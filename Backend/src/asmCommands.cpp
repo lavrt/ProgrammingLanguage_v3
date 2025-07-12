@@ -1,29 +1,6 @@
+#include "asmCommands.h"
+
 #include "generator.h"
-
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-
-void CodeGenCtor(TCodeGen* cg) {
-    cg->capacity = kInitCapacity;
-    cg->code = (uint8_t*)calloc(cg->capacity, sizeof(char));
-    assert(cg->code);
-    cg->size = 0;
-}
-
-void CodeGenDtor(TCodeGen* cg) {
-    free(cg->code);
-    cg->code = NULL;
-}
-
-void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len) {
-    if (cg->size + len > cg->capacity) {
-        cg->capacity *= 2;
-        cg->code = (uint8_t*)realloc(cg->code, cg->capacity);
-    }
-    memcpy(cg->code + cg->size, data, len);
-    cg->size += len;
-}
 
 // PUSH r64
 void push_reg(TCodeGen* cg, ERegister reg) {

@@ -1,32 +1,7 @@
-#ifndef GENERATOR_H
-#define GENERATOR_H
+#ifndef ASM_COMMANDS_H
+#define ASM_COMMANDS_H
 
-#include <stdio.h>
-#include <stdint.h>
-
-const size_t kInitCapacity = 4096;
-
-struct TVariables {
-    char* id;
-    int offset;
-};
-
-struct TFunctions {
-    char* name;
-    size_t addr;
-};
-
-struct TCodeGen {
-    uint8_t* code;
-    size_t size;
-    size_t capacity;
-    int stackOffset;
-    int labelCount;
-    TVariables* vars; 
-    int varCount;
-    TFunctions* funcs;
-    int funcCount;
-};
+#include "generator.h"
 
 enum ERegister {
     REG_AX = 0,  
@@ -38,10 +13,6 @@ enum ERegister {
     REG_SI = 6,  
     REG_DI = 7,  
 };
-
-void CodeGenCtor(TCodeGen* cg);
-void CodeGenDtor(TCodeGen* cg);
-void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len);
 
 void push_reg(TCodeGen* cg, ERegister reg);
 void pop_reg(TCodeGen* cg, ERegister reg);
@@ -59,4 +30,4 @@ void jmp_rel32(TCodeGen* cg, int32_t offset);
 void call_rel32(TCodeGen* cg, int32_t offset);
 void ret(TCodeGen* cg);
 
-#endif // GENERATOR_H
+#endif // ASM_COMMANDS_H

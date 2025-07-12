@@ -2,8 +2,22 @@
 
 #include "headers.h"
 #include "generator.h"
+#include "vector.h"
+#include "parser.h"
+#include "tree.h"
+#include "tokenizer.h"
 
 int main() {
+    //-frontend-test-----------------//
+    Vector tokens = tokenizer();     //
+    tNode* root = runParser(tokens); //
+    dump(root);                      //
+    tokenVectorDtor(&tokens);        //
+    free(tokens.data);               //
+    treeDtor(root);                  //
+    //-------------------------------//
+
+    //-elf-file-test-----------------------------------------------------//
     unsigned char code[] = {
         0x48, 0xc7, 0xc0, 0x01, 0x00, 0x00, 0x00, // mov rax, 1
         0x48, 0xc7, 0xc7, 0x01, 0x00, 0x00, 0x00, // mov rdi, 1
