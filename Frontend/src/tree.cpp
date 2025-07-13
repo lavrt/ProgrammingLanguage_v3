@@ -63,6 +63,15 @@ tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right) {
             node->right = right;
         }
         break;
+        case Binary: 
+        {
+            node = memoryAllocationForNode();
+
+            node->type = Binary;
+            node->left = left;
+            node->right = right;
+        }
+        break;
         default: assert(0);
     }
 
@@ -163,17 +172,19 @@ static void dumpTreeTraversal(tNode* node, FILE* dumpFile) {
     } else if (node->type == Identifier) {
         fprintf(dumpFile, " | type: %s | value: %s | ", kVariable, node->value);
     } else if (node->type == Operation) {
-        if (!strcmp(node->value, ">" ) || !strcmp(node->value, "<" ) || !strcmp(node->value, "==") ||
-            !strcmp(node->value, ">=") || !strcmp(node->value, "<=") || !strcmp(node->value, "!=")) {
-
-            fprintf(dumpFile, " | type: %s | value: \\%s | ", kOperation, node->value);
-        } else {
-            fprintf(dumpFile, " | type: %s | value: %s | ", kOperation, node->value);
-        }
+        fprintf(dumpFile, " | type: %s | value: %s | ", kOperation, node->value);
     } else if (node->type == Function) {
         fprintf(dumpFile, " | type: %s | value: %s | ", kFunction, node->value);
     } else if (node->type == Calling) {
         fprintf(dumpFile, " | type: %s | value: %s | ", kCalling, node->value);
+    } else if (node->type == Binary) {
+        if (!strcmp(node->value, ">" ) || !strcmp(node->value, "<" ) || !strcmp(node->value, "==") ||
+            !strcmp(node->value, ">=") || !strcmp(node->value, "<=") || !strcmp(node->value, "!=")) {
+
+            fprintf(dumpFile, " | type: %s | value: \\%s | ", kBinary, node->value);
+        } else {
+            fprintf(dumpFile, " | type: %s | value: %s | ", kBinary, node->value);
+        }
     } else assert(0);
 
     fprintf(dumpFile, "{ left: %p | right: %p }} \"", node->left, node->right);
@@ -188,6 +199,8 @@ static void dumpTreeTraversal(tNode* node, FILE* dumpFile) {
         fprintf(dumpFile, ", color = \"#E7FFAC\"];\n");
     } else if (node->type == Calling) {
         fprintf(dumpFile, ", color = \"#E8A79E\"];\n");
+    } else if (node->type == Binary) {
+        fprintf(dumpFile, ", color = \"#A7A79E\"];\n");
     }
 
     if (node->left) {

@@ -19,6 +19,7 @@ const char* const kNumber = "number";
 const char* const kVariable = "variable";
 const char* const kOperation = "operation";
 const char* const kCalling = "calling";
+const char* const kBinary = "binary";
 
 tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right);
 void treeDtor(tNode* node);

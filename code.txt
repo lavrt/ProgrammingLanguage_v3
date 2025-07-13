@@ -1,8 +1,8 @@
-def f ( n )
+def f ( n ; y )
 {
     k = 1 ;
     i = 0 ;
-    while ( i < n )
+    while ( n > i )
     {
         i = i + 1 ;
         k = k * i ;
@@ -13,6 +13,6 @@ def f ( n )
     } ;
 } ;
 n = 12 ;
-k = call f ( n ) ;
+k = call f ( n ; y ) ;
 print ( k ) ;
 end

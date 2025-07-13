@@ -83,17 +83,17 @@ static tNode* getComparsion(Vector tokenVector, size_t* pos) {
         (*pos)++;
         tNode* rightNode = getExpression(tokenVector, pos);
         if (!strcmp(GET_TOKEN(op), ">")) {
-            leftNode = newNode(Operation, ">", leftNode, rightNode);
+            leftNode = newNode(Binary, ">", leftNode, rightNode);
         } else if (!strcmp(GET_TOKEN(op), "<")) {
-            leftNode = newNode(Operation, "<", leftNode, rightNode);
+            leftNode = newNode(Binary, "<", leftNode, rightNode);
         } else if (!strcmp(GET_TOKEN(op), "==")) {
-            leftNode = newNode(Operation, "==", leftNode, rightNode);
+            leftNode = newNode(Binary, "==", leftNode, rightNode);
         } else if (!strcmp(GET_TOKEN(op), "<=")) {
-            leftNode = newNode(Operation, "<=", leftNode, rightNode);
+            leftNode = newNode(Binary, "<=", leftNode, rightNode);
         } else if (!strcmp(GET_TOKEN(op), ">=")) {
-            leftNode = newNode(Operation, ">=", leftNode, rightNode);
+            leftNode = newNode(Binary, ">=", leftNode, rightNode);
         } else if (!strcmp(GET_TOKEN(op), "!=")) {
-            leftNode = newNode(Operation, "!=", leftNode, rightNode);
+            leftNode = newNode(Binary, "!=", leftNode, rightNode);
         }
     }
 

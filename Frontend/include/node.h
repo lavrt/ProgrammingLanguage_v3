@@ -7,6 +7,7 @@ enum NodeType {
     Identifier = 3,
     Function   = 4,
     Calling    = 5,
+    Binary     = 6,
 };
 
 struct tNode {

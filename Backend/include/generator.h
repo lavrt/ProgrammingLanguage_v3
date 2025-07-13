@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "node.h"
+
 const size_t kInitCapacityOfCodeArray = 4096;
-const size_t kAdditionalCapacityOfNameTable = 16;
+const int kAdditionalCapacityOfNameTable = 16;
 
 struct TVariables {
     char* id;
@@ -36,5 +38,7 @@ int FindVar(TCodeGen* cg, const char* id);
 void AddVar(TCodeGen* cg, const char* id);
 size_t FindFunc(TCodeGen* cg, const char* name);
 void AddFunc(TCodeGen* cg, const char* name);
+void CodeGenExpr(TCodeGen* cg, tNode* node);
+void CodeGenStmt(TCodeGen* cg, tNode* node);
 
 #endif // GENERATOR_H

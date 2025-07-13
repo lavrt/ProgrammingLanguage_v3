@@ -18,13 +18,13 @@
 #define VAR(value_) \
     newNode(Identifier, value_, NULL, NULL)
 #define ADD(leftNode_, rightNode_) \
-    newNode(Operation, "+", leftNode_, rightNode_)
+    newNode(Binary, "+", leftNode_, rightNode_)
 #define SUB(leftNode_, rightNode_) \
-    newNode(Operation, "-", leftNode_, rightNode_)
+    newNode(Binary, "-", leftNode_, rightNode_)
 #define MUL(leftNode_, rightNode_) \
-    newNode(Operation, "*", leftNode_, rightNode_)
+    newNode(Binary, "*", leftNode_, rightNode_)
 #define DIV(leftNode_, rightNode_) \
-    newNode(Operation, "/", leftNode_, rightNode_)
+    newNode(Binary, "/", leftNode_, rightNode_)
 #define SEMICOLON(leftNode_, rightNode_) \
     newNode(Operation, ";", leftNode_, rightNode_)
 #define SQRT(leftNode_, rightNode_) \
