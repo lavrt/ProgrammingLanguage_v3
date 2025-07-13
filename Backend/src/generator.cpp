@@ -177,7 +177,7 @@ void CodeGenStmt(TCodeGen* cg, tNode* node) {
     }
     switch (node->type) {
         case Function: {
-
+            // TODO in process
             break;
         }
         case Operation: {
@@ -192,10 +192,17 @@ void CodeGenStmt(TCodeGen* cg, tNode* node) {
                     int offset = FindVar(cg, node->left->value);
                     if (offset == -1) {
                         AddVar(cg, node->left->value);
-                        offset = 
+                        offset = cg->vars[cg->varCount - 1].offset;
                     }
+                    mov_mem_reg(cg, -offset, REG_AX);
+                    break;
                 }
-                default:
+                case Print: {
+
+                }
+                default: {
+                    exit(1);
+                }
             }
         }
 
