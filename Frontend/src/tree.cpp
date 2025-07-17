@@ -6,7 +6,7 @@
 
 #include "debug.h"
 
-#define GRAPHVIZ
+#define GRAPHVIZ 
 
 // static --------------------------------------------------------------------------------------------------------------
 
@@ -20,58 +20,46 @@ tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right) {
     tNode* node = NULL;
 
     switch (type) {
-        case Number:
-        {
+        case Number: {
             node = memoryAllocationForNode();
-
             node->type = Number;
+            break;
         }
-        break;
-        case Identifier:
-        {
+        case Identifier: {
             node = memoryAllocationForNode();
             node->left = left;
             node->right = right;
-
             node->type = Identifier;
+            break;
         }
-        break;
-        case Operation:
-        {
+        case Operation: {
             node = memoryAllocationForNode();
-
             node->type = Operation;
             node->left = left;
             node->right = right;
+            break;
         }
-        break;
-        case Calling:
-        {
+        case Calling: {
             node = memoryAllocationForNode();
-
             node->type = Calling;
             node->left = left;
-            node->right = right;            
+            node->right = right;
+            break;
         }
-        break;
-        case Function:
-        {
+        case Function: {
             node = memoryAllocationForNode();
-
             node->type = Function;
             node->left = left;
             node->right = right;
+            break;
         }
-        break;
-        case Binary: 
-        {
+        case Binary: {
             node = memoryAllocationForNode();
-
             node->type = Binary;
             node->left = left;
             node->right = right;
+            break;
         }
-        break;
         default: assert(0);
     }
 
@@ -178,13 +166,14 @@ static void dumpTreeTraversal(tNode* node, FILE* dumpFile) {
     } else if (node->type == Calling) {
         fprintf(dumpFile, " | type: %s | value: %s | ", kCalling, node->value);
     } else if (node->type == Binary) {
-        if (!strcmp(node->value, ">" ) || !strcmp(node->value, "<" ) || !strcmp(node->value, "==") ||
-            !strcmp(node->value, ">=") || !strcmp(node->value, "<=") || !strcmp(node->value, "!=")) {
-
-            fprintf(dumpFile, " | type: %s | value: \\%s | ", kBinary, node->value);
-        } else {
-            fprintf(dumpFile, " | type: %s | value: %s | ", kBinary, node->value);
-        }
+        fprintf(
+            dumpFile, 
+            (!strcmp(node->value, ">" ) || !strcmp(node->value, "<" ) || !strcmp(node->value, "==") ||
+             !strcmp(node->value, ">=") || !strcmp(node->value, "<=") || !strcmp(node->value, "!="))
+                ? " | type: %s | value: \\%s | "
+                : " | type: %s | value: %s | ",
+            kBinary, node->value
+        );
     } else assert(0);
 
     fprintf(dumpFile, "{ left: %p | right: %p }} \"", node->left, node->right);

@@ -21,7 +21,8 @@ void mov_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
     // opcode: REX.W + C7 /0 imm32
     // REX.W: 0x48 (64 bits)
     // ModR/M: (Mod=11, Reg=000, R/M=reg_code)
-    uint8_t opcode[] = {0x48, 0xc7, 0xc0 + (reg & 0x7)};
+    uint8_t modrm = 0xc0 + (reg & 0x7);
+    uint8_t opcode[] = {0x48, 0xc7, modrm}; 
     AppendCode(cg, opcode, 3);
     AppendCode(cg, (uint8_t*)&imm, 4);
 }
@@ -137,4 +138,11 @@ void ret(TCodeGen* cg) {
     // opcode: С3
     uint8_t opcode[] = {0xc3};
     AppendCode(cg, opcode, 1);
+}
+
+// SYSCALL
+void syscall(TCodeGen* cg) {
+    // opcode: 0F 05
+    uint8_t opcode[] = {0x0f, 0x05};
+    AppendCode(cg, opcode, 2);
 }

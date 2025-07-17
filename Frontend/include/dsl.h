@@ -33,8 +33,10 @@
     newNode(Operation, "sin", leftNode_, rightNode_)
 #define COS(leftNode_, rightNode_) \
     newNode(Operation, "cos", leftNode_, rightNode_)
-#define PRINT(leftNode_, rightNode_) \
-    newNode(Operation, "print", leftNode_, rightNode_)
+#define PRINT_INT(leftNode_, rightNode_) \
+    newNode(Operation, "print_int", leftNode_, rightNode_)
+#define PRINT_ASCII(leftNode_, rightNode_) \
+    newNode(Operation, "print_ascii", leftNode_, rightNode_)
 #define IF(leftNode_, rightNode_) \
     newNode(Operation, "if", leftNode_, rightNode_)
 #define WHILE(leftNode_, rightNode_) \

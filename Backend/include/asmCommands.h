@@ -29,5 +29,6 @@ void je_rel32(TCodeGen* cg, int32_t offset);
 void jmp_rel32(TCodeGen* cg, int32_t offset);
 void call_rel32(TCodeGen* cg, int32_t offset);
 void ret(TCodeGen* cg);
+void syscall(TCodeGen* cg);
 
 #endif // ASM_COMMANDS_H

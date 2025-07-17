@@ -18,25 +18,26 @@ struct tNode {
 };
 
 enum Operations {
-    NoOperation =  0,
-    Semicolon = 1,
-    Print = 2,
-    While = 3,
-    Sqrt = 4,
-    Sin = 5,
-    Cos = 6,
-    If = 7,
-    Add = 8,
-    Sub = 9,
-    Mul = 10,
-    Div = 11,
-    Less = 12,
-    Equal = 13,
-    Greater = 14,
-    Identical = 15,
-    LessOrEqual = 16,
-    NotIdentical = 17,
-    GreaterOrEqual = 18,
+    NoOperation = 0,
+    Semicolon,
+    PrintAscii,
+    PrintInt,
+    While,
+    Sqrt,
+    Sin,
+    Cos,
+    If,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Less,
+    Equal,
+    Greater,
+    Identical,
+    LessOrEqual,
+    NotIdentical,
+    GreaterOrEqual,
     Def,
     Call,
     Return,
@@ -56,7 +57,8 @@ const char* const keyEqual = "=";
 const char* const keyGreater = ">";
 const char* const keyCall = "call";
 const char* const keySqrt = "sqrt";
-const char* const keyPrint = "print";
+const char* const keyPrintAscii = "print_ascii";
+const char* const keyPrintInt = "print_int";
 const char* const keyWhile = "while";
 const char* const keySemicolon = ";";
 const char* const keyIdentical = "==";

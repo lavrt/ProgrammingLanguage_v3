@@ -8,20 +8,65 @@
 
 // static ------------------------------------------------------------------------------------------
 
+static const size_t kInitCapacityOfCodeArray = 4096;
+static const int kAdditionalCapacityOfNameTable = 16;
+
 static Operations GetOperationType(const char* const word);
+static int FindVar(const TCodeGen* const cg, const char* id);
+static void AddVar(TCodeGen* cg, const char* id);
+static size_t FindFunc(const TCodeGen* const cg, const char* name);
+static void AddFunc(TCodeGen* cg, const char* name);
+static void CodeGenExpr(TCodeGen* cg, tNode* node);
+static void CodeGenStmt(TCodeGen* cg, tNode* node);
+
+namespace GenExpr {
+    static void EmitNumber(TCodeGen* cg, tNode* node);
+
+    static void EmitIdentifier(TCodeGen* cg, tNode* node);
+
+    static void EmitCalling(TCodeGen* cg, tNode* node);
+
+    static void EmitBinary(TCodeGen* cg, tNode* node);
+    namespace Binary {
+        static void EmitAdd(TCodeGen* cg);
+        static void EmitSub(TCodeGen* cg);
+        static void EmitMul(TCodeGen* cg);
+        static void EmitDiv(TCodeGen* cg);
+        static void EmitGreater(TCodeGen* cg);
+        static void EmitGreaterOrEqual(TCodeGen* cg);
+        static void EmitLess(TCodeGen* cg);
+        static void EmitLessOrEqual(TCodeGen* cg);
+        static void EmitIdentical(TCodeGen* cg);
+        static void EmitNotIdentical(TCodeGen* cg);
+    }
+}
+
+namespace GenStmt {
+    static void EmitFunction(TCodeGen* cg, tNode* node);
+
+    static void EmitOperation(TCodeGen* cg, tNode* node);
+    namespace Operation {
+        static void EmitSemicolon(TCodeGen* cg, tNode* node);
+        static void EmitEqual(TCodeGen* cg, tNode* node);
+        static void EmitPrintAscii(TCodeGen* cg, tNode* node);
+    }
+}
 
 // global ------------------------------------------------------------------------------------------
 
 void CodeGenCtor(TCodeGen* cg) {
-    cg->capacity = kInitCapacityOfCodeArray;
-    cg->code = (uint8_t*)calloc(cg->capacity, sizeof(char));
-    assert(cg->code);
     cg->size = 0;
     cg->stackOffset = 0;
     cg->labelCount = 0;
+
+    cg->capacity = kInitCapacityOfCodeArray;
+    cg->code = (uint8_t*)calloc(cg->capacity, sizeof(char));
+    assert(cg->code);
+
     cg->varCount = 0;
     cg->vars = (TVariables*)calloc(kAdditionalCapacityOfNameTable, sizeof(TVariables));
     assert(cg->vars);
+
     cg->funcCount = 0;
     cg->funcs = (TFunctions*)calloc(kAdditionalCapacityOfNameTable, sizeof(TFunctions));
     assert(cg->funcs);
@@ -29,7 +74,16 @@ void CodeGenCtor(TCodeGen* cg) {
 
 void CodeGenDtor(TCodeGen* cg) {
     free(cg->code);
-    cg->code = NULL;
+
+    for (int i = 0; i != cg->varCount; ++i) {
+        free(cg->vars[i].id);
+    }
+    free(cg->vars);
+
+    for (int i = 0; i != cg->funcCount; ++i) {
+        free(cg->funcs[i].name);
+    }
+    free(cg->funcs);
 }
 
 void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len) {
@@ -42,7 +96,44 @@ void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len) {
     cg->size += len;
 }
 
-int FindVar(TCodeGen* cg, const char* id) {
+void CodegenProgram(TCodeGen* cg, tNode* program) {
+    AddFunc(cg, "_start");
+    push_reg(cg, REG_BP);
+    mov_reg_reg(cg, REG_BP, REG_SP);
+    CodeGenStmt(cg, program);
+    mov_reg_imm32(cg, REG_AX, 60);
+    mov_reg_imm32(cg, REG_DI, 0);
+    syscall(cg);
+}
+
+// static ------------------------------------------------------------------------------------------
+
+static Operations GetOperationType(const char* const word) {
+         if (!strcmp(word, "if")) return If;               
+    else if (!strcmp(word, "+")) return Add; //
+    else if (!strcmp(word, "-")) return Sub; //
+    else if (!strcmp(word, "*")) return Mul; //
+    else if (!strcmp(word, "/")) return Div; //
+    else if (!strcmp(word, "sin")) return Sin;
+    else if (!strcmp(word, "cos")) return Cos; 
+    else if (!strcmp(word, "sqrt")) return Sqrt;
+    else if (!strcmp(word, "while")) return While;         
+    else if (!strcmp(word, "=")) return Equal; //
+    else if (!strcmp(word, "print_ascii")) return PrintAscii; //
+    else if (!strcmp(word, "print_int")) return PrintInt;
+    else if (!strcmp(word, "return")) return Return;
+    else if (!strcmp(word, ">")) return Greater; //
+    else if (!strcmp(word, "<")) return Less; //
+    else if (!strcmp(word, ";")) return Semicolon; //  
+    else if (!strcmp(word, "==")) return Identical; //
+    else if (!strcmp(word, "<=")) return LessOrEqual; //
+    else if (!strcmp(word, "!=")) return NotIdentical; //
+    else if (!strcmp(word, ">=")) return GreaterOrEqual; //
+
+    else return NoOperation;
+}
+
+static int FindVar(const TCodeGen* const cg, const char* id) {
     for (int i = 0; i != cg->varCount; ++i) {
         if (!strcmp(cg->vars[i].id, id)) {
             return cg->vars[i].offset;
@@ -51,7 +142,7 @@ int FindVar(TCodeGen* cg, const char* id) {
     return -1;
 }
 
-void AddVar(TCodeGen* cg, const char* id) {
+static void AddVar(TCodeGen* cg, const char* id) {
     if (cg->varCount >= kAdditionalCapacityOfNameTable) {
         cg->vars = (TVariables*)realloc(
             cg->vars, (cg->varCount + kAdditionalCapacityOfNameTable) * sizeof(TVariables)
@@ -64,7 +155,7 @@ void AddVar(TCodeGen* cg, const char* id) {
     ++cg->varCount;
 }
 
-size_t FindFunc(TCodeGen* cg, const char* name) {
+static size_t FindFunc(const TCodeGen* const cg, const char* name) {
     for (int i = 0; i < cg->funcCount; i++) {
         if (!strcmp(cg->funcs[i].name, name)) {
             return cg->funcs[i].addr;
@@ -73,7 +164,7 @@ size_t FindFunc(TCodeGen* cg, const char* name) {
     return 0;
 }
 
-void AddFunc(TCodeGen* cg, const char* name) {
+static void AddFunc(TCodeGen* cg, const char* name) {
     if (cg->funcCount >= kAdditionalCapacityOfNameTable) {
         cg->funcs = (TFunctions*)realloc(
             cg->funcs, (cg->funcCount + kAdditionalCapacityOfNameTable) * sizeof(TFunctions)
@@ -85,84 +176,12 @@ void AddFunc(TCodeGen* cg, const char* name) {
     ++cg->funcCount;
 }
 
-void CodeGenExpr(TCodeGen* cg, tNode* node) {
+static void CodeGenExpr(TCodeGen* cg, tNode* node) {
     switch (node->type) {
-        case Number: {
-            mov_reg_imm32(cg, REG_AX, atoi(node->value));
-            break;
-        }
-        case Identifier: {
-            int offset = FindVar(cg, node->value);
-            if (offset == -1) {
-                fprintf(stderr, "Undefined variable\n");
-                exit(1);
-            }
-            mov_reg_mem(cg, REG_AX, -offset);
-            break;
-        }
-        case Binary: {
-            CodeGenExpr(cg, node->left);
-            push_reg(cg, REG_AX);
-            CodeGenExpr(cg, node->right);
-            pop_reg(cg, REG_BX);
-            switch (GetOperationType(node->value)) {
-                case Add: add_reg_reg(cg, REG_AX, REG_BX); break;
-                case Sub: sub_reg_reg(cg, REG_AX, REG_BX); break;
-                case Mul: imul_reg_reg(cg, REG_AX, REG_BX); break;
-                case Div: {
-                    uint8_t xor_rdx_rdx[] = {0x48, 0x31, 0xd2};
-                    AppendCode(cg, xor_rdx_rdx, 3);
-                    uint8_t xchg_rax_rbx[] = {0x48, 0x93};
-                    AppendCode(cg, xchg_rax_rbx, 2);
-                    idiv_reg(cg, REG_BX);
-                    break;
-                }
-                case Greater: {
-                    cmp_reg_reg(cg, REG_AX, REG_BX);
-                    uint8_t setg_al[] = {0x0f, 0x9f, 0xc0}; // opcode: 0F 9F /0
-                    AppendCode(cg, setg_al, 3);
-                    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
-                    AppendCode(cg, movzx_rax_al, 4);
-                    break;
-                }
-                case Identical: {
-                    cmp_reg_reg(cg, REG_AX, REG_BX);
-                    uint8_t sete_al[] = {0x0f, 0x94, 0xc0}; // opcode: 0F 94 /0
-                    AppendCode(cg, sete_al, 3);
-                    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
-                    AppendCode(cg, movzx_rax_al, 4);
-                    break;
-                }
-                default: {
-                    fprintf(stderr, "Unknown binary operator\n");
-                    exit(1);
-                }
-            }
-            break;
-        }
-        case Calling: {
-            push_reg(cg, REG_DI);
-            push_reg(cg, REG_SI);
-            tNode* arg = node->left;
-            if (arg) {
-                CodeGenExpr(cg, arg);
-                mov_reg_reg(cg, REG_DI, REG_AX);
-                arg = arg->left;
-                if (arg) {
-                    CodeGenExpr(cg, arg);
-                    mov_reg_reg(cg, REG_SI, REG_AX);
-                }
-            }
-            size_t addr = FindFunc(cg, node->value);
-            if (!addr) {
-                fprintf(stderr, "Undefined function\n");
-                exit(1);
-            }
-            call_rel32(cg, addr - (cg->size + 5)); // 5 is the size of the call_rel32
-            pop_reg(cg, REG_SI);
-            pop_reg(cg, REG_DI);
-            break;
-        }
+        case Number:        GenExpr::EmitNumber(cg, node);       break;
+        case Identifier:    GenExpr::EmitIdentifier(cg, node);   break;        
+        case Binary:        GenExpr::EmitBinary(cg, node);       break;
+        case Calling:       GenExpr::EmitCalling(cg, node);      break;
         
         default: {
             fprintf(stderr, "Unknown expression type\n");
@@ -171,102 +190,203 @@ void CodeGenExpr(TCodeGen* cg, tNode* node) {
     }
 }
 
-void CodeGenStmt(TCodeGen* cg, tNode* node) {
+static void CodeGenStmt(TCodeGen* cg, tNode* node) {
     if (!node) {
         return;
     }
     switch (node->type) {
-        case Function: {
-            // TODO in process
-            break;
+        case Function:      GenStmt::EmitFunction(cg, node);        break;
+        case Operation:     GenStmt::EmitOperation(cg, node);       break;
+
+        default: {
+            fprintf(stderr, "Unknown node type\n");
+            exit(1);
         }
-        case Operation: {
-            switch (GetOperationType(node->value)) {
-                case Semicolon: {
-                    CodeGenStmt(cg, node->left);
-                    CodeGenStmt(cg, node->right);
-                    break;
-                }
-                case Equal: {
-                    CodeGenExpr(cg, node->right);
-                    int offset = FindVar(cg, node->left->value);
-                    if (offset == -1) {
-                        AddVar(cg, node->left->value);
-                        offset = cg->vars[cg->varCount - 1].offset;
-                    }
-                    mov_mem_reg(cg, -offset, REG_AX);
-                    break;
-                }
-                case Print: { 
-                    CodeGenExpr(cg, node->left);
-
-                    push_reg(cg, REG_DI);
-                    push_reg(cg, REG_SI);
-                    push_reg(cg, REG_DX);
-
-                    push_reg(cg, REG_AX);
-
-                    mov_reg_imm32(cg, REG_AX, 1);       // number of syscall write 
-                    mov_reg_imm32(cg, REG_DI, 1);       // stdout
-                    mov_reg_reg(cg, REG_SI, REG_SP);    // pointer to value
-                    mov_reg_imm32(cg, REG_DX, 8);       // output size
-
-                    uint8_t syscall[] = {0x0f, 0x05};
-                    AppendCode(cg, syscall, 2);
-
-                    mov_reg_imm32(cg, REG_AX, 8);
-                    add_reg_reg(cg, REG_SP, REG_AX);
-
-                    pop_reg(cg, REG_DX);
-                    pop_reg(cg, REG_SI);
-                    pop_reg(cg, REG_DI);
-
-                    break;
-                }
-                default: {
-                    
-                    exit(1);
-                }
-            }
-        }
-
-        default: break;
     }
 }
 
-void CodegenProgram(TCodeGen* cg, tNode* program) {
-    AddFunc(cg, "_start");
-    push_reg(cg, REG_BP);
-    mov_reg_reg(cg, REG_BP, REG_SP);
-    CodeGenStmt(cg, program);
-    mov_reg_imm32(cg, REG_AX, 60);
-    mov_reg_imm32(cg, REG_DI, 0);
-    uint8_t syscall[] = {0x0f, 0x05};
-    AppendCode(cg, syscall, 2);
+static void GenExpr::EmitNumber(TCodeGen* cg, tNode* node) {
+    mov_reg_imm32(cg, REG_AX, atoi(node->value));
 }
 
-// static ------------------------------------------------------------------------------------------
+static void GenExpr::EmitIdentifier(TCodeGen* cg, tNode* node) {
+    int offset = FindVar(cg, node->value);
+    if (offset == -1) {
+        fprintf(stderr, "Undefined variable\n");
+        exit(1);
+    }
+    mov_reg_mem(cg, REG_AX, -offset);
+}
 
-static Operations GetOperationType(const char* const word) {
-         if (!strcmp(word, "if"    )) return If;               
-    else if (!strcmp(word, "+"     )) return Add;              
-    else if (!strcmp(word, "-"     )) return Sub;              
-    else if (!strcmp(word, "*"     )) return Mul;              
-    else if (!strcmp(word, "/"     )) return Div;               
-    else if (!strcmp(word, "sin"   )) return Sin;
-    else if (!strcmp(word, "cos"   )) return Cos; 
-    else if (!strcmp(word, "sqrt"  )) return Sqrt;
-    else if (!strcmp(word, "<"     )) return Less;           
-    else if (!strcmp(word, "while" )) return While;          
-    else if (!strcmp(word, "="     )) return Equal;       
-    else if (!strcmp(word, "print" )) return Print;   
-    else if (!strcmp(word, "return")) return Return;
-    else if (!strcmp(word, ">"     )) return Greater;       
-    else if (!strcmp(word, ";"     )) return Semicolon;        
-    else if (!strcmp(word, "=="    )) return Identical;        
-    else if (!strcmp(word, "<="    )) return LessOrEqual;       
-    else if (!strcmp(word, "!="    )) return NotIdentical;     
-    else if (!strcmp(word, ">="    )) return GreaterOrEqual;    
+static void GenExpr::EmitBinary(TCodeGen* cg, tNode* node) {
+    CodeGenExpr(cg, node->left);
+    push_reg(cg, REG_AX);
 
-    else return NoOperation;
+    CodeGenExpr(cg, node->right);
+    pop_reg(cg, REG_BX);
+    
+    switch (GetOperationType(node->value)) {
+        case Add:               GenExpr::Binary::EmitAdd(cg);               break;
+        case Sub:               GenExpr::Binary::EmitSub(cg);               break;
+        case Mul:               GenExpr::Binary::EmitMul(cg);               break;
+        case Div:               GenExpr::Binary::EmitDiv(cg);               break;
+        case Greater:           GenExpr::Binary::EmitGreater(cg);           break;
+        case GreaterOrEqual:    GenExpr::Binary::EmitGreaterOrEqual(cg);    break;
+        case Less:              GenExpr::Binary::EmitLess(cg);              break;
+        case LessOrEqual:       GenExpr::Binary::EmitLessOrEqual(cg);       break;
+        case Identical:         GenExpr::Binary::EmitIdentical(cg);         break;
+        case NotIdentical:      GenExpr::Binary::EmitNotIdentical(cg);      break;
+
+        default: {
+            fprintf(stderr, "Unknown binary operator\n");
+            exit(1);
+        }
+    }
+}
+
+static void GenExpr::Binary::EmitAdd(TCodeGen* cg) {
+    add_reg_reg(cg, REG_AX, REG_BX); 
+}
+
+static void GenExpr::Binary::EmitSub(TCodeGen* cg) {
+    sub_reg_reg(cg, REG_AX, REG_BX);
+}
+
+static void GenExpr::Binary::EmitMul(TCodeGen* cg) {
+    imul_reg_reg(cg, REG_AX, REG_BX);
+}
+
+static void GenExpr::Binary::EmitDiv(TCodeGen* cg) {
+    uint8_t xor_rdx_rdx[] = {0x48, 0x31, 0xd2};
+    AppendCode(cg, xor_rdx_rdx, 3);
+    uint8_t xchg_rax_rbx[] = {0x48, 0x93};
+    AppendCode(cg, xchg_rax_rbx, 2);
+    idiv_reg(cg, REG_BX);
+}
+
+static void GenExpr::Binary::EmitGreater(TCodeGen* cg) {
+    cmp_reg_reg(cg, REG_AX, REG_BX);
+    uint8_t setg_al[] = {0x0f, 0x9f, 0xc0}; // opcode: 0F 9F /0
+    AppendCode(cg, setg_al, 3);
+    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
+    AppendCode(cg, movzx_rax_al, 4);
+}
+
+static void GenExpr::Binary::EmitGreaterOrEqual(TCodeGen* cg) {
+    cmp_reg_reg(cg, REG_AX, REG_BX);
+    uint8_t setge_al[] = {0x0f, 0x9d, 0xc0}; // opcode: 0F 9D /0
+    AppendCode(cg, setge_al, 3);
+    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
+    AppendCode(cg, movzx_rax_al, 4);
+}
+
+static void GenExpr::Binary::EmitLess(TCodeGen* cg) {
+    cmp_reg_reg(cg, REG_AX, REG_BX);
+    uint8_t setl_al[] = {0x0f, 0x9c, 0xc0}; // opcode: 0F 9C /0
+    AppendCode(cg, setl_al, 3);
+    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
+    AppendCode(cg, movzx_rax_al, 4);
+}
+
+static void GenExpr::Binary::EmitLessOrEqual(TCodeGen* cg) {
+    cmp_reg_reg(cg, REG_AX, REG_BX);
+    uint8_t setge_al[] = {0x0f, 0x9e, 0xc0}; // opcode: 0F 9D /0
+    AppendCode(cg, setge_al, 3);
+    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
+    AppendCode(cg, movzx_rax_al, 4);
+}
+
+static void GenExpr::Binary::EmitIdentical(TCodeGen* cg) {
+    cmp_reg_reg(cg, REG_AX, REG_BX);
+    uint8_t sete_al[] = {0x0f, 0x94, 0xc0}; // opcode: 0F 94 /0
+    AppendCode(cg, sete_al, 3);
+    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
+    AppendCode(cg, movzx_rax_al, 4);
+}
+
+static void GenExpr::Binary::EmitNotIdentical(TCodeGen* cg) {
+    cmp_reg_reg(cg, REG_AX, REG_BX);
+    uint8_t setne_al[] = {0x0f, 0x95, 0xc0}; // opcode: 0F 95 /0
+    AppendCode(cg, setne_al, 3);
+    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
+    AppendCode(cg, movzx_rax_al, 4);
+}
+
+static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
+    push_reg(cg, REG_DI);
+    push_reg(cg, REG_SI);
+    tNode* arg = node->left;
+    if (arg) {
+        CodeGenExpr(cg, arg);
+        mov_reg_reg(cg, REG_DI, REG_AX);
+        arg = arg->left;
+        if (arg) {
+            CodeGenExpr(cg, arg);
+            mov_reg_reg(cg, REG_SI, REG_AX);
+        }
+    }
+    size_t addr = FindFunc(cg, node->value);
+    if (!addr) {
+        fprintf(stderr, "Undefined function\n");
+        exit(1);
+    }
+    call_rel32(cg, addr - (cg->size + 5)); // 5 is the size of the call_rel32
+    pop_reg(cg, REG_SI);
+    pop_reg(cg, REG_DI);
+}
+
+static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
+    // TODO in process
+}
+
+static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
+    switch (GetOperationType(node->value)) {
+        case Semicolon:     GenStmt::Operation::EmitSemicolon(cg, node);        break;
+        case Equal:         GenStmt::Operation::EmitEqual(cg, node);            break;
+        case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;
+
+        default: {
+            fprintf(stderr, "Unknown operation\n");
+            exit(1);
+        }
+    }
+}
+
+static void GenStmt::Operation::EmitSemicolon(TCodeGen* cg, tNode* node) {
+    CodeGenStmt(cg, node->left);
+    CodeGenStmt(cg, node->right);
+}
+
+static void GenStmt::Operation::EmitEqual(TCodeGen* cg, tNode* node) {
+    CodeGenExpr(cg, node->right);
+    int offset = FindVar(cg, node->left->value);
+    if (offset == -1) {
+        AddVar(cg, node->left->value);
+        offset = cg->vars[cg->varCount - 1].offset;
+    }
+    mov_mem_reg(cg, -offset, REG_AX);
+}
+
+static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
+    CodeGenExpr(cg, node->left);
+
+    push_reg(cg, REG_DI);
+    push_reg(cg, REG_SI);
+    push_reg(cg, REG_DX);
+
+    push_reg(cg, REG_AX);
+
+    mov_reg_imm32(cg, REG_AX, 1);       // number of syscall write 
+    mov_reg_imm32(cg, REG_DI, 1);       // stdout
+    mov_reg_reg(cg, REG_SI, REG_SP);    // pointer to value
+    mov_reg_imm32(cg, REG_DX, 8);       // output size
+
+    syscall(cg);
+
+    mov_reg_imm32(cg, REG_AX, 8);
+    add_reg_reg(cg, REG_SP, REG_AX);
+
+    pop_reg(cg, REG_DX);
+    pop_reg(cg, REG_SI);
+    pop_reg(cg, REG_DI);
 }

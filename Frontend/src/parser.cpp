@@ -221,7 +221,7 @@ static tNode* getOperation(Vector tokenVector, size_t* pos) {
         (*pos)++;
         tNode* node = getWhile(tokenVector, pos);
         return node;
-    } else if (!strcmp(GET_TOKEN(*pos), keyPrint)) {
+    } else if (!strcmp(GET_TOKEN(*pos), keyPrintAscii)) {
         (*pos)++;
         CHECK_LEFT_PARENTHESIS;
         (*pos)++;
@@ -229,7 +229,16 @@ static tNode* getOperation(Vector tokenVector, size_t* pos) {
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
 
-        return PRINT(leftNode, NULL);
+        return PRINT_ASCII(leftNode, NULL);
+    } else if (!strcmp(GET_TOKEN(*pos), keyPrintInt)) {
+        (*pos)++;
+        CHECK_LEFT_PARENTHESIS;
+        (*pos)++;
+        tNode* leftNode = getComparsion(tokenVector, pos);
+        CHECK_RIGHT_PARENTHESIS;
+        (*pos)++;
+
+        return PRINT_INT(leftNode, NULL);
     } else if (!strcmp(GET_TOKEN(*pos), keyReturn)) {
         (*pos)++;
         tNode* leftNode = getComparsion(tokenVector, pos);
