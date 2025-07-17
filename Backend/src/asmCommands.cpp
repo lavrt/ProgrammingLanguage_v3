@@ -30,8 +30,8 @@ void mov_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
 void mov_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     // opcode: REX.W + 8B /r
     // REX.W: 0x48 (64 bits)
-    // ModR/M: (Mod=11, Reg=src, R/M=dst)
-    uint8_t modrm = 0xc0 + ((src & 0x7) << 3) + (dst & 0x7);
+    // ModR/M: (Mod=11, Reg=dst, R/M=src)
+    uint8_t modrm = 0xc0 + ((dst & 0x7) << 3) + (src & 0x7);
     uint8_t opcode[] = {0x48, 0x8b, modrm};
     AppendCode(cg, opcode, 3);
 }

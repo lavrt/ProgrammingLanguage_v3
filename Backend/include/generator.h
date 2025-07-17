@@ -40,5 +40,6 @@ size_t FindFunc(TCodeGen* cg, const char* name);
 void AddFunc(TCodeGen* cg, const char* name);
 void CodeGenExpr(TCodeGen* cg, tNode* node);
 void CodeGenStmt(TCodeGen* cg, tNode* node);
+void CodegenProgram(TCodeGen* cg, tNode* program);
 
 #endif // GENERATOR_H

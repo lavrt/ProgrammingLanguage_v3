@@ -197,10 +197,34 @@ void CodeGenStmt(TCodeGen* cg, tNode* node) {
                     mov_mem_reg(cg, -offset, REG_AX);
                     break;
                 }
-                case Print: {
+                case Print: { 
+                    CodeGenExpr(cg, node->left);
 
+                    push_reg(cg, REG_DI);
+                    push_reg(cg, REG_SI);
+                    push_reg(cg, REG_DX);
+
+                    push_reg(cg, REG_AX);
+
+                    mov_reg_imm32(cg, REG_AX, 1);       // number of syscall write 
+                    mov_reg_imm32(cg, REG_DI, 1);       // stdout
+                    mov_reg_reg(cg, REG_SI, REG_SP);    // pointer to value
+                    mov_reg_imm32(cg, REG_DX, 8);       // output size
+
+                    uint8_t syscall[] = {0x0f, 0x05};
+                    AppendCode(cg, syscall, 2);
+
+                    mov_reg_imm32(cg, REG_AX, 8);
+                    add_reg_reg(cg, REG_SP, REG_AX);
+
+                    pop_reg(cg, REG_DX);
+                    pop_reg(cg, REG_SI);
+                    pop_reg(cg, REG_DI);
+
+                    break;
                 }
                 default: {
+                    
                     exit(1);
                 }
             }
@@ -208,6 +232,17 @@ void CodeGenStmt(TCodeGen* cg, tNode* node) {
 
         default: break;
     }
+}
+
+void CodegenProgram(TCodeGen* cg, tNode* program) {
+    AddFunc(cg, "_start");
+    push_reg(cg, REG_BP);
+    mov_reg_reg(cg, REG_BP, REG_SP);
+    CodeGenStmt(cg, program);
+    mov_reg_imm32(cg, REG_AX, 60);
+    mov_reg_imm32(cg, REG_DI, 0);
+    uint8_t syscall[] = {0x0f, 0x05};
+    AppendCode(cg, syscall, 2);
 }
 
 // static ------------------------------------------------------------------------------------------
