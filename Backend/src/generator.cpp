@@ -49,6 +49,7 @@ namespace GenStmt {
         static void EmitSemicolon(TCodeGen* cg, tNode* node);
         static void EmitEqual(TCodeGen* cg, tNode* node);
         static void EmitPrintAscii(TCodeGen* cg, tNode* node);
+        static void EmitPrintInt(TCodeGen* cg, tNode* node);
     }
 }
 
@@ -101,9 +102,14 @@ void CodegenProgram(TCodeGen* cg, tNode* program) {
     push_reg(cg, REG_BP);
     mov_reg_reg(cg, REG_BP, REG_SP);
     CodeGenStmt(cg, program);
+    mov_reg_reg(cg, REG_SP, REG_BP);
+    pop_reg(cg, REG_BP);
     mov_reg_imm32(cg, REG_AX, 60);
     mov_reg_imm32(cg, REG_DI, 0);
     syscall(cg);
+
+    AddFunc(cg, "print_ascii");
+    GenStmt::Operation::EmitPrintAscii(cg)
 }
 
 // static ------------------------------------------------------------------------------------------
@@ -343,7 +349,7 @@ static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
     switch (GetOperationType(node->value)) {
         case Semicolon:     GenStmt::Operation::EmitSemicolon(cg, node);        break;
         case Equal:         GenStmt::Operation::EmitEqual(cg, node);            break;
-        case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;
+        // case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;   // FIXME
 
         default: {
             fprintf(stderr, "Unknown operation\n");
@@ -389,4 +395,17 @@ static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
     pop_reg(cg, REG_DX);
     pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DI);
+}
+
+static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { // TODO
+    // CodeGenExpr(cg, node->left);
+
+    // push_reg(cg, REG_DI);
+    // push_reg(cg, REG_SI);
+    // push_reg(cg, REG_DX);
+    // push_reg(cg, REG_AX);
+
+    // cmp_reg_imm32(cg, REG_AX, 0);
+    // jge_rel32(cg, 0); // address will be added later
+    // size_t jgePos = cg->size - 4;
 }

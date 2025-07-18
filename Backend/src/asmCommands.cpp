@@ -109,6 +109,17 @@ void cmp_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     AppendCode(cg, opcode, 3);
 }
 
+// CMP r/m64, imm32
+void cmp_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
+    // opcode: REX.W + 81 /7 id
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=111, R/M=reg)
+    uint8_t modrm = 0xf8 + (reg & 0x07);
+    uint8_t opcode[] = {0x48, 0x81, modrm};
+    AppendCode(cg, opcode, 3);
+    AppendCode(cg, (uint8_t*)&imm, 4);
+}
+
 // JE rel32
 void je_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: 0F 84 imm32
@@ -122,6 +133,14 @@ void jmp_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: E9 cd
     uint8_t opcode[] = {0xe9};
     AppendCode(cg, opcode, 1);
+    AppendCode(cg, (uint8_t*)&offset, 4);
+}
+
+// JGE rel32
+void jge_rel32(TCodeGen* cg, int32_t offset) {
+    // opcode: 0F 8D cd
+    uint8_t opcode[] = {0x0f, 0x8d};
+    AppendCode(cg, opcode, 2);
     AppendCode(cg, (uint8_t*)&offset, 4);
 }
 
