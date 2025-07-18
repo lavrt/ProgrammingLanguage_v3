@@ -405,7 +405,7 @@ static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
     pop_reg(cg, REG_DI);
 }
 
-static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { // TODO
+static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { 
     CodeGenExpr(cg, node->left);
 
     size_t printIntAddr = FindFunc(cg, "print_int");
@@ -429,7 +429,6 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { // TOD
     pop_reg(cg, REG_BX);
 }
 
-// Destroyed: rax, rdi, rsi, rdx
 static void CreatePrintAscii(TCodeGen* cg) {
     AddFunc(cg, "print_ascii"); 
 
@@ -464,7 +463,6 @@ static void CreatePrintInt(TCodeGen* cg) {
 
     push_reg(cg, REG_BP);
     mov_reg_reg(cg, REG_BP, REG_SP);
-    // возможно sub rsp, imm - фрейм для локальных переменных
 
     xor_reg_reg(cg, REG_CX, REG_CX);
     mov_reg_reg(cg, REG_AX, REG_DI);
