@@ -3,6 +3,7 @@
 #include "generator.h"
 
 // PUSH r64
+// size: 1 byte
 void push_reg(TCodeGen* cg, ERegister reg) {
     // opcode: 0x50 + reg
     uint8_t opcode = 0x50 + (reg & 0x7);
@@ -10,6 +11,7 @@ void push_reg(TCodeGen* cg, ERegister reg) {
 }
 
 // POP r64
+// size: 1 byte
 void pop_reg(TCodeGen* cg, ERegister reg) {
     // opcode: 0x58 + reg
     uint8_t opcode = 0x58 + (reg & 0x7);
@@ -17,6 +19,7 @@ void pop_reg(TCodeGen* cg, ERegister reg) {
 }
 
 // MOV r/m64, imm32
+// size: 7 byte
 void mov_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
     // opcode: REX.W + C7 /0 imm32
     // REX.W: 0x48 (64 bits)
@@ -28,6 +31,7 @@ void mov_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
 }
 
 // MOV r64, r/m64
+// size: 3 byte
 void mov_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     // opcode: REX.W + 8B /r
     // REX.W: 0x48 (64 bits)
@@ -38,6 +42,7 @@ void mov_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
 }
 
 // MOV r64, [rbp-offset]
+// size: 7 byte
 void mov_reg_mem(TCodeGen* cg, ERegister reg, int32_t offset) { 
     // opcode: REX.W + 8B /r disp32
     // REX.W: 0x48 (64 bits)
@@ -49,6 +54,7 @@ void mov_reg_mem(TCodeGen* cg, ERegister reg, int32_t offset) {
 }
 
 // MOV [rbp-offset], r64
+// size: 7 byte
 void mov_mem_reg(TCodeGen* cg, int32_t offset, ERegister reg) { 
     // opcode: REX.W + 89 /r disp32
     // REX.W: 0x48 (64 bits)
@@ -60,6 +66,7 @@ void mov_mem_reg(TCodeGen* cg, int32_t offset, ERegister reg) {
 }
 
 // ADD r/m64, r64
+// size: 3 byte
 void add_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     // opcode: REX.W + 01 /r
     // REX.W: 0x48 (64 bits)
@@ -69,7 +76,20 @@ void add_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     AppendCode(cg, opcode, 3);
 }
 
+// ADD r/m64, imm32
+// size: 7 byte
+void add_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
+    // opcode: REX.W + 81 /0 id
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=000, R/M=reg)
+    uint8_t modrm = 0xc0 + (reg & 0x07);
+    uint8_t opcode[] = {0x48, 0x81, modrm};
+    AppendCode(cg, opcode, 3);
+    AppendCode(cg, (uint8_t*)&imm, 4);
+}
+
 // SUB r/m64, r64
+// size: 3 byte
 void sub_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     // opcode: REX.W + 29 /r
     // REX.W: 0x48 (64 bits)
@@ -79,7 +99,20 @@ void sub_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     AppendCode(cg, opcode, 3);
 }
 
+// SUB r/m64, imm32
+// size: 7 byte
+void sub_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
+    // opcode: REX.W + 81 /5 id
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=101, R/M=reg)
+    uint8_t modrm = 0xe8 + (reg & 0x07);
+    uint8_t opcode[] = {0x48, 0x81, modrm};
+    AppendCode(cg, opcode, 3);
+    AppendCode(cg, (uint8_t*)&imm, 4);
+}
+
 // IMUL r64, r/m64
+// size: 4 byte
 void imul_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     // opcode: REX.W + 0F AF /r
     // REX.W: 0x48 (64 bits)
@@ -90,6 +123,7 @@ void imul_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
 }
 
 // IDIV r/m64
+// size: 3 byte
 void idiv_reg(TCodeGen* cg, ERegister reg) {
     // opcode: REX.W + F7 /7
     // REX.W: 0x48 (64 bits)
@@ -100,6 +134,7 @@ void idiv_reg(TCodeGen* cg, ERegister reg) {
 }
 
 // CMP r/m64, r64
+// size: 3 byte
 void cmp_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     // opcode: REX.W + 39 /r
     // REX.W: 0x48 (64 bits)
@@ -110,6 +145,7 @@ void cmp_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
 }
 
 // CMP r/m64, imm32
+// size: 7 byte
 void cmp_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
     // opcode: REX.W + 81 /7 id
     // REX.W: 0x48 (64 bits)
@@ -121,6 +157,7 @@ void cmp_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
 }
 
 // JE rel32
+// size: 6 byte
 void je_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: 0F 84 imm32
     uint8_t opcode[] = {0x0f, 0x84};
@@ -129,6 +166,7 @@ void je_rel32(TCodeGen* cg, int32_t offset) {
 }
 
 // JMP rel32
+// size: 5 byte
 void jmp_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: E9 cd
     uint8_t opcode[] = {0xe9};
@@ -137,6 +175,7 @@ void jmp_rel32(TCodeGen* cg, int32_t offset) {
 }
 
 // JGE rel32
+// size: 6 byte
 void jge_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: 0F 8D cd
     uint8_t opcode[] = {0x0f, 0x8d};
@@ -145,6 +184,7 @@ void jge_rel32(TCodeGen* cg, int32_t offset) {
 }
 
 // CALL rel32
+// size: 5 byte
 void call_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: E8 cd
     uint8_t opcode[] = {0xe8};
@@ -152,7 +192,30 @@ void call_rel32(TCodeGen* cg, int32_t offset) {
     AppendCode(cg, (uint8_t*)&offset, 4);
 }
 
+// XOR r/m64, r64
+// size: 3 byte
+void xor_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
+    // opcode: REX.W + 31 /r
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=src, R/M=dst)
+    uint8_t modrm = 0xc0 + ((src & 0x07) << 3) + (dst & 0x07);
+    uint8_t opcode[] = {0x48, 0x31, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
+// NEG r/m64
+// size: 3 byte
+void neg_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: REX.W + F7 /3
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=011, R/M=reg)
+    uint8_t modrm = 0xd8 + (reg & 0x07);
+    uint8_t opcode[] = {0x48, 0xf7, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
 // RET
+// size: 1 byte
 void ret(TCodeGen* cg) {
     // opcode: С3
     uint8_t opcode[] = {0xc3};
@@ -160,8 +223,17 @@ void ret(TCodeGen* cg) {
 }
 
 // SYSCALL
+// size: 2 byte
 void syscall(TCodeGen* cg) {
     // opcode: 0F 05
     uint8_t opcode[] = {0x0f, 0x05};
     AppendCode(cg, opcode, 2);
+}
+
+// NOP
+// size: 1 byte
+void nop(TCodeGen* cg) {
+    // opcode: NP 90
+    uint8_t opcode[] = {0x90};
+    AppendCode(cg, opcode, 1);
 }

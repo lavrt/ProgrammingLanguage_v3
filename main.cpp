@@ -11,20 +11,23 @@ int main() {
     //-frontend-test-----------------//
     Vector tokens = tokenizer();     
     tNode* root = runParser(tokens); 
-    
+
     TCodeGen cg;
     CodeGenCtor(&cg);
-    CodegenProgram(&cg, root);
+
+    Elf64_Ehdr ehdr;
+    CreateElfHeader(&ehdr);
+
+    CodegenProgram(&cg, root, &ehdr);
+
+    Elf64_Phdr phdr;
+    CreateProgramHeader(&phdr, cg.size);
 
     dump(root);                      
     tokenVectorDtor(&tokens);        
     free(tokens.data);               
     treeDtor(root);                  
 
-    Elf64_Ehdr ehdr;
-    CreateElfHeader(&ehdr);
-    Elf64_Phdr phdr;
-    CreateProgramHeader(&phdr, cg.size);
     FILE* file = fopen("output.elf", "wb");
     if (!file) {
         fprintf(stderr, "Cannot open output file\n");

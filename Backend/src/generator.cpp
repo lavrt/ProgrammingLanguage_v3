@@ -53,6 +53,9 @@ namespace GenStmt {
     }
 }
 
+static void CreatePrintAscii(TCodeGen* cg);
+static void CreatePrintInt(TCodeGen* cg);
+
 // global ------------------------------------------------------------------------------------------
 
 void CodeGenCtor(TCodeGen* cg) {
@@ -97,7 +100,11 @@ void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len) {
     cg->size += len;
 }
 
-void CodegenProgram(TCodeGen* cg, tNode* program) {
+void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr) {
+    nop(cg);
+    CreatePrintAscii(cg);
+    ehdr->e_entry += cg->size;
+
     AddFunc(cg, "_start");
     push_reg(cg, REG_BP);
     mov_reg_reg(cg, REG_BP, REG_SP);
@@ -107,9 +114,6 @@ void CodegenProgram(TCodeGen* cg, tNode* program) {
     mov_reg_imm32(cg, REG_AX, 60);
     mov_reg_imm32(cg, REG_DI, 0);
     syscall(cg);
-
-    AddFunc(cg, "print_ascii");
-    GenStmt::Operation::EmitPrintAscii(cg)
 }
 
 // static ------------------------------------------------------------------------------------------
@@ -349,7 +353,8 @@ static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
     switch (GetOperationType(node->value)) {
         case Semicolon:     GenStmt::Operation::EmitSemicolon(cg, node);        break;
         case Equal:         GenStmt::Operation::EmitEqual(cg, node);            break;
-        // case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;   // FIXME
+        case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;
+        case PrintInt:      GenStmt::Operation::EmitPrintInt(cg, node);         break;
 
         default: {
             fprintf(stderr, "Unknown operation\n");
@@ -376,25 +381,24 @@ static void GenStmt::Operation::EmitEqual(TCodeGen* cg, tNode* node) {
 static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
     CodeGenExpr(cg, node->left);
 
+    size_t printAsciiAddr = FindFunc(cg, "print_ascii");
+    if (!printAsciiAddr) {
+        fprintf(stderr, "Function print_ascii not found\n");
+        exit(1);
+    }
+
+    push_reg(cg, REG_AX);
     push_reg(cg, REG_DI);
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DX);
-
-    push_reg(cg, REG_AX);
-
-    mov_reg_imm32(cg, REG_AX, 1);       // number of syscall write 
-    mov_reg_imm32(cg, REG_DI, 1);       // stdout
-    mov_reg_reg(cg, REG_SI, REG_SP);    // pointer to value
-    mov_reg_imm32(cg, REG_DX, 8);       // output size
-
-    syscall(cg);
-
-    mov_reg_imm32(cg, REG_AX, 8);
-    add_reg_reg(cg, REG_SP, REG_AX);
-
+    mov_reg_reg(cg, REG_DI, REG_AX);
+    sub_reg_imm32(cg, REG_SP, 8);
+    call_rel32(cg, printAsciiAddr - (cg->size + 5));
+    add_reg_imm32(cg, REG_SP, 8);
     pop_reg(cg, REG_DX);
     pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DI);
+    pop_reg(cg, REG_AX);
 }
 
 static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { // TODO
@@ -408,4 +412,63 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { // TOD
     // cmp_reg_imm32(cg, REG_AX, 0);
     // jge_rel32(cg, 0); // address will be added later
     // size_t jgePos = cg->size - 4;
+}
+
+// Destroyed: rax, rdi, rsi, rdx
+static void CreatePrintAscii(TCodeGen* cg) {
+    AddFunc(cg, "print_ascii"); 
+
+    push_reg(cg, REG_BP);
+    mov_reg_reg(cg, REG_BP, REG_SP);
+    sub_reg_imm32(cg, REG_SP, 8);
+
+    push_reg(cg, REG_DI);
+
+    mov_reg_imm32(cg, REG_AX, 1);       // number of syscall write 
+    mov_reg_imm32(cg, REG_DI, 1);       // stdout
+    mov_reg_reg(cg, REG_SI, REG_SP);    // pointer to value
+    mov_reg_imm32(cg, REG_DX, 8);       // output size
+
+    syscall(cg);
+
+    mov_reg_reg(cg, REG_SP, REG_BP);
+    pop_reg(cg, REG_BP);
+    ret(cg);
+}
+
+static void CreatePrintInt(TCodeGen* cg) {
+    AddFunc(cg, "print_int");
+
+    size_t printAsciiAddr = FindFunc(cg, "print_ascii");
+    if (!printAsciiAddr) {
+        fprintf(stderr, "Function print_ascii not found\n");
+        exit(1);
+    }
+
+    push_reg(cg, REG_BP);
+    mov_reg_reg(cg, REG_BP, REG_SP);
+    // возможно sub rsp, imm - фрейм для локальных переменных
+
+    mov_reg_reg(cg, REG_AX, REG_DI);
+    xor_reg_reg(cg, REG_CX, REG_CX);
+    cmp_reg_imm32(cg, REG_AX, 0);
+    jge_rel32(cg, ); //--------------------------------------------------
+    //                                                                  |
+    neg_reg(cg, REG_AX); //                                             |
+    mov_reg_imm32(cg, REG_DI, '-'); //                                  |
+    //                                                                  |
+    push_reg(cg, REG_AX); //                                            |
+    push_reg(cg, REG_DI); //                                            |
+    push_reg(cg, REG_SI); //                                            |
+    push_reg(cg, REG_DX); //                                            |
+    sub_reg_imm32(cg, REG_SP, 8); //                                    |
+    call_rel32(cg, printAsciiAddr - (cg->size + 5)); //                 |
+    add_reg_imm32(cg, REG_SP, 8); //                                    |
+    pop_reg(cg, REG_DX); //                                             |
+    pop_reg(cg, REG_SI); //                                             |
+    pop_reg(cg, REG_DI); //                                             |
+    pop_reg(cg, REG_AX); //                                             |
+    //                                                                  |
+
+
 }

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "headers.h"
 #include "node.h"
 
 struct TVariables {
@@ -31,6 +32,6 @@ struct TCodeGen {
 void CodeGenCtor(TCodeGen* cg);
 void CodeGenDtor(TCodeGen* cg);
 void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len);
-void CodegenProgram(TCodeGen* cg, tNode* program);
+void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr);
 
 #endif // GENERATOR_H
