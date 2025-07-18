@@ -14,7 +14,7 @@ struct TVariables {
 
 struct TFunctions {
     char* name;
-    size_t addr;
+    size_t addr; 
 };
 
 struct TCodeGen {
@@ -33,5 +33,12 @@ void CodeGenCtor(TCodeGen* cg);
 void CodeGenDtor(TCodeGen* cg);
 void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len);
 void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr);
+
+#define TEMP_JMP_OFFSET(cg) \
+    uint32_t macro_initialSize_ = cg->size
+    
+#define SET_JMP_OFFSET \
+    uint32_t macro_block_ = (uint32_t)cg->size - macro_initialSize_; \
+    memcpy(cg->code + cg->size - macro_block_ - 4, (uint8_t*)&macro_block_, 4); \
 
 #endif // GENERATOR_H

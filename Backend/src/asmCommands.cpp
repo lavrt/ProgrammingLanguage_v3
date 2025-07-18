@@ -183,6 +183,15 @@ void jge_rel32(TCodeGen* cg, int32_t offset) {
     AppendCode(cg, (uint8_t*)&offset, 4);
 }
 
+// JNE rel32
+// size: 6 byte
+void jne_rel32(TCodeGen* cg, int32_t offset) {
+    // opcode: OF 85 cd
+    uint8_t opcode[] = {0x0f, 0x85};
+    AppendCode(cg, opcode, 2);
+    AppendCode(cg, (uint8_t*)&offset, 4);
+}
+
 // CALL rel32
 // size: 5 byte
 void call_rel32(TCodeGen* cg, int32_t offset) {
@@ -211,6 +220,28 @@ void neg_reg(TCodeGen* cg, ERegister reg) {
     // ModR/M: (Mod=11, Reg=011, R/M=reg)
     uint8_t modrm = 0xd8 + (reg & 0x07);
     uint8_t opcode[] = {0x48, 0xf7, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
+// INC r/m64
+// size: 3 byte
+void inc_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: REX.W + FF /0
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=000, R/M=reg)
+    uint8_t modrm = 0xc0 + (reg & 0x07);
+    uint8_t opcode[] = {0x48, 0xff, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
+// DEC r/m64
+// size: 3 byte
+void dec_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: REX.W + FF /1
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=001, R/M=reg)
+    uint8_t modrm = 0xc8 + (reg & 0x07);
+    uint8_t opcode[] = {0x48, 0xff, modrm};
     AppendCode(cg, opcode, 3);
 }
 

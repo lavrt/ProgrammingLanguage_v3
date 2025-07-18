@@ -103,6 +103,7 @@ void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len) {
 void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr) {
     nop(cg);
     CreatePrintAscii(cg);
+    CreatePrintInt(cg);
     ehdr->e_entry += cg->size;
 
     AddFunc(cg, "_start");
@@ -387,31 +388,45 @@ static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
         exit(1);
     }
 
-    push_reg(cg, REG_AX);
+    mov_reg_reg(cg, REG_DI, REG_AX);
+
     push_reg(cg, REG_DI);
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DX);
-    mov_reg_reg(cg, REG_DI, REG_AX);
+    push_reg(cg, REG_CX);
+
     sub_reg_imm32(cg, REG_SP, 8);
     call_rel32(cg, printAsciiAddr - (cg->size + 5));
     add_reg_imm32(cg, REG_SP, 8);
+
+    pop_reg(cg, REG_CX);
     pop_reg(cg, REG_DX);
     pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DI);
-    pop_reg(cg, REG_AX);
 }
 
 static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { // TODO
-    // CodeGenExpr(cg, node->left);
+    CodeGenExpr(cg, node->left);
 
-    // push_reg(cg, REG_DI);
-    // push_reg(cg, REG_SI);
-    // push_reg(cg, REG_DX);
-    // push_reg(cg, REG_AX);
+    size_t printIntAddr = FindFunc(cg, "print_int");
+    if (!printIntAddr) {
+        fprintf(stderr, "Function print_int not found\n");
+        exit(1);
+    }
 
-    // cmp_reg_imm32(cg, REG_AX, 0);
-    // jge_rel32(cg, 0); // address will be added later
-    // size_t jgePos = cg->size - 4;
+    mov_reg_reg(cg, REG_DI, REG_AX);
+
+    push_reg(cg, REG_BX);
+    push_reg(cg, REG_CX);
+    push_reg(cg, REG_DX);
+
+    sub_reg_imm32(cg, REG_SP, 8);
+    call_rel32(cg, printIntAddr - (cg->size + 5));
+    add_reg_imm32(cg, REG_SP, 8);
+
+    pop_reg(cg, REG_DX);
+    pop_reg(cg, REG_CX);
+    pop_reg(cg, REG_BX);
 }
 
 // Destroyed: rax, rdi, rsi, rdx
@@ -428,6 +443,8 @@ static void CreatePrintAscii(TCodeGen* cg) {
     mov_reg_imm32(cg, REG_DI, 1);       // stdout
     mov_reg_reg(cg, REG_SI, REG_SP);    // pointer to value
     mov_reg_imm32(cg, REG_DX, 8);       // output size
+
+    jge_rel32(cg, 0);
 
     syscall(cg);
 
@@ -449,26 +466,91 @@ static void CreatePrintInt(TCodeGen* cg) {
     mov_reg_reg(cg, REG_BP, REG_SP);
     // возможно sub rsp, imm - фрейм для локальных переменных
 
-    mov_reg_reg(cg, REG_AX, REG_DI);
     xor_reg_reg(cg, REG_CX, REG_CX);
+    mov_reg_reg(cg, REG_AX, REG_DI);
+
     cmp_reg_imm32(cg, REG_AX, 0);
-    jge_rel32(cg, ); //--------------------------------------------------
-    //                                                                  |
-    neg_reg(cg, REG_AX); //                                             |
-    mov_reg_imm32(cg, REG_DI, '-'); //                                  |
-    //                                                                  |
-    push_reg(cg, REG_AX); //                                            |
-    push_reg(cg, REG_DI); //                                            |
-    push_reg(cg, REG_SI); //                                            |
-    push_reg(cg, REG_DX); //                                            |
-    sub_reg_imm32(cg, REG_SP, 8); //                                    |
-    call_rel32(cg, printAsciiAddr - (cg->size + 5)); //                 |
-    add_reg_imm32(cg, REG_SP, 8); //                                    |
-    pop_reg(cg, REG_DX); //                                             |
-    pop_reg(cg, REG_SI); //                                             |
-    pop_reg(cg, REG_DI); //                                             |
-    pop_reg(cg, REG_AX); //                                             |
-    //                                                                  |
+    int32_t jmpPos_1 = (int32_t)cg->size;
+    jge_rel32(cg, 0);
 
+    neg_reg(cg, REG_AX); 
+    mov_reg_imm32(cg, REG_DI, '-');
+                                   
+    push_reg(cg, REG_AX);         
+    push_reg(cg, REG_SI);          
+    push_reg(cg, REG_DX); 
+    push_reg(cg, REG_CX);         
+    sub_reg_imm32(cg, REG_SP, 8);  
+    call_rel32(cg, printAsciiAddr - (cg->size + 5));               
+    add_reg_imm32(cg, REG_SP, 8); 
+    pop_reg(cg, REG_CX);
+    pop_reg(cg, REG_DX);          
+    pop_reg(cg, REG_SI);          
+    pop_reg(cg, REG_AX);
+    
+    int32_t jmpTarget_1 = (int32_t)cg->size;
+    int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
+    memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
 
+    int32_t jmpTarget_2 = (int32_t)cg->size;
+
+    xor_reg_reg(cg, REG_DX, REG_DX);
+    mov_reg_imm32(cg, REG_BX, 10);
+    idiv_reg(cg, REG_BX);
+    push_reg(cg, REG_DX);
+    inc_reg(cg, REG_CX);
+
+    cmp_reg_imm32(cg, REG_AX, 0);
+    int32_t jmpPos_2 = (int32_t)cg->size;
+    int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 6);
+    jne_rel32(cg, jmpOffset_2);
+
+    int32_t jmpTarget_4 = cg->size;
+
+    cmp_reg_imm32(cg, REG_CX, 0);
+    int32_t jmpPos_3 = (int32_t)cg->size;
+    je_rel32(cg, 0);
+
+    pop_reg(cg, REG_DI);
+    add_reg_imm32(cg, REG_DI, '0');
+
+    push_reg(cg, REG_AX);         
+    push_reg(cg, REG_SI);          
+    push_reg(cg, REG_DX);  
+    push_reg(cg, REG_CX);        
+    sub_reg_imm32(cg, REG_SP, 8);  
+    call_rel32(cg, printAsciiAddr - (cg->size + 5));               
+    add_reg_imm32(cg, REG_SP, 8);
+    pop_reg(cg, REG_CX); 
+    pop_reg(cg, REG_DX);          
+    pop_reg(cg, REG_SI);          
+    pop_reg(cg, REG_AX);
+
+    dec_reg(cg, REG_CX);
+
+    int32_t jmpPos_4 = cg->size;
+    int32_t jmpOffset_4 = jmpTarget_4 - (jmpPos_4 + 5);
+    jmp_rel32(cg, jmpOffset_4); 
+
+    int32_t jmpTarget_3 = (int32_t)cg->size;
+    int32_t jmpOffset_3 = jmpTarget_3 - (jmpPos_3 + 6);
+    memcpy(cg->code + jmpPos_3 + 2, (uint8_t*)&jmpOffset_3, 4);
+
+    mov_reg_imm32(cg, REG_DI, '\n');
+                                   
+    push_reg(cg, REG_AX);         
+    push_reg(cg, REG_SI);          
+    push_reg(cg, REG_DX); 
+    push_reg(cg, REG_CX);         
+    sub_reg_imm32(cg, REG_SP, 8);  
+    call_rel32(cg, printAsciiAddr - (cg->size + 5));               
+    add_reg_imm32(cg, REG_SP, 8); 
+    pop_reg(cg, REG_CX);
+    pop_reg(cg, REG_DX);          
+    pop_reg(cg, REG_SI);          
+    pop_reg(cg, REG_AX);
+
+    mov_reg_reg(cg, REG_SP, REG_BP);
+    pop_reg(cg, REG_BP);
+    ret(cg);
 }
