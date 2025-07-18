@@ -212,6 +212,17 @@ void xor_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     AppendCode(cg, opcode, 3);
 }
 
+// XCHG r/m64, r64
+// size: 3 byte
+void xchg_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
+    // opcode: REX.W + 87 /r
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=src, R/M=dst)
+    uint8_t modrm = 0xc0 + ((src & 0x07) << 3) + (dst & 0x07);
+    uint8_t opcode[] = {0x48, 0x87, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
 // NEG r/m64
 // size: 3 byte
 void neg_reg(TCodeGen* cg, ERegister reg) {
@@ -267,4 +278,77 @@ void nop(TCodeGen* cg) {
     // opcode: NP 90
     uint8_t opcode[] = {0x90};
     AppendCode(cg, opcode, 1);
+}
+
+// SETG r/m8
+// size: 3 byte
+void setg_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: 0F 9F
+    // ModR/M: (Mod=11, Reg=000, R/M=reg)
+    uint8_t modrm = 0xc0 + (reg & 0x07);
+    uint8_t opcode[] = {0x0f, 0x9f, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
+// SETGE r/m8
+// size: 3 byte
+void setge_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: 0F 9D
+    // ModR/M: (Mod=11, Reg=000, R/M=reg)
+    uint8_t modrm = 0xc0 + (reg & 0x07);
+    uint8_t opcode[] = {0x0f, 0x9d, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
+// SETL r/m8
+// size: 3 byte
+void setl_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: 0F 9C
+    // ModR/M: (Mod=11, Reg=000, R/M=reg)
+    uint8_t modrm = 0xc0 + (reg & 0x07);
+    uint8_t opcode[] = {0x0f, 0x9c, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
+// SETLE r/m8
+// size: 3 byte
+void setle_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: 0F 9E
+    // ModR/M: (Mod=11, Reg=000, R/M=reg)
+    uint8_t modrm = 0xc0 + (reg & 0x07);
+    uint8_t opcode[] = {0x0f, 0x9e, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
+// SETE r/m8
+// size: 3 byte
+void sete_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: 0F 94
+    // ModR/M: (Mod=11, Reg=000, R/M=reg)
+    uint8_t modrm = 0xc0 + (reg & 0x07);
+    uint8_t opcode[] = {0x0f, 0x94, modrm};
+    AppendCode(cg, opcode, 3);    
+}
+
+
+// SETNE r/m8
+// size: 3 byte
+void setne_reg(TCodeGen* cg, ERegister reg) {
+    // opcode: 0F 95
+    // ModR/M: (Mod=11, Reg=000, R/M=reg)
+    uint8_t modrm = 0xc0 + (reg & 0x07);
+    uint8_t opcode[] = {0x0f, 0x95, modrm};
+    AppendCode(cg, opcode, 3);
+}
+
+// MOVZX r64, r/m8 
+// size: 4 byte
+// note: r/m8 can not be encoded to access the following byte registers: AH, BH, CH, DH.
+void movzx_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
+    // opcode: REX.W + 0F B6 /r
+    // REX.W: 0x48 (64 bits)
+    // ModR/M: (Mod=11, Reg=dst, R/M=src)
+    uint8_t modrm = 0xc0 + ((dst & 0x07) << 3) + (src & 0x07);
+    uint8_t opcode[] = {0x48, 0x0f, 0xb6, modrm};
+    AppendCode(cg, opcode, 4);
 }

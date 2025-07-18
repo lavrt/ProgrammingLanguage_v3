@@ -10,6 +10,7 @@
 
 static const size_t kInitCapacityOfCodeArray = 4096;
 static const int kAdditionalCapacityOfNameTable = 16;
+static const char* const kNameOfEntryFunction = "_start";
 
 static Operations GetOperationType(const char* const word);
 static int FindVar(const TCodeGen* const cg, const char* id);
@@ -106,7 +107,7 @@ void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr) {
     CreatePrintInt(cg);
     ehdr->e_entry += cg->size;
 
-    AddFunc(cg, "_start");
+    AddFunc(cg, kNameOfEntryFunction);
     push_reg(cg, REG_BP);
     mov_reg_reg(cg, REG_BP, REG_SP);
     CodeGenStmt(cg, program);
@@ -120,26 +121,26 @@ void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr) {
 // static ------------------------------------------------------------------------------------------
 
 static Operations GetOperationType(const char* const word) {
-         if (!strcmp(word, "if")) return If;               
-    else if (!strcmp(word, "+")) return Add; //
-    else if (!strcmp(word, "-")) return Sub; //
-    else if (!strcmp(word, "*")) return Mul; //
-    else if (!strcmp(word, "/")) return Div; //
-    else if (!strcmp(word, "sin")) return Sin;
-    else if (!strcmp(word, "cos")) return Cos; 
-    else if (!strcmp(word, "sqrt")) return Sqrt;
-    else if (!strcmp(word, "while")) return While;         
-    else if (!strcmp(word, "=")) return Equal; //
-    else if (!strcmp(word, "print_ascii")) return PrintAscii; //
-    else if (!strcmp(word, "print_int")) return PrintInt;
-    else if (!strcmp(word, "return")) return Return;
-    else if (!strcmp(word, ">")) return Greater; //
-    else if (!strcmp(word, "<")) return Less; //
-    else if (!strcmp(word, ";")) return Semicolon; //  
-    else if (!strcmp(word, "==")) return Identical; //
-    else if (!strcmp(word, "<=")) return LessOrEqual; //
-    else if (!strcmp(word, "!=")) return NotIdentical; //
-    else if (!strcmp(word, ">=")) return GreaterOrEqual; //
+         if (!strcmp(word, keyIf)) return If;               
+    else if (!strcmp(word, keyAdd)) return Add; //
+    else if (!strcmp(word, keySub)) return Sub; //
+    else if (!strcmp(word, keyMul)) return Mul; //
+    else if (!strcmp(word, keyDiv)) return Div; //
+    else if (!strcmp(word, keySin)) return Sin;
+    else if (!strcmp(word, keyCos)) return Cos; 
+    else if (!strcmp(word, keySqrt)) return Sqrt;
+    else if (!strcmp(word, keyWhile)) return While;         
+    else if (!strcmp(word, keyEqual)) return Equal; //
+    else if (!strcmp(word, keyPrintAscii)) return PrintAscii; //
+    else if (!strcmp(word, keyPrintInt)) return PrintInt; // 
+    else if (!strcmp(word, keyReturn)) return Return;
+    else if (!strcmp(word, keyGreater)) return Greater; //
+    else if (!strcmp(word, keyLess)) return Less; //
+    else if (!strcmp(word, keySemicolon)) return Semicolon; //  
+    else if (!strcmp(word, keyIdentical)) return Identical; //
+    else if (!strcmp(word, keyLessOrEqual)) return LessOrEqual; //
+    else if (!strcmp(word, keyNotIdentical)) return NotIdentical; //
+    else if (!strcmp(word, keyGreaterOrEqual)) return GreaterOrEqual; //
 
     else return NoOperation;
 }
@@ -268,59 +269,45 @@ static void GenExpr::Binary::EmitMul(TCodeGen* cg) {
 }
 
 static void GenExpr::Binary::EmitDiv(TCodeGen* cg) {
-    uint8_t xor_rdx_rdx[] = {0x48, 0x31, 0xd2};
-    AppendCode(cg, xor_rdx_rdx, 3);
-    uint8_t xchg_rax_rbx[] = {0x48, 0x93};
-    AppendCode(cg, xchg_rax_rbx, 2);
+    xor_reg_reg(cg, REG_DX, REG_DX);
+    xchg_reg_reg(cg, REG_AX, REG_BX);
     idiv_reg(cg, REG_BX);
 }
 
 static void GenExpr::Binary::EmitGreater(TCodeGen* cg) {
     cmp_reg_reg(cg, REG_AX, REG_BX);
-    uint8_t setg_al[] = {0x0f, 0x9f, 0xc0}; // opcode: 0F 9F /0
-    AppendCode(cg, setg_al, 3);
-    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
-    AppendCode(cg, movzx_rax_al, 4);
+    setg_reg(cg, REG_AX);
+    movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitGreaterOrEqual(TCodeGen* cg) {
     cmp_reg_reg(cg, REG_AX, REG_BX);
-    uint8_t setge_al[] = {0x0f, 0x9d, 0xc0}; // opcode: 0F 9D /0
-    AppendCode(cg, setge_al, 3);
-    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
-    AppendCode(cg, movzx_rax_al, 4);
+    setge_reg(cg, REG_AX);
+    movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitLess(TCodeGen* cg) {
     cmp_reg_reg(cg, REG_AX, REG_BX);
-    uint8_t setl_al[] = {0x0f, 0x9c, 0xc0}; // opcode: 0F 9C /0
-    AppendCode(cg, setl_al, 3);
-    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
-    AppendCode(cg, movzx_rax_al, 4);
+    setl_reg(cg, REG_AX);
+    movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitLessOrEqual(TCodeGen* cg) {
     cmp_reg_reg(cg, REG_AX, REG_BX);
-    uint8_t setge_al[] = {0x0f, 0x9e, 0xc0}; // opcode: 0F 9D /0
-    AppendCode(cg, setge_al, 3);
-    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
-    AppendCode(cg, movzx_rax_al, 4);
+    setle_reg(cg, REG_AX);
+    movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitIdentical(TCodeGen* cg) {
     cmp_reg_reg(cg, REG_AX, REG_BX);
-    uint8_t sete_al[] = {0x0f, 0x94, 0xc0}; // opcode: 0F 94 /0
-    AppendCode(cg, sete_al, 3);
-    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
-    AppendCode(cg, movzx_rax_al, 4);
+    sete_reg(cg, REG_AX);
+    movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitNotIdentical(TCodeGen* cg) {
     cmp_reg_reg(cg, REG_AX, REG_BX);
-    uint8_t setne_al[] = {0x0f, 0x95, 0xc0}; // opcode: 0F 95 /0
-    AppendCode(cg, setne_al, 3);
-    uint8_t movzx_rax_al[] = {0x48, 0x0f, 0xb6, 0xc0};
-    AppendCode(cg, movzx_rax_al, 4);
+    setne_reg(cg, REG_AX);
+    movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
@@ -382,9 +369,9 @@ static void GenStmt::Operation::EmitEqual(TCodeGen* cg, tNode* node) {
 static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
     CodeGenExpr(cg, node->left);
 
-    size_t printAsciiAddr = FindFunc(cg, "print_ascii");
+    size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
     if (!printAsciiAddr) {
-        fprintf(stderr, "Function print_ascii not found\n");
+        fprintf(stderr, "Function %s not found\n", keyPrintAscii);
         exit(1);
     }
 
@@ -408,9 +395,9 @@ static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
 static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { 
     CodeGenExpr(cg, node->left);
 
-    size_t printIntAddr = FindFunc(cg, "print_int");
+    size_t printIntAddr = FindFunc(cg, keyPrintInt);
     if (!printIntAddr) {
-        fprintf(stderr, "Function print_int not found\n");
+        fprintf(stderr, "Function %s not found\n", keyPrintInt);
         exit(1);
     }
 
@@ -430,7 +417,7 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) {
 }
 
 static void CreatePrintAscii(TCodeGen* cg) {
-    AddFunc(cg, "print_ascii"); 
+    AddFunc(cg, keyPrintAscii); 
 
     push_reg(cg, REG_BP);
     mov_reg_reg(cg, REG_BP, REG_SP);
@@ -453,11 +440,11 @@ static void CreatePrintAscii(TCodeGen* cg) {
 }
 
 static void CreatePrintInt(TCodeGen* cg) {
-    AddFunc(cg, "print_int");
+    AddFunc(cg, keyPrintInt);
 
-    size_t printAsciiAddr = FindFunc(cg, "print_ascii");
+    size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
     if (!printAsciiAddr) {
-        fprintf(stderr, "Function print_ascii not found\n");
+        fprintf(stderr, "Function %s not found\n", keyPrintAscii);
         exit(1);
     }
 

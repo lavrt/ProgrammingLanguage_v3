@@ -34,11 +34,19 @@ void jge_rel32(TCodeGen* cg, int32_t offset);
 void jne_rel32(TCodeGen* cg, int32_t offset);
 void call_rel32(TCodeGen* cg, int32_t offset);
 void xor_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
+void xchg_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
 void neg_reg(TCodeGen* cg, ERegister reg);
 void inc_reg(TCodeGen* cg, ERegister reg);
 void dec_reg(TCodeGen* cg, ERegister reg);
 void ret(TCodeGen* cg);
 void syscall(TCodeGen* cg);
 void nop(TCodeGen* cg);
+void setg_reg(TCodeGen* cg, ERegister reg);
+void setge_reg(TCodeGen* cg, ERegister reg);
+void setl_reg(TCodeGen* cg, ERegister reg);
+void setle_reg(TCodeGen* cg, ERegister reg);
+void sete_reg(TCodeGen* cg, ERegister reg);
+void setne_reg(TCodeGen* cg, ERegister reg);
+void movzx_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
 
 #endif // ASM_COMMANDS_H
