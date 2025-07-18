@@ -430,8 +430,6 @@ static void CreatePrintAscii(TCodeGen* cg) {
     mov_reg_reg(cg, REG_SI, REG_SP);    // pointer to value
     mov_reg_imm32(cg, REG_DX, 8);       // output size
 
-    jge_rel32(cg, 0);
-
     syscall(cg);
 
     mov_reg_reg(cg, REG_SP, REG_BP);
