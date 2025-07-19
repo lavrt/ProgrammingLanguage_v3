@@ -219,7 +219,7 @@ static void CodeGenStmt(TCodeGen* cg, tNode* node) {
 }
 
 static void GenExpr::EmitNumber(TCodeGen* cg, tNode* node) {
-    mov_reg_imm32(cg, REG_AX, atoi(node->value));
+    push_imm32(cg, (int32_t)atoi(node->value));
 }
 
 static void GenExpr::EmitIdentifier(TCodeGen* cg, tNode* node) {
@@ -229,15 +229,15 @@ static void GenExpr::EmitIdentifier(TCodeGen* cg, tNode* node) {
         exit(1);
     }
     mov_reg_mem(cg, REG_AX, -offset);
+    push_reg(cg, REG_AX);
 }
 
-static void GenExpr::EmitBinary(TCodeGen* cg, tNode* node) {
+static void GenExpr::EmitBinary(TCodeGen* cg, tNode* node) { 
     CodeGenExpr(cg, node->left);
-    push_reg(cg, REG_AX);
-
     CodeGenExpr(cg, node->right);
-    pop_reg(cg, REG_BX);
     
+    pop_reg(cg, REG_BX);
+    pop_reg(cg, REG_AX);
     switch (GetOperationType(node->value)) {
         case Add:               GenExpr::Binary::EmitAdd(cg);               break;
         case Sub:               GenExpr::Binary::EmitSub(cg);               break;
@@ -255,10 +255,12 @@ static void GenExpr::EmitBinary(TCodeGen* cg, tNode* node) {
             exit(1);
         }
     }
+    push_reg(cg, REG_AX);
 }
 
 static void GenExpr::Binary::EmitAdd(TCodeGen* cg) {
     add_reg_reg(cg, REG_AX, REG_BX); 
+    
 }
 
 static void GenExpr::Binary::EmitSub(TCodeGen* cg) {
@@ -271,42 +273,41 @@ static void GenExpr::Binary::EmitMul(TCodeGen* cg) {
 
 static void GenExpr::Binary::EmitDiv(TCodeGen* cg) {
     xor_reg_reg(cg, REG_DX, REG_DX);
-    xchg_reg_reg(cg, REG_AX, REG_BX);
     idiv_reg(cg, REG_BX);
 }
 
 static void GenExpr::Binary::EmitGreater(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_BX, REG_AX);
+    cmp_reg_reg(cg, REG_AX, REG_BX);
     setg_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitGreaterOrEqual(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_BX, REG_AX);
+    cmp_reg_reg(cg, REG_AX, REG_BX);
     setge_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitLess(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_BX, REG_AX);
+    cmp_reg_reg(cg, REG_AX, REG_BX);
     setl_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitLessOrEqual(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_BX, REG_AX);
+    cmp_reg_reg(cg, REG_AX, REG_BX);
     setle_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitIdentical(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_BX, REG_AX);
+    cmp_reg_reg(cg, REG_AX, REG_BX);
     sete_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitNotIdentical(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_BX, REG_AX);
+    cmp_reg_reg(cg, REG_AX, REG_BX);
     setne_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
@@ -369,53 +370,55 @@ static void GenStmt::Operation::EmitEqual(TCodeGen* cg, tNode* node) {
 }
 
 static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
-    CodeGenExpr(cg, node->left);
-
     size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
     if (!printAsciiAddr) {
         fprintf(stderr, "Function %s not found\n", keyPrintAscii);
         exit(1);
     }
 
-    mov_reg_reg(cg, REG_DI, REG_AX);
+    CodeGenExpr(cg, node->left);
+    pop_reg(cg, REG_DI);  
 
-    push_reg(cg, REG_DI);
-    push_reg(cg, REG_SI);
-    push_reg(cg, REG_DX);
+    push_reg(cg, REG_AX);
     push_reg(cg, REG_CX);
+    push_reg(cg, REG_DX);
+    push_reg(cg, REG_SI);
+    push_reg(cg, REG_DI);
 
     sub_reg_imm32(cg, REG_SP, 8);
     call_rel32(cg, printAsciiAddr - (cg->size + 5));
     add_reg_imm32(cg, REG_SP, 8);
 
-    pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DI);
+    pop_reg(cg, REG_SI);
+    pop_reg(cg, REG_DX);
+    pop_reg(cg, REG_CX);
+    pop_reg(cg, REG_AX);
 }
 
 static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) { 
-    CodeGenExpr(cg, node->left);
-
     size_t printIntAddr = FindFunc(cg, keyPrintInt);
     if (!printIntAddr) {
         fprintf(stderr, "Function %s not found\n", keyPrintInt);
         exit(1);
     }
 
-    mov_reg_reg(cg, REG_DI, REG_AX);
+    CodeGenExpr(cg, node->left);
+    pop_reg(cg, REG_DI);
 
-    push_reg(cg, REG_BX);
+    push_reg(cg, REG_AX);    
     push_reg(cg, REG_CX);
     push_reg(cg, REG_DX);
+    push_reg(cg, REG_DI);
 
     sub_reg_imm32(cg, REG_SP, 8);
     call_rel32(cg, printIntAddr - (cg->size + 5));
     add_reg_imm32(cg, REG_SP, 8);
 
+    pop_reg(cg, REG_DI);
     pop_reg(cg, REG_DX);
     pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_BX);
+    pop_reg(cg, REG_AX);
 }
 
 static void GenStmt::Operation::EmitIf(TCodeGen* cg, tNode* node) {
@@ -462,29 +465,35 @@ static void CreatePrintInt(TCodeGen* cg) {
         exit(1);
     }
 
+    push_reg(cg, REG_BX);
+
     push_reg(cg, REG_BP);
     mov_reg_reg(cg, REG_BP, REG_SP);
 
     xor_reg_reg(cg, REG_CX, REG_CX);
     mov_reg_reg(cg, REG_AX, REG_DI);
 
-    cmp_reg_imm32(cg, REG_AX, 0);
+    cmp_reg_imm32(cg, REG_AX, 0); 
     int32_t jmpPos_1 = (int32_t)cg->size;
     jge_rel32(cg, 0);
 
     neg_reg(cg, REG_AX); 
     mov_reg_imm32(cg, REG_DI, '-');
                                    
-    push_reg(cg, REG_AX);         
-    push_reg(cg, REG_SI);          
-    push_reg(cg, REG_DX); 
-    push_reg(cg, REG_CX);         
+    push_reg(cg, REG_AX);
+    push_reg(cg, REG_CX);
+    push_reg(cg, REG_DX);
+    push_reg(cg, REG_SI);
+    push_reg(cg, REG_DI);
+
     sub_reg_imm32(cg, REG_SP, 8);  
     call_rel32(cg, printAsciiAddr - (cg->size + 5));               
     add_reg_imm32(cg, REG_SP, 8); 
+
+    pop_reg(cg, REG_DI);
+    pop_reg(cg, REG_SI);
+    pop_reg(cg, REG_DX);
     pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_DX);          
-    pop_reg(cg, REG_SI);          
     pop_reg(cg, REG_AX);
     
     int32_t jmpTarget_1 = (int32_t)cg->size;
@@ -513,16 +522,20 @@ static void CreatePrintInt(TCodeGen* cg) {
     pop_reg(cg, REG_DI);
     add_reg_imm32(cg, REG_DI, '0');
 
-    push_reg(cg, REG_AX);         
-    push_reg(cg, REG_SI);          
-    push_reg(cg, REG_DX);  
-    push_reg(cg, REG_CX);        
+    push_reg(cg, REG_AX);
+    push_reg(cg, REG_CX);
+    push_reg(cg, REG_DX);
+    push_reg(cg, REG_SI);
+    push_reg(cg, REG_DI);
+
     sub_reg_imm32(cg, REG_SP, 8);  
     call_rel32(cg, printAsciiAddr - (cg->size + 5));               
     add_reg_imm32(cg, REG_SP, 8);
-    pop_reg(cg, REG_CX); 
-    pop_reg(cg, REG_DX);          
-    pop_reg(cg, REG_SI);          
+
+    pop_reg(cg, REG_DI);
+    pop_reg(cg, REG_SI);
+    pop_reg(cg, REG_DX);
+    pop_reg(cg, REG_CX);
     pop_reg(cg, REG_AX);
 
     dec_reg(cg, REG_CX);
@@ -537,19 +550,26 @@ static void CreatePrintInt(TCodeGen* cg) {
 
     mov_reg_imm32(cg, REG_DI, '\n');
                                    
-    push_reg(cg, REG_AX);         
-    push_reg(cg, REG_SI);          
-    push_reg(cg, REG_DX); 
-    push_reg(cg, REG_CX);         
+    push_reg(cg, REG_AX);
+    push_reg(cg, REG_CX);
+    push_reg(cg, REG_DX);
+    push_reg(cg, REG_SI);
+    push_reg(cg, REG_DI);
+
     sub_reg_imm32(cg, REG_SP, 8);  
     call_rel32(cg, printAsciiAddr - (cg->size + 5));               
-    add_reg_imm32(cg, REG_SP, 8); 
+    add_reg_imm32(cg, REG_SP, 8);
+    
+    pop_reg(cg, REG_DI);
+    pop_reg(cg, REG_SI);
+    pop_reg(cg, REG_DX);
     pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_DX);          
-    pop_reg(cg, REG_SI);          
     pop_reg(cg, REG_AX);
 
     mov_reg_reg(cg, REG_SP, REG_BP);
     pop_reg(cg, REG_BP);
+
+    pop_reg(cg, REG_BX);
+
     ret(cg);
 }

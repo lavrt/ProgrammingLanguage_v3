@@ -15,6 +15,7 @@ enum ERegister {
 };
 
 void push_reg(TCodeGen* cg, ERegister reg);
+void push_imm32(TCodeGen* cg, int32_t imm);
 void pop_reg(TCodeGen* cg, ERegister reg);
 void mov_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm);
 void mov_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);

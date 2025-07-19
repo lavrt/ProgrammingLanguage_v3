@@ -5,15 +5,24 @@
 // PUSH r64
 // size: 1 byte
 void push_reg(TCodeGen* cg, ERegister reg) {
-    // opcode: 0x50 + reg
+    // opcode: 0x50 + rd
     uint8_t opcode = 0x50 + (reg & 0x7);
     AppendCode(cg, &opcode, 1);
+}
+
+// PUSH imm32
+// size: 5 byte
+void push_imm32(TCodeGen* cg, int32_t imm) {
+    // opcode: 68 id
+    uint8_t opcode[] = {0x68};
+    AppendCode(cg, opcode, 1);
+    AppendCode(cg, (uint8_t*)&imm, 4);
 }
 
 // POP r64
 // size: 1 byte
 void pop_reg(TCodeGen* cg, ERegister reg) {
-    // opcode: 0x58 + reg
+    // opcode: 0x58 + rd
     uint8_t opcode = 0x58 + (reg & 0x7);
     AppendCode(cg, &opcode, 1);
 }
