@@ -51,6 +51,7 @@ namespace GenStmt {
         static void EmitEqual(TCodeGen* cg, tNode* node);
         static void EmitPrintAscii(TCodeGen* cg, tNode* node);
         static void EmitPrintInt(TCodeGen* cg, tNode* node);
+        static void EmitIf(TCodeGen* cg, tNode* node);
     }
 }
 
@@ -275,37 +276,37 @@ static void GenExpr::Binary::EmitDiv(TCodeGen* cg) {
 }
 
 static void GenExpr::Binary::EmitGreater(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_AX, REG_BX);
+    cmp_reg_reg(cg, REG_BX, REG_AX);
     setg_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitGreaterOrEqual(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_AX, REG_BX);
+    cmp_reg_reg(cg, REG_BX, REG_AX);
     setge_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitLess(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_AX, REG_BX);
+    cmp_reg_reg(cg, REG_BX, REG_AX);
     setl_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitLessOrEqual(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_AX, REG_BX);
+    cmp_reg_reg(cg, REG_BX, REG_AX);
     setle_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitIdentical(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_AX, REG_BX);
+    cmp_reg_reg(cg, REG_BX, REG_AX);
     sete_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
 
 static void GenExpr::Binary::EmitNotIdentical(TCodeGen* cg) {
-    cmp_reg_reg(cg, REG_AX, REG_BX);
+    cmp_reg_reg(cg, REG_BX, REG_AX);
     setne_reg(cg, REG_AX);
     movzx_reg_reg(cg, REG_AX, REG_AX);
 }
@@ -343,9 +344,10 @@ static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
         case Equal:         GenStmt::Operation::EmitEqual(cg, node);            break;
         case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;
         case PrintInt:      GenStmt::Operation::EmitPrintInt(cg, node);         break;
+        case If:            GenStmt::Operation::EmitIf(cg, node);               break;
 
         default: {
-            fprintf(stderr, "Unknown operation\n");
+            fprintf(stderr, "Unknown operation \"%s\"\n", node->value);
             exit(1);
         }
     }
@@ -414,6 +416,20 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) {
     pop_reg(cg, REG_DX);
     pop_reg(cg, REG_CX);
     pop_reg(cg, REG_BX);
+}
+
+static void GenStmt::Operation::EmitIf(TCodeGen* cg, tNode* node) {
+    CodeGenExpr(cg, node->left);
+    
+    cmp_reg_imm32(cg, REG_AX, 0);
+    int32_t jmpPos_1 = (int32_t)cg->size;
+    je_rel32(cg, 0);
+
+    CodeGenStmt(cg, node->right);
+
+    int32_t jmpTarget_1 = (int32_t)cg->size;
+    int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
+    memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
 }
 
 static void CreatePrintAscii(TCodeGen* cg) {
