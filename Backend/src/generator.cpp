@@ -223,13 +223,20 @@ static void GenExpr::EmitNumber(TCodeGen* cg, tNode* node) {
 }
 
 static void GenExpr::EmitIdentifier(TCodeGen* cg, tNode* node) {
+    /* DEBUG */ static int k = 0; k++;
+
     int offset = FindVar(cg, node->value);
     if (offset == -1) {
         fprintf(stderr, "Undefined variable\n");
         exit(1);
     }
+
+    // /* DEBUG */ if (k == 2) {push_imm32(cg, 20); return;}
+    // /* DEBUG */ fprintf(stderr, "%d\n", -offset);
     mov_reg_mem(cg, REG_AX, -offset);
     push_reg(cg, REG_AX);
+
+
 }
 
 static void GenExpr::EmitBinary(TCodeGen* cg, tNode* node) { 
@@ -361,11 +368,14 @@ static void GenStmt::Operation::EmitSemicolon(TCodeGen* cg, tNode* node) {
 
 static void GenStmt::Operation::EmitEqual(TCodeGen* cg, tNode* node) {
     CodeGenExpr(cg, node->right);
+    pop_reg(cg, REG_AX);
     int offset = FindVar(cg, node->left->value);
     if (offset == -1) {
         AddVar(cg, node->left->value);
         offset = cg->vars[cg->varCount - 1].offset;
     }
+
+
     mov_mem_reg(cg, -offset, REG_AX);
 }
 
@@ -403,8 +413,11 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) {
         exit(1);
     }
 
-    CodeGenExpr(cg, node->left);
-    pop_reg(cg, REG_DI);
+    // mov_reg_mem(cg, REG_DI, -FindVar(cg, node->left->value));
+    // GenExpr::EmitIdentifier(cg, node->left);
+    CodeGenExpr(cg, node->left); // mov_reg_imm32(cg, REG_DI, 156);
+    // push_imm32(cg, 122);
+    pop_reg(cg, REG_DI);  
 
     push_reg(cg, REG_AX);    
     push_reg(cg, REG_CX);
@@ -423,6 +436,7 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) {
 
 static void GenStmt::Operation::EmitIf(TCodeGen* cg, tNode* node) {
     CodeGenExpr(cg, node->left);
+    pop_reg(cg, REG_AX);
     
     cmp_reg_imm32(cg, REG_AX, 0);
     int32_t jmpPos_1 = (int32_t)cg->size;
