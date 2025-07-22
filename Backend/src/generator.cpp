@@ -423,6 +423,7 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) {
 
 static void GenStmt::Operation::EmitIf(TCodeGen* cg, tNode* node) {
     CodeGenExpr(cg, node->left);
+    pop_reg(cg, REG_AX);
     
     cmp_reg_imm32(cg, REG_AX, 0);
     int32_t jmpPos_1 = (int32_t)cg->size;

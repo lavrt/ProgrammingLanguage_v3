@@ -1,2 +1,7 @@
-print_int ( ( 12 + 7 ) * ( 2  + 2 ) ) ;
+a = 2 ; 
+if ( 77 ) {
+    print_int ( a ) ;
+    print_int ( 5 ) ;
+    
+} ;
 end
