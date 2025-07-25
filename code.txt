@@ -1,7 +1,7 @@
 a = 2 ; 
 if ( 77 ) {
     print_int ( a ) ;
-    print_int ( 5 ) ;
+    print_int ( 0 - 5 ) ;
     
 } ;
 end

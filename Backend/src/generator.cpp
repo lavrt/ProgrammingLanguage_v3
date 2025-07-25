@@ -131,13 +131,13 @@ void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr) {
 // static ------------------------------------------------------------------------------------------
 
 static Operations GetOperationType(const char* const word) {
-         if (!strcmp(word, keyIf)) return If;               
+         if (!strcmp(word, keyIf)) return If;
     else if (!strcmp(word, keyAdd)) return Add; //
     else if (!strcmp(word, keySub)) return Sub; //
     else if (!strcmp(word, keyMul)) return Mul; //
     else if (!strcmp(word, keyDiv)) return Div; //
     else if (!strcmp(word, keySin)) return Sin;
-    else if (!strcmp(word, keyCos)) return Cos; 
+    else if (!strcmp(word, keyCos)) return Cos;
     else if (!strcmp(word, keySqrt)) return Sqrt;
     else if (!strcmp(word, keyWhile)) return While;         
     else if (!strcmp(word, keyEqual)) return Equal; //
@@ -267,7 +267,6 @@ static void GenExpr::EmitBinary(TCodeGen* cg, tNode* node) {
 
 static void GenExpr::Binary::EmitAdd(TCodeGen* cg) {
     add_reg_reg(cg, REG_AX, REG_BX); 
-    
 }
 
 static void GenExpr::Binary::EmitSub(TCodeGen* cg) {
@@ -490,7 +489,6 @@ static void CreatePrintInt(TCodeGen* cg) {
     jge_rel32(cg, 0);
 
     neg_reg(cg, REG_AX); 
-    mov_reg_imm32(cg, REG_DI, '-');
                                    
     push_reg(cg, REG_AX);
     push_reg(cg, REG_CX);
@@ -498,16 +496,23 @@ static void CreatePrintInt(TCodeGen* cg) {
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DI);
 
-    sub_reg_imm32(cg, REG_SP, 8);  
-    call_rel32(cg, printAsciiAddr - (cg->size + 5));               
-    add_reg_imm32(cg, REG_SP, 8); 
+    push_imm32(cg, '-');
+
+    mov_reg_imm32(cg, REG_AX, 1);
+    mov_reg_imm32(cg, REG_DI, 1);
+    mov_reg_reg(cg, REG_SI, REG_SP);
+    mov_reg_imm32(cg, REG_DX, 8);
+
+    syscall(cg);
+
+    add_reg_imm32(cg, REG_SP, 8);
 
     pop_reg(cg, REG_DI);
     pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DX);
     pop_reg(cg, REG_CX);
     pop_reg(cg, REG_AX);
-    
+
     int32_t jmpTarget_1 = (int32_t)cg->size;
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
     memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
@@ -540,8 +545,15 @@ static void CreatePrintInt(TCodeGen* cg) {
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DI);
 
-    sub_reg_imm32(cg, REG_SP, 8);  
-    call_rel32(cg, printAsciiAddr - (cg->size + 5));               
+    push_reg(cg, REG_DI);
+
+    mov_reg_imm32(cg, REG_AX, 1);
+    mov_reg_imm32(cg, REG_DI, 1);
+    mov_reg_reg(cg, REG_SI, REG_SP);
+    mov_reg_imm32(cg, REG_DX, 8);
+
+    syscall(cg);
+
     add_reg_imm32(cg, REG_SP, 8);
 
     pop_reg(cg, REG_DI);
@@ -559,8 +571,6 @@ static void CreatePrintInt(TCodeGen* cg) {
     int32_t jmpTarget_3 = (int32_t)cg->size;
     int32_t jmpOffset_3 = jmpTarget_3 - (jmpPos_3 + 6);
     memcpy(cg->code + jmpPos_3 + 2, (uint8_t*)&jmpOffset_3, 4);
-
-    mov_reg_imm32(cg, REG_DI, '\n');
                                    
     push_reg(cg, REG_AX);
     push_reg(cg, REG_CX);
@@ -568,8 +578,15 @@ static void CreatePrintInt(TCodeGen* cg) {
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DI);
 
-    sub_reg_imm32(cg, REG_SP, 8);  
-    call_rel32(cg, printAsciiAddr - (cg->size + 5));               
+    push_imm32(cg, '\n');
+
+    mov_reg_imm32(cg, REG_AX, 1);
+    mov_reg_imm32(cg, REG_DI, 1);
+    mov_reg_reg(cg, REG_SI, REG_SP);
+    mov_reg_imm32(cg, REG_DX, 8);
+
+    syscall(cg);
+
     add_reg_imm32(cg, REG_SP, 8);
     
     pop_reg(cg, REG_DI);
