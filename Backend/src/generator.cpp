@@ -543,7 +543,6 @@ static void CreatePrintInt(TCodeGen* cg) {
     push_reg(cg, REG_CX);
     push_reg(cg, REG_DX);
     push_reg(cg, REG_SI);
-    push_reg(cg, REG_DI);
 
     push_reg(cg, REG_DI);
 
@@ -554,9 +553,8 @@ static void CreatePrintInt(TCodeGen* cg) {
 
     syscall(cg);
 
-    add_reg_imm32(cg, REG_SP, 8);
-
     pop_reg(cg, REG_DI);
+
     pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DX);
     pop_reg(cg, REG_CX);
