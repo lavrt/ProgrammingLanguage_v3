@@ -455,10 +455,10 @@ static void CreatePrintAscii(TCodeGen* cg) {
 
     push_reg(cg, REG_DI);
 
-    mov_reg_imm32(cg, REG_AX, 1);       // number of syscall write 
-    mov_reg_imm32(cg, REG_DI, 1);       // stdout
-    mov_reg_reg(cg, REG_SI, REG_SP);    // pointer to value
-    mov_reg_imm32(cg, REG_DX, 8);       // output size
+    mov_reg_imm32(cg, REG_AX, 1);
+    mov_reg_imm32(cg, REG_DI, 1);
+    mov_reg_reg(cg, REG_SI, REG_SP);
+    mov_reg_imm32(cg, REG_DX, 8);
 
     syscall(cg);
 
@@ -469,12 +469,6 @@ static void CreatePrintAscii(TCodeGen* cg) {
 
 static void CreatePrintInt(TCodeGen* cg) {
     AddFunc(cg, keyPrintInt);
-
-    size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
-    if (!printAsciiAddr) {
-        fprintf(stderr, "Function %s not found\n", keyPrintAscii);
-        exit(1);
-    }
 
     push_reg(cg, REG_BX);
 
