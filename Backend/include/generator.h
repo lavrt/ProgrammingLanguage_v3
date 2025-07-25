@@ -33,6 +33,7 @@ void CodeGenCtor(TCodeGen* cg);
 void CodeGenDtor(TCodeGen* cg);
 void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len);
 void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr);
+void AddFunc(TCodeGen* cg, const char* name);
 
 #define TEMP_JMP_OFFSET(cg) \
     uint32_t macro_initialSize_ = cg->size
