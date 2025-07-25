@@ -52,6 +52,7 @@ namespace GenStmt {
         static void EmitPrintAscii(TCodeGen* cg, tNode* node);
         static void EmitPrintInt(TCodeGen* cg, tNode* node);
         static void EmitIf(TCodeGen* cg, tNode* node);
+        static void EmitWhile(TCodeGen* cg, tNode* node);
     }
 }
 
@@ -133,7 +134,7 @@ void AddFunc(TCodeGen* cg, const char* name) {
 // static ------------------------------------------------------------------------------------------
 
 static Operations GetOperationType(const char* const word) {
-         if (!strcmp(word, keyIf)) return If;
+         if (!strcmp(word, keyIf)) return If; //
     else if (!strcmp(word, keyAdd)) return Add; //
     else if (!strcmp(word, keySub)) return Sub; //
     else if (!strcmp(word, keyMul)) return Mul; //
@@ -141,7 +142,7 @@ static Operations GetOperationType(const char* const word) {
     else if (!strcmp(word, keySin)) return Sin;
     else if (!strcmp(word, keyCos)) return Cos;
     else if (!strcmp(word, keySqrt)) return Sqrt;
-    else if (!strcmp(word, keyWhile)) return While;         
+    else if (!strcmp(word, keyWhile)) return While;    
     else if (!strcmp(word, keyEqual)) return Equal; //
     else if (!strcmp(word, keyPrintAscii)) return PrintAscii; //
     else if (!strcmp(word, keyPrintInt)) return PrintInt; // 
@@ -342,6 +343,7 @@ static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
         case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;
         case PrintInt:      GenStmt::Operation::EmitPrintInt(cg, node);         break;
         case If:            GenStmt::Operation::EmitIf(cg, node);               break;
+        case While:         GenStmt::Operation::EmitWhile(cg, node);            break;
 
         default: {
             fprintf(stderr, "Unknown operation \"%s\"\n", node->value);
@@ -430,6 +432,27 @@ static void GenStmt::Operation::EmitIf(TCodeGen* cg, tNode* node) {
     je_rel32(cg, 0);
 
     CodeGenStmt(cg, node->right);
+
+    int32_t jmpTarget_1 = (int32_t)cg->size;
+    int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
+    memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
+}
+
+static void GenStmt::Operation::EmitWhile(TCodeGen* cg, tNode* node) {
+    CodeGenExpr(cg, node->left);
+    pop_reg(cg, REG_AX);
+
+    int32_t jmpTarget_2 = (int32_t)cg->size;
+
+    cmp_reg_imm32(cg, REG_AX, 0);
+    int32_t jmpPos_1 = (int32_t)cg->size;
+    je_rel32(cg, 0);
+
+    CodeGenStmt(cg, node->right);
+    
+    int32_t jmpPos_2 = (int32_t)cg->size;
+    int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 5);
+    jmp_rel32(cg, jmpOffset_2);
 
     int32_t jmpTarget_1 = (int32_t)cg->size;
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);

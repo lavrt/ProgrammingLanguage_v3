@@ -1,7 +1,8 @@
-a = 2 ; 
-if ( 77 ) {
-    print_int ( a ) ;
-    print_int ( 0 - 5 ) ;
-    
+a = 5 ; 
+b = 1 ;
+while ( a != 0 ) {
+    b = b * a ;
+    a = a - 1 ;
 } ;
+print_int ( b ) ;
 end
