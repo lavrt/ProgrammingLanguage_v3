@@ -28,7 +28,8 @@ struct TCodeGen {
     TFunctions* funcs;
     int funcCount;
 
-    
+    int localStackOffset;
+    bool isLocal;
 };
 
 void CodeGenCtor(TCodeGen* cg);

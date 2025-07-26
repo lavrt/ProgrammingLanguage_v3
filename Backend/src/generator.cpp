@@ -75,6 +75,9 @@ void CodeGenCtor(TCodeGen* cg) {
     cg->funcCount = 0;
     cg->funcs = (TFunctions*)calloc(kAdditionalCapacityOfNameTable, sizeof(TFunctions));
     assert(cg->funcs);
+
+    cg->localStackOffset = 0;
+    cg->isLocal = false;
 }
 
 void CodeGenDtor(TCodeGen* cg) {
@@ -169,6 +172,7 @@ static int FindVar(const TCodeGen* const cg, const char* id) {
 }
 
 static void AddVar(TCodeGen* cg, const char* id) {
+    int& varOffset = cg->isLocal ? cg->localStackOffset : cg->stackOffset;
     if (cg->varCount >= kAdditionalCapacityOfNameTable) {
         cg->vars = (TVariables*)realloc(
             cg->vars, (cg->varCount + kAdditionalCapacityOfNameTable) * sizeof(TVariables)
@@ -176,8 +180,8 @@ static void AddVar(TCodeGen* cg, const char* id) {
         assert(cg->vars);
     }
     cg->vars[cg->varCount].id = strdup(id);
-    cg->stackOffset += 8;
-    cg->vars[cg->varCount].offset = cg->stackOffset;
+    varOffset += 8;
+    cg->vars[cg->varCount].offset = varOffset;
     ++cg->varCount;
 }
 
@@ -342,6 +346,8 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
 */ 
 
 static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
+    cg->isLocal = true;
+
     int32_t jmpPos1 = (int32_t)cg->size;
     jmp_rel32(cg, 0);
 
@@ -370,6 +376,9 @@ static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
     int32_t jmpTarget1 = (int32_t)cg->size;
     int32_t jmpOffset1 = jmpTarget1 - (jmpPos1 + 5);
     memcpy(cg->code + jmpPos1 + 1, (uint8_t*)&jmpOffset1, 4);
+
+    cg->isLocal = false;
+    cg->localStackOffset = 0;
 }
 
 static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
