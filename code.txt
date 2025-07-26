@@ -1,8 +1,7 @@
-a = 5 ; 
-b = 1 ;
-while ( a != 0 ) {
-    b = b * a ;
-    a = a - 1 ;
+def fnc ( a1 ) {
+    print_int ( a1 ) ;
 } ;
-print_int ( b ) ;
+a = 5 ; 
+k = call fnc ( a ) ;
+
 end

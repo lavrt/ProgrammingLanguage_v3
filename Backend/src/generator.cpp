@@ -12,6 +12,7 @@
 static const size_t kInitCapacityOfCodeArray = 4096;
 static const int kAdditionalCapacityOfNameTable = 16;
 static const char* const kNameOfEntryFunction = "_start";
+static const ERegister kArgRegs[] = { REG_DI, REG_SI, REG_DX, REG_CX, REG_R8, REG_R9 };
 
 static Operations GetOperationType(const char* const word);
 static int FindVar(const TCodeGen* const cg, const char* id);
@@ -142,7 +143,7 @@ static Operations GetOperationType(const char* const word) {
     else if (!strcmp(word, keySin)) return Sin;
     else if (!strcmp(word, keyCos)) return Cos;
     else if (!strcmp(word, keySqrt)) return Sqrt;
-    else if (!strcmp(word, keyWhile)) return While;    
+    else if (!strcmp(word, keyWhile)) return While; //
     else if (!strcmp(word, keyEqual)) return Equal; //
     else if (!strcmp(word, keyPrintAscii)) return PrintAscii; //
     else if (!strcmp(word, keyPrintInt)) return PrintInt; // 
@@ -194,7 +195,7 @@ static void CodeGenExpr(TCodeGen* cg, tNode* node) {
         case Number:        GenExpr::EmitNumber(cg, node);       break;
         case Identifier:    GenExpr::EmitIdentifier(cg, node);   break;        
         case Binary:        GenExpr::EmitBinary(cg, node);       break;
-        // case Calling:       GenExpr::EmitCalling(cg, node);      break;
+        case Calling:       GenExpr::EmitCalling(cg, node);      break;
         
         default: {
             fprintf(stderr, "Unknown expression type\n");
@@ -205,7 +206,7 @@ static void CodeGenExpr(TCodeGen* cg, tNode* node) {
 
 static void CodeGenStmt(TCodeGen* cg, tNode* node) {
     switch (node->type) {
-        // case Function:      GenStmt::EmitFunction(cg, node);        break;
+        case Function:      GenStmt::EmitFunction(cg, node);        break;
         case Operation:     GenStmt::EmitOperation(cg, node);       break;
 
         default: {
@@ -315,11 +316,11 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
     tNode* arg = node->left;
     if (arg) {
         CodeGenExpr(cg, arg);
-        mov_reg_reg(cg, REG_DI, REG_AX);
+        pop_reg(cg, REG_DI);
         arg = arg->left;
         if (arg) {
             CodeGenExpr(cg, arg);
-            mov_reg_reg(cg, REG_SI, REG_AX);
+            pop_reg(cg, REG_SI);
         }
     }
     size_t addr = FindFunc(cg, node->value);
@@ -327,13 +328,48 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
         fprintf(stderr, "Undefined function\n");
         exit(1);
     }
-    call_rel32(cg, addr - (cg->size + 5)); // 5 is the size of the call_rel32
+    call_rel32(cg, addr - (cg->size + 5));
     pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DI);
+
+    push_reg(cg, REG_AX);
 }
 
+/* NOTE
+    ошибка в том что если функция сначала, то addvar ставит offset = 8 для локальной переменной a1,
+    а для переменной a offset = 16, но поскольку это первая переменная, то rsp уменьшается на 8, 
+    т.е. переменная лежит ниже rsp => видимо чем то затирается
+*/ 
+
 static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
-    // TODO in process
+    int32_t jmpPos1 = (int32_t)cg->size;
+    jmp_rel32(cg, 0);
+
+    AddFunc(cg, node->value);
+
+    push_reg(cg, REG_BP);
+    mov_reg_reg(cg, REG_BP, REG_SP);
+
+    tNode* arg = node->left;
+    size_t argCount = 0;
+    while (arg && argCount < 6) {
+        AddVar(cg, arg->value);
+        int offset = cg->vars[cg->varCount - 1].offset;
+        mov_mem_reg(cg, -offset, kArgRegs[argCount]);
+        arg = arg->left;
+        ++argCount;
+    }
+    sub_reg_imm32(cg, REG_SP, 8 * argCount);
+
+    CodeGenStmt(cg, node->right);
+
+    mov_reg_reg(cg, REG_SP, REG_BP);
+    pop_reg(cg, REG_BP);
+    ret(cg); // удалить локальные
+
+    int32_t jmpTarget1 = (int32_t)cg->size;
+    int32_t jmpOffset1 = jmpTarget1 - (jmpPos1 + 5);
+    memcpy(cg->code + jmpPos1 + 1, (uint8_t*)&jmpOffset1, 4);
 }
 
 static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
@@ -387,9 +423,7 @@ static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DI);
 
-    sub_reg_imm32(cg, REG_SP, 8);
     call_rel32(cg, printAsciiAddr - (cg->size + 5));
-    add_reg_imm32(cg, REG_SP, 8);
 
     pop_reg(cg, REG_DI);
     pop_reg(cg, REG_SI);
@@ -413,9 +447,7 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) {
     push_reg(cg, REG_DX);
     push_reg(cg, REG_DI);
 
-    sub_reg_imm32(cg, REG_SP, 8);
     call_rel32(cg, printIntAddr - (cg->size + 5));
-    add_reg_imm32(cg, REG_SP, 8);
 
     pop_reg(cg, REG_DI);
     pop_reg(cg, REG_DX);
