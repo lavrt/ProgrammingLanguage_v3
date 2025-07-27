@@ -351,6 +351,7 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
 
 static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
     cg->isLocal = true;
+    int varCountBeforeFunction = cg->varCount;
 
     int32_t jmpPos1 = (int32_t)cg->size;
     jmp_rel32(cg, 0);
@@ -375,7 +376,9 @@ static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
 
     mov_reg_reg(cg, REG_SP, REG_BP);
     pop_reg(cg, REG_BP);
-    ret(cg); // удалить локальные
+
+    mov_reg_imm32(cg, REG_AX, -1);
+    ret(cg);
 
     int32_t jmpTarget1 = (int32_t)cg->size;
     int32_t jmpOffset1 = jmpTarget1 - (jmpPos1 + 5);
@@ -383,6 +386,11 @@ static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
 
     cg->isLocal = false;
     cg->localStackOffset = 0;
+
+    int varCountAfterFunction = cg->varCount;
+    for (int i = 0; i != varCountAfterFunction - varCountBeforeFunction; ++i) {
+        free(cg->vars[--cg->varCount - i].id);
+    }
 }
 
 static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
@@ -508,7 +516,9 @@ static void GenStmt::Operation::EmitWhile(TCodeGen* cg, tNode* node) {
 static void GenStmt::Operation::EmitReturn(TCodeGen* cg, tNode* node) {
     CodeGenExpr(cg, node->left);
     pop_reg(cg, REG_AX);
+
     mov_reg_reg(cg, REG_SP, REG_BP);
     pop_reg(cg, REG_BP);
+
     ret(cg);
 }
