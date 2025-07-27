@@ -394,10 +394,7 @@ static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
     cg->isLocal = false;
     cg->localStackOffset = 0;
 
-    int varCountAfterFunction = cg->varCount;
-    for (int i = 0; i != varCountAfterFunction - varCountBeforeFunction; ++i) {
-        free(cg->vars[--cg->varCount - i].id);
-    }
+    cg->varCount = varCountBeforeFunction;
 }
 
 static void GenStmt::Operation::EmitSemicolon(TCodeGen* cg, tNode* node) {

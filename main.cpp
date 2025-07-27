@@ -9,7 +9,15 @@
 
 int main() {
     Vector tokens = tokenizer();     
-    tNode* root = runParser(tokens); 
+    tNode* root = runParser(tokens);
+    // saveTree(root); 
+  
+
+
+
+
+    // tNode* newRoot = ReadTree();
+    dump(root);
 
     TCodeGen cg;
     CodeGenCtor(&cg);
@@ -18,14 +26,14 @@ int main() {
     CreateElfHeader(&ehdr);
 
     CodegenProgram(&cg, root, &ehdr);
+    // backendTreeDtor(newRoot);
 
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, cg.size);
 
-    dump(root);                      
     tokenVectorDtor(&tokens);        
     free(tokens.data);               
-    treeDtor(root);                  
+    treeDtor(root);
 
     FILE* file = fopen("output.elf", "wb");
     if (!file) {
@@ -37,6 +45,8 @@ int main() {
     fwrite(cg.code, 1, cg.size, file);
     fclose(file);
     printf("ELF file created\n");
+
+    CodeGenDtor(&cg); 
 
     return 0;
 }

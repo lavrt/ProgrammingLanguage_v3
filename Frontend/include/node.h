@@ -2,6 +2,7 @@
 #define NODE_H
 
 enum NodeType {
+    Null       = 0,
     Number     = 1,
     Operation  = 2,
     Identifier = 3,

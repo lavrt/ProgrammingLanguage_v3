@@ -12,6 +12,7 @@
     do { fclose(ptr_); ptr_ = NULL; } while(0);
 
 const char* const kDumpFileName = "./Frontend/dump/dump.gv";
+const char* const kNameOfFileWithTree = "./Frontend/dump/tree.txt";
 
 const char* const kFunction = "def";
 const char* const kNumber = "number";
@@ -25,5 +26,8 @@ void treeDtor(tNode* node);
 void dump(tNode* root);
 tNode* copyNode(tNode* node);
 bool subtreeContainsVariable(tNode* node);
+void saveTree(tNode* root);
+tNode* ReadTree();
+void backendTreeDtor(tNode* node);
 
 #endif // TREE_H

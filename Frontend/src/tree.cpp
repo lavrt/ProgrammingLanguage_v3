@@ -3,18 +3,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <vector>
 
+#include "tokenizer.h"
 #include "debug.h"
 
 #define GRAPHVIZ 
 
-// static --------------------------------------------------------------------------------------------------------------
+// static ------------------------------------------------------------------------------------------
 
 static tNode* memoryAllocationForNode();
 static void dumpTreeTraversal(tNode* node, FILE* dumpFile);
 static void dumpTreeTraversalWithArrows(tNode* node, FILE* dumpFile);
+static void saveTreeToFile(FILE* file, tNode* node);
+static std::pair<tNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, char*>>& nodes, size_t pos);
 
-// global --------------------------------------------------------------------------------------------------------------
+// global ------------------------------------------------------------------------------------------
 
 tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right) {
     tNode* node = NULL;
@@ -60,7 +64,7 @@ tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right) {
             node->right = right;
             break;
         }
-        default: assert(0);
+        default: assert(0); 
     }
 
     node->value = value;
@@ -137,6 +141,55 @@ bool subtreeContainsVariable(tNode* node) {
     }
 }
 
+void saveTree(tNode* root) {
+    FILE* outputFile = fopen(kNameOfFileWithTree, "wb");
+    assert(outputFile);
+
+    saveTreeToFile(outputFile, root);
+
+    FCLOSE(outputFile);
+} 
+
+tNode* ReadTree() {
+    FILE* file = fopen(kNameOfFileWithTree, "rb");
+    assert(file);
+
+    size_t fileSize = getFileSize(file);
+
+    char* dataArray = (char*)calloc(fileSize + 1, sizeof(char));
+    assert(dataArray);
+
+    fread(dataArray, sizeof(char), fileSize, file);
+
+    FCLOSE(file);
+
+    std::vector<std::pair<NodeType, char*>> nodes;
+    if (char* ptr = strtok(dataArray, " ")) {
+        NodeType type = (NodeType)atoi(ptr);
+        ptr = strtok(NULL, " ");
+        nodes.push_back({type, strdup(ptr)});
+
+        while ((ptr = strtok(NULL, " "))) {
+            NodeType type = (NodeType)atoi(ptr);
+            ptr = strtok(NULL, " ");
+            nodes.push_back({type, strdup(ptr)});        
+        }
+    }
+    
+    return ReadTreeFromFile(nodes, 0).first;
+}
+
+// void backendTreeDtor(tNode* node) {
+//     if (node->left) {
+//         backendTreeDtor(node->left);
+//     }
+//     if (node->right) {
+//         backendTreeDtor(node->right);
+//     }
+//     FREE(node->value);
+//     FREE(node);
+// }
+
 // static --------------------------------------------------------------------------------------------------------------
 
 static tNode* memoryAllocationForNode(void) {
@@ -168,8 +221,9 @@ static void dumpTreeTraversal(tNode* node, FILE* dumpFile) {
     } else if (node->type == Binary) {
         fprintf(
             dumpFile, 
-            (!strcmp(node->value, ">" ) || !strcmp(node->value, "<" ) || !strcmp(node->value, "==") ||
-             !strcmp(node->value, ">=") || !strcmp(node->value, "<=") || !strcmp(node->value, "!="))
+            (!strcmp(node->value, keyGreater) || !strcmp(node->value, keyLess) || 
+             !strcmp(node->value, keyIdentical) || !strcmp(node->value, keyGreaterOrEqual) ||
+             !strcmp(node->value, keyLessOrEqual) || !strcmp(node->value, keyNotIdentical))
                 ? " | type: %s | value: \\%s | "
                 : " | type: %s | value: %s | ",
             kBinary, node->value
@@ -225,3 +279,26 @@ static void dumpTreeTraversalWithArrows(tNode* node, FILE* dumpFile) {
     }
     flag = 0;
 }
+
+static void saveTreeToFile(FILE* file, tNode* node) {
+    if (!node) {
+        fprintf(file, "0 NULL ");
+        return;
+    }
+
+    fprintf(file, "%d %s ", node->type, node->value);
+
+    saveTreeToFile(file, node->left);
+    saveTreeToFile(file, node->right);    
+}
+
+static std::pair<tNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, char*>>& nodes, size_t pos) { 
+    if (nodes[pos].first == Null) {
+        return { nullptr, pos + 1 };
+    }
+
+    tNode* node = newNode(nodes[pos].first, nodes[pos].second, nullptr, nullptr); 
+    std::tie(node->left, pos) = ReadTreeFromFile(nodes, pos + 1);
+    std::tie(node->right, pos) = ReadTreeFromFile(nodes, pos);
+    return { node, pos };
+} 
