@@ -139,26 +139,26 @@ void AddFunc(TCodeGen* cg, const char* name) {
 // static ------------------------------------------------------------------------------------------
 
 static Operations GetOperationType(const char* const word) {
-         if (!strcmp(word, keyIf)) return If; //
-    else if (!strcmp(word, keyAdd)) return Add; //
-    else if (!strcmp(word, keySub)) return Sub; //
-    else if (!strcmp(word, keyMul)) return Mul; //
-    else if (!strcmp(word, keyDiv)) return Div; //
-    else if (!strcmp(word, keySin)) return Sin;
-    else if (!strcmp(word, keyCos)) return Cos;
-    else if (!strcmp(word, keySqrt)) return Sqrt;
-    else if (!strcmp(word, keyWhile)) return While; //
-    else if (!strcmp(word, keyEqual)) return Equal; //
-    else if (!strcmp(word, keyPrintAscii)) return PrintAscii; //
-    else if (!strcmp(word, keyPrintInt)) return PrintInt; // 
+         if (!strcmp(word, keyIf)) return If;
+    else if (!strcmp(word, keyAdd)) return Add;
+    else if (!strcmp(word, keySub)) return Sub;
+    else if (!strcmp(word, keyMul)) return Mul;
+    else if (!strcmp(word, keyDiv)) return Div;
+    else if (!strcmp(word, keySin)) return Sin; // not supported
+    else if (!strcmp(word, keyCos)) return Cos; // not supported
+    else if (!strcmp(word, keySqrt)) return Sqrt; // not supported
+    else if (!strcmp(word, keyWhile)) return While; 
+    else if (!strcmp(word, keyEqual)) return Equal; 
+    else if (!strcmp(word, keyPrintAscii)) return PrintAscii;
+    else if (!strcmp(word, keyPrintInt)) return PrintInt;
     else if (!strcmp(word, keyReturn)) return Return;
-    else if (!strcmp(word, keyGreater)) return Greater; //
-    else if (!strcmp(word, keyLess)) return Less; //
-    else if (!strcmp(word, keySemicolon)) return Semicolon; //  
-    else if (!strcmp(word, keyIdentical)) return Identical; //
-    else if (!strcmp(word, keyLessOrEqual)) return LessOrEqual; //
-    else if (!strcmp(word, keyNotIdentical)) return NotIdentical; //
-    else if (!strcmp(word, keyGreaterOrEqual)) return GreaterOrEqual; //
+    else if (!strcmp(word, keyGreater)) return Greater;
+    else if (!strcmp(word, keyLess)) return Less;
+    else if (!strcmp(word, keySemicolon)) return Semicolon;
+    else if (!strcmp(word, keyIdentical)) return Identical;
+    else if (!strcmp(word, keyLessOrEqual)) return LessOrEqual;
+    else if (!strcmp(word, keyNotIdentical)) return NotIdentical;
+    else if (!strcmp(word, keyGreaterOrEqual)) return GreaterOrEqual;
 
     else return NoOperation;
 }
@@ -204,7 +204,7 @@ static void CodeGenExpr(TCodeGen* cg, tNode* node) {
         
         default: {
             fprintf(stderr, "Unknown expression type\n");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
     }
 }
@@ -216,7 +216,7 @@ static void CodeGenStmt(TCodeGen* cg, tNode* node) {
 
         default: {
             fprintf(stderr, "Unknown node type\n");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
     }
 }
@@ -229,7 +229,7 @@ static void GenExpr::EmitIdentifier(TCodeGen* cg, tNode* node) {
     int offset = FindVar(cg, node->value);
     if (offset == -1) {
         fprintf(stderr, "Undefined variable\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     mov_reg_mem(cg, REG_AX, -offset);
@@ -256,7 +256,7 @@ static void GenExpr::EmitBinary(TCodeGen* cg, tNode* node) {
 
         default: {
             fprintf(stderr, "Unknown binary operator\n");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
     }
     push_reg(cg, REG_AX);
@@ -335,7 +335,7 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
     size_t addr = FindFunc(cg, node->value);
     if (!addr) {
         fprintf(stderr, "Undefined function\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     call_rel32(cg, addr - (cg->size + 5));
 
@@ -405,7 +405,7 @@ static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
 
         default: {
             fprintf(stderr, "Unknown operation \"%s\"\n", node->value);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
     }
 }
@@ -433,7 +433,7 @@ static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
     size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
     if (!printAsciiAddr) {
         fprintf(stderr, "Function %s not found\n", keyPrintAscii);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     CodeGenExpr(cg, node->left);
@@ -458,7 +458,7 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) {
     size_t printIntAddr = FindFunc(cg, keyPrintInt);
     if (!printIntAddr) {
         fprintf(stderr, "Function %s not found\n", keyPrintInt);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     CodeGenExpr(cg, node->left);

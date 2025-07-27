@@ -27,12 +27,6 @@
     newNode(Binary, "/", leftNode_, rightNode_)
 #define SEMICOLON(leftNode_, rightNode_) \
     newNode(Operation, ";", leftNode_, rightNode_)
-#define SQRT(leftNode_, rightNode_) \
-    newNode(Operation, "sqrt", leftNode_, rightNode_)
-#define SIN(leftNode_, rightNode_) \
-    newNode(Operation, "sin", leftNode_, rightNode_)
-#define COS(leftNode_, rightNode_) \
-    newNode(Operation, "cos", leftNode_, rightNode_)
 #define PRINT_INT(leftNode_, rightNode_) \
     newNode(Operation, "print_int", leftNode_, rightNode_)
 #define PRINT_ASCII(leftNode_, rightNode_) \

@@ -24,7 +24,6 @@ static tNode* getExpression(Vector tokenVector, size_t* pos);
 static tNode* getComparsion(Vector tokenVector, size_t* pos);
 static tNode* getAssignment(Vector tokenVector, size_t* pos);
 static tNode* getParentheses(Vector tokenVector, size_t* pos);
-static tNode* getMathFunction(Vector tokenVector, size_t* pos);
 static tNode* getMultiplication(Vector tokenVector, size_t* pos);
 
 [[noreturn]] static void syntaxError(int line);
@@ -130,54 +129,7 @@ static tNode* getParentheses(Vector tokenVector, size_t* pos) {
         return node;
     } else if (GET_TOKEN_TYPE(*pos) == Number) {
         return getNumber(tokenVector, pos);
-    } else if (GET_TOKEN_TYPE(*pos) == Operation) {
-        return getMathFunction(tokenVector, pos);
     } else assert(0);
-}
-
-static tNode* getMathFunction(Vector tokenVector, size_t* pos) {
-    if (!strcmp(GET_TOKEN(*pos), keySqrt)) {
-        tNode* node = SQRT(NULL, NULL);
-
-        (*pos)++;
-        CHECK_LEFT_PARENTHESIS;
-        (*pos)++;
-
-        node->left = getComparsion(tokenVector, pos);
-
-        CHECK_RIGHT_PARENTHESIS;
-        (*pos)++;
-
-        return node;
-    } else if (!strcmp(GET_TOKEN(*pos), keySin)) {
-        tNode* node = SIN(NULL, NULL);
-
-        (*pos)++;
-        CHECK_LEFT_PARENTHESIS;
-        (*pos)++;
-
-        node->left = getComparsion(tokenVector, pos);
-
-        CHECK_RIGHT_PARENTHESIS;
-        (*pos)++;
-
-        return node;
-    } else if (!strcmp(GET_TOKEN(*pos), keyCos)) {
-        tNode* node = COS(NULL, NULL);
-
-        (*pos)++;
-        CHECK_LEFT_PARENTHESIS;
-        (*pos)++;
-
-        node->left = getComparsion(tokenVector, pos);
-
-        CHECK_RIGHT_PARENTHESIS;
-        (*pos)++;
-
-        return node;
-    } else {
-        syntaxError(__LINE__);
-    }
 }
 
 static tNode* getNumber(Vector tokenVector, size_t* pos) {
@@ -293,7 +245,7 @@ static tNode* getWhile(Vector tokenVector, size_t* pos) {
     return WHILE(leftNode, rightNode);
 }
 
-static tNode* getAssignment(Vector tokenVector, size_t* pos) { //////////////////
+static tNode* getAssignment(Vector tokenVector, size_t* pos) {
     tNode* leftNode = getVariable(tokenVector, pos);
     tNode* rightNode = NULL;
     if (strcmp(GET_TOKEN(*pos), keyEqual)) {

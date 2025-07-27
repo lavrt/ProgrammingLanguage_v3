@@ -3,8 +3,7 @@
 
 #include <stdio.h>
 
-struct Vector
-{
+struct Vector {
     void** data;
     size_t size;
     size_t capacity;

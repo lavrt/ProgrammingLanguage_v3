@@ -82,10 +82,7 @@ bool isKeyWord(const char* const word) {
     else if (!strcmp(word, keyMul              )) return true;
     else if (!strcmp(word, keyDiv              )) return true;
     else if (!strcmp(word, keyEnd              )) return true;
-    else if (!strcmp(word, keySin              )) return true;
-    else if (!strcmp(word, keyCos              )) return true;
     else if (!strcmp(word, keyCall             )) return true;
-    else if (!strcmp(word, keySqrt             )) return true;
     else if (!strcmp(word, keyLess             )) return true;
     else if (!strcmp(word, keyWhile            )) return true;
     else if (!strcmp(word, keyPrintAscii       )) return true;

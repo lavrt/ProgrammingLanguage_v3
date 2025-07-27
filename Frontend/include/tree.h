@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #define FREE(ptr_) \
     do { free(ptr_); ptr_ = NULL; } while(0);

@@ -23,9 +23,6 @@ enum Operations {
     PrintAscii,
     PrintInt,
     While,
-    Sqrt,
-    Sin,
-    Cos,
     If,
     Add,
     Sub,
@@ -50,13 +47,10 @@ const char* const keyMul = "*";
 const char* const keyDiv = "/";
 const char* const keyLess = "<";
 const char* const keyDef = "def";
-const char* const keySin = "sin";
-const char* const keyCos = "cos";
 const char* const keyEnd = "end";
 const char* const keyEqual = "=";
 const char* const keyGreater = ">";
 const char* const keyCall = "call";
-const char* const keySqrt = "sqrt";
 const char* const keyPrintAscii = "print_ascii";
 const char* const keyPrintInt = "print_int";
 const char* const keyWhile = "while";

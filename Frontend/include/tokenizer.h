@@ -2,7 +2,6 @@
 #define TOKENIZER_H
 
 #include <stdio.h>
-#include <stdbool.h>
 
 #include "node.h"
 #include "vector.h"
