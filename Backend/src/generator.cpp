@@ -144,9 +144,6 @@ static Operations GetOperationType(const char* const word) {
     else if (!strcmp(word, keySub)) return Sub;
     else if (!strcmp(word, keyMul)) return Mul;
     else if (!strcmp(word, keyDiv)) return Div;
-    else if (!strcmp(word, keySin)) return Sin; // not supported
-    else if (!strcmp(word, keyCos)) return Cos; // not supported
-    else if (!strcmp(word, keySqrt)) return Sqrt; // not supported
     else if (!strcmp(word, keyWhile)) return While; 
     else if (!strcmp(word, keyEqual)) return Equal; 
     else if (!strcmp(word, keyPrintAscii)) return PrintAscii;
