@@ -8,7 +8,7 @@
 #include "vector.h"
 
 const int kInitialSizeOfTokenVector = 64;
-const char* const kNameOfFileWithCode = "code.txt";
+const char* const kNameOfFileWithCode = "code.rt";
 
 struct Token {
     NodeType type;

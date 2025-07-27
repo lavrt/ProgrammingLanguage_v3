@@ -349,12 +349,6 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
     push_reg(cg, REG_AX);
 }
 
-/* NOTE
-    ошибка в том что если функция сначала, то addvar ставит offset = 8 для локальной переменной a1,
-    а для переменной a offset = 16, но поскольку это первая переменная, то rsp уменьшается на 8, 
-    т.е. переменная лежит ниже rsp => видимо чем то затирается
-*/ 
-
 static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
     cg->isLocal = true;
 

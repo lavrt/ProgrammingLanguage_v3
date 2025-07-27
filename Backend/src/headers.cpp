@@ -30,12 +30,12 @@ void CreateElfHeader(Elf64_Ehdr* ehdr) {
 }
 
 void CreateProgramHeader(Elf64_Phdr* phdr, uint64_t filesz) {
-    phdr->p_type = PT_LOAD;                                                 // segment type
-    phdr->p_flags = PF_X | PF_R;                                            // segment access flags
-    phdr->p_offset = sizeof(Elf64_Ehdr) + sizeof(Elf64_Phdr);               // segment offset in the file
-    phdr->p_vaddr = 0x400000 + sizeof(Elf64_Ehdr) + sizeof(Elf64_Phdr);     // segment virtual address
-    phdr->p_paddr = phdr->p_vaddr;                                          // segment physical address
-    phdr->p_filesz = filesz;                                                // segment size in the file
-    phdr->p_memsz = filesz;                                                 // segment size in memory
-    phdr->p_align = 0x1000;                                                 // segment alignment
+    phdr->p_type = PT_LOAD;
+    phdr->p_flags = PF_X | PF_R;
+    phdr->p_offset = sizeof(Elf64_Ehdr) + sizeof(Elf64_Phdr);
+    phdr->p_vaddr = 0x400000 + sizeof(Elf64_Ehdr) + sizeof(Elf64_Phdr);
+    phdr->p_paddr = 0x400000 + sizeof(Elf64_Ehdr) + sizeof(Elf64_Phdr);
+    phdr->p_filesz = filesz;
+    phdr->p_memsz = filesz;
+    phdr->p_align = 0x1000;
 }

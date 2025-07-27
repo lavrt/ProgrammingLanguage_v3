@@ -12,7 +12,7 @@ void push_reg(TCodeGen* cg, ERegister reg) {
     } else {
         // opcode: REX + 0x50 + reg<<3
         // REX.B: 0x41
-        uint8_t opcode[] = {0x41, 0x50 + (uint8_t)(reg - REG_R8)};
+        uint8_t opcode[] = {0x41, (uint8_t)(0x50 + reg - REG_R8)};
         AppendCode(cg, opcode, 2);
     }
 }
@@ -36,7 +36,7 @@ void pop_reg(TCodeGen* cg, ERegister reg) {
     } else {
         // opcode: REX + 0x58 + reg<<3
         // REX.B: 0x41
-        uint8_t opcode[] = {0x41, 0x58 + (uint8_t)(reg - REG_R8)};
+        uint8_t opcode[] = {0x41, (uint8_t)(0x58 + reg - REG_R8)};
         AppendCode(cg, opcode, 2);
     }
 }
