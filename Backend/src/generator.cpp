@@ -28,7 +28,6 @@ namespace GenExpr {
 
     static void EmitCalling(TCodeGen* cg, tNode* node);
 
-    static void EmitBinary(TCodeGen* cg, tNode* node);
     namespace Binary {
         static void EmitAdd(TCodeGen* cg);
         static void EmitSub(TCodeGen* cg);
@@ -46,7 +45,6 @@ namespace GenExpr {
 namespace GenStmt {
     static void EmitFunction(TCodeGen* cg, tNode* node);
 
-    static void EmitOperation(TCodeGen* cg, tNode* node);
     namespace Operation {
         static void EmitSemicolon(TCodeGen* cg, tNode* node);
         static void EmitEqual(TCodeGen* cg, tNode* node);
@@ -194,10 +192,33 @@ static size_t FindFunc(const TCodeGen* const cg, const char* name) {
 
 static void CodeGenExpr(TCodeGen* cg, tNode* node) {
     switch (node->type) {
-        case Number:        GenExpr::EmitNumber(cg, node);       break;
-        case Identifier:    GenExpr::EmitIdentifier(cg, node);   break;        
-        case Binary:        GenExpr::EmitBinary(cg, node);       break;
-        case Calling:       GenExpr::EmitCalling(cg, node);      break;
+        case Number:        GenExpr::EmitNumber(cg, node);      break;
+        case Identifier:    GenExpr::EmitIdentifier(cg, node);  break;      
+        case Calling:       GenExpr::EmitCalling(cg, node);     break;
+        case Binary: {
+            CodeGenExpr(cg, node->left);
+            CodeGenExpr(cg, node->right);
+            pop_reg(cg, REG_BX);
+            pop_reg(cg, REG_AX);
+            switch (GetOperationType(node->value)) {
+                case Add:               GenExpr::Binary::EmitAdd(cg);               break;
+                case Sub:               GenExpr::Binary::EmitSub(cg);               break;
+                case Mul:               GenExpr::Binary::EmitMul(cg);               break;
+                case Div:               GenExpr::Binary::EmitDiv(cg);               break;
+                case Greater:           GenExpr::Binary::EmitGreater(cg);           break;
+                case GreaterOrEqual:    GenExpr::Binary::EmitGreaterOrEqual(cg);    break;
+                case Less:              GenExpr::Binary::EmitLess(cg);              break;
+                case LessOrEqual:       GenExpr::Binary::EmitLessOrEqual(cg);       break;
+                case Identical:         GenExpr::Binary::EmitIdentical(cg);         break;
+                case NotIdentical:      GenExpr::Binary::EmitNotIdentical(cg);      break;
+
+                default: {
+                    fprintf(stderr, "Unknown binary operator\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            push_reg(cg, REG_AX);
+        } break;
         
         default: {
             fprintf(stderr, "Unknown expression type\n");
@@ -209,7 +230,22 @@ static void CodeGenExpr(TCodeGen* cg, tNode* node) {
 static void CodeGenStmt(TCodeGen* cg, tNode* node) {
     switch (node->type) {
         case Function:      GenStmt::EmitFunction(cg, node);        break;
-        case Operation:     GenStmt::EmitOperation(cg, node);       break;
+        case Operation: {
+            switch (GetOperationType(node->value)) {
+                case Semicolon:     GenStmt::Operation::EmitSemicolon(cg, node);        break;
+                case Equal:         GenStmt::Operation::EmitEqual(cg, node);            break;
+                case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;
+                case PrintInt:      GenStmt::Operation::EmitPrintInt(cg, node);         break;
+                case If:            GenStmt::Operation::EmitIf(cg, node);               break;
+                case While:         GenStmt::Operation::EmitWhile(cg, node);            break;
+                case Return:        GenStmt::Operation::EmitReturn(cg, node);           break;
+
+                default: {
+                    fprintf(stderr, "Unknown operation \"%s\"\n", node->value);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        } break;
 
         default: {
             fprintf(stderr, "Unknown node type\n");
@@ -230,32 +266,6 @@ static void GenExpr::EmitIdentifier(TCodeGen* cg, tNode* node) {
     }
 
     mov_reg_mem(cg, REG_AX, -offset);
-    push_reg(cg, REG_AX);
-}
-
-static void GenExpr::EmitBinary(TCodeGen* cg, tNode* node) { 
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
-    
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
-    switch (GetOperationType(node->value)) {
-        case Add:               GenExpr::Binary::EmitAdd(cg);               break;
-        case Sub:               GenExpr::Binary::EmitSub(cg);               break;
-        case Mul:               GenExpr::Binary::EmitMul(cg);               break;
-        case Div:               GenExpr::Binary::EmitDiv(cg);               break;
-        case Greater:           GenExpr::Binary::EmitGreater(cg);           break;
-        case GreaterOrEqual:    GenExpr::Binary::EmitGreaterOrEqual(cg);    break;
-        case Less:              GenExpr::Binary::EmitLess(cg);              break;
-        case LessOrEqual:       GenExpr::Binary::EmitLessOrEqual(cg);       break;
-        case Identical:         GenExpr::Binary::EmitIdentical(cg);         break;
-        case NotIdentical:      GenExpr::Binary::EmitNotIdentical(cg);      break;
-
-        default: {
-            fprintf(stderr, "Unknown binary operator\n");
-            exit(EXIT_FAILURE);
-        }
-    }
     push_reg(cg, REG_AX);
 }
 
@@ -387,23 +397,6 @@ static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
     int varCountAfterFunction = cg->varCount;
     for (int i = 0; i != varCountAfterFunction - varCountBeforeFunction; ++i) {
         free(cg->vars[--cg->varCount - i].id);
-    }
-}
-
-static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
-    switch (GetOperationType(node->value)) {
-        case Semicolon:     GenStmt::Operation::EmitSemicolon(cg, node);        break;
-        case Equal:         GenStmt::Operation::EmitEqual(cg, node);            break;
-        case PrintAscii:    GenStmt::Operation::EmitPrintAscii(cg, node);       break;
-        case PrintInt:      GenStmt::Operation::EmitPrintInt(cg, node);         break;
-        case If:            GenStmt::Operation::EmitIf(cg, node);               break;
-        case While:         GenStmt::Operation::EmitWhile(cg, node);            break;
-        case Return:        GenStmt::Operation::EmitReturn(cg, node);           break;
-
-        default: {
-            fprintf(stderr, "Unknown operation \"%s\"\n", node->value);
-            exit(EXIT_FAILURE);
-        }
     }
 }
 
