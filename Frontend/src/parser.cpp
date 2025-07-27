@@ -293,7 +293,7 @@ static tNode* getWhile(Vector tokenVector, size_t* pos) {
     return WHILE(leftNode, rightNode);
 }
 
-static tNode* getAssignment(Vector tokenVector, size_t* pos) {
+static tNode* getAssignment(Vector tokenVector, size_t* pos) { //////////////////
     tNode* leftNode = getVariable(tokenVector, pos);
     tNode* rightNode = NULL;
     if (strcmp(GET_TOKEN(*pos), keyEqual)) {
@@ -309,7 +309,7 @@ static tNode* getAssignment(Vector tokenVector, size_t* pos) {
         tNode* leftNode = getVariable(tokenVector, pos);
         while (!strcmp(GET_TOKEN(*pos), keySemicolon)) {
             (*pos)++;
-            leftNode = newNode(Identifier, GET_TOKEN(*pos), leftNode, NULL);
+            leftNode->left = newNode(Identifier, GET_TOKEN(*pos), NULL, NULL);
             (*pos)++;
         }
         CHECK_RIGHT_PARENTHESIS;

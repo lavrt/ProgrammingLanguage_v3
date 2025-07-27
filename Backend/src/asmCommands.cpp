@@ -5,9 +5,16 @@
 // PUSH r64
 // size: 1 byte
 void push_reg(TCodeGen* cg, ERegister reg) {
-    // opcode: 0x50 + rd
-    uint8_t opcode = 0x50 + (reg & 0x7);
-    AppendCode(cg, &opcode, 1);
+    if (reg <= REG_DI) {
+        // opcode: 0x50 + rd
+        uint8_t opcode = 0x50 + (reg & 0x7);
+        AppendCode(cg, &opcode, 1);
+    } else {
+        // opcode: REX + 0x50 + reg<<3
+        // REX.B: 0x41
+        uint8_t opcode[] = {0x41, 0x50 + (uint8_t)(reg - REG_R8)};
+        AppendCode(cg, opcode, 2);
+    }
 }
 
 // PUSH imm32
@@ -22,9 +29,16 @@ void push_imm32(TCodeGen* cg, int32_t imm) {
 // POP r64
 // size: 1 byte
 void pop_reg(TCodeGen* cg, ERegister reg) {
-    // opcode: 0x58 + rd
-    uint8_t opcode = 0x58 + (reg & 0x7);
-    AppendCode(cg, &opcode, 1);
+    if (reg <= REG_DI) {
+        // opcode: 0x58 + rd
+        uint8_t opcode = 0x58 + (reg & 0x7);
+        AppendCode(cg, &opcode, 1);
+    } else {
+        // opcode: REX + 0x58 + reg<<3
+        // REX.B: 0x41
+        uint8_t opcode[] = {0x41, 0x58 + (uint8_t)(reg - REG_R8)};
+        AppendCode(cg, opcode, 2);
+    }
 }
 
 // MOV r/m64, imm32

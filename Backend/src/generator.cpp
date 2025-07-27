@@ -54,6 +54,7 @@ namespace GenStmt {
         static void EmitPrintInt(TCodeGen* cg, tNode* node);
         static void EmitIf(TCodeGen* cg, tNode* node);
         static void EmitWhile(TCodeGen* cg, tNode* node);
+        static void EmitReturn(TCodeGen* cg, tNode* node);
     }
 }
 
@@ -317,22 +318,31 @@ static void GenExpr::Binary::EmitNotIdentical(TCodeGen* cg) {
 static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
     push_reg(cg, REG_DI);
     push_reg(cg, REG_SI);
+    push_reg(cg, REG_DX);
+    push_reg(cg, REG_CX);
+    push_reg(cg, REG_R8);
+    push_reg(cg, REG_R9);
+
     tNode* arg = node->left;
-    if (arg) {
+
+    size_t argCount = 0;
+    while (arg && argCount < 6) {
         CodeGenExpr(cg, arg);
-        pop_reg(cg, REG_DI);
+        pop_reg(cg, kArgRegs[argCount++]);
         arg = arg->left;
-        if (arg) {
-            CodeGenExpr(cg, arg);
-            pop_reg(cg, REG_SI);
-        }
     }
+
     size_t addr = FindFunc(cg, node->value);
     if (!addr) {
         fprintf(stderr, "Undefined function\n");
         exit(1);
     }
     call_rel32(cg, addr - (cg->size + 5));
+
+    pop_reg(cg, REG_R9);
+    pop_reg(cg, REG_R8);
+    pop_reg(cg, REG_CX);
+    pop_reg(cg, REG_DX);
     pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DI);
 
@@ -389,6 +399,7 @@ static void GenStmt::EmitOperation(TCodeGen* cg, tNode* node) {
         case PrintInt:      GenStmt::Operation::EmitPrintInt(cg, node);         break;
         case If:            GenStmt::Operation::EmitIf(cg, node);               break;
         case While:         GenStmt::Operation::EmitWhile(cg, node);            break;
+        case Return:        GenStmt::Operation::EmitReturn(cg, node);           break;
 
         default: {
             fprintf(stderr, "Unknown operation \"%s\"\n", node->value);
@@ -498,4 +509,12 @@ static void GenStmt::Operation::EmitWhile(TCodeGen* cg, tNode* node) {
     int32_t jmpTarget_1 = (int32_t)cg->size;
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
     memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
+}
+
+static void GenStmt::Operation::EmitReturn(TCodeGen* cg, tNode* node) {
+    CodeGenExpr(cg, node->left);
+    pop_reg(cg, REG_AX);
+    mov_reg_reg(cg, REG_SP, REG_BP);
+    pop_reg(cg, REG_BP);
+    ret(cg);
 }
