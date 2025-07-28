@@ -4,61 +4,70 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unordered_set>
+#include <string>
 
 #include "node.h"
 #include "tree.h"
 #include "debug.h"
 
-Vector tokenizer() {
-    FILE* inputFile = fopen(kNameOfFileWithCode, "r");
-    assert(inputFile);
+// static ------------------------------------------------------------------------------------------
 
-    size_t fileSize = getFileSize(inputFile);
+static const std::unordered_set<char> kAllowedSpecialChars = {
+    '{', '}', '(', ')', ';', '+', '-', '*', '/', '<', '>', '=', '!'
+};
 
-    char* dataArray = (char*)calloc(fileSize + 1, sizeof(char));
-    assert(dataArray);
+// global ------------------------------------------------------------------------------------------
 
-    fread(dataArray, sizeof(char), fileSize, inputFile);
+void tokenizer(std::vector<char*>& tokens) {
+    FILE* file = fopen(kNameOfFileWithCode, "r");
+    assert(file);
 
-    Vector tokenVector;
-    vectorInit(&tokenVector, kInitialSizeOfTokenVector);
+    size_t fileSize = getFileSize(file);
 
-    for (char* pointerToWord = strtok(dataArray, " \n"); pointerToWord; pointerToWord = strtok(NULL, " \n")) {
-        Token* currentToken = (Token*)calloc(1, sizeof(Token));
-        assert(currentToken);
+    char* code = (char*)calloc(fileSize + 1, sizeof(char));
+    assert(code);
 
-        currentToken->value = pointerToWord;
+    fread(code, sizeof(char), fileSize, file);
 
-        if (tokenVector.size) {
-            currentToken->left = (Token*)vectorGet(&tokenVector, tokenVector.size - 1);
-            ((Token*)vectorGet(&tokenVector, tokenVector.size - 1))->right = currentToken;
-        } else {
-            Token* serviceToken = (Token*)calloc(1, sizeof(Token));
-            assert(serviceToken);
+    fclose(file);
 
-            currentToken->left = serviceToken;
-
-            serviceToken->value = dataArray;
+    for (size_t i = 0; i < fileSize;) {
+        while (i < fileSize && isspace(code[i])) {
+            ++i;
         }
 
-        if (!strcmp(pointerToWord, keyDef)) {
-            currentToken->type = Function;
-        } else if (isKeyWord(pointerToWord)) {
-            currentToken->type = Operation;
-        } else if (isdigit(pointerToWord[0])) {
-            currentToken->type = Number;
+        std::string buffer;
+        if (isalpha(code[i])) {
+            while (i < fileSize && (isalnum(code[i]) || code[i] == '_')) {
+                buffer += code[i++];
+            }
+            tokens.push_back(strdup(buffer.c_str()));
+        } else if (isdigit(code[i])) {
+            while (i < fileSize && isdigit(code[i])) {
+                buffer += code[i++];
+            }
+            tokens.push_back(strdup(buffer.c_str())); 
+        } else if (kAllowedSpecialChars.contains(code[i])) {
+            while (i < fileSize && kAllowedSpecialChars.contains(code[i])) {
+                buffer += code[i++];
+            }
+            if (!isKeyWord(buffer.c_str())) {
+                fprintf(stderr, "Unknown operator '%s'", buffer.c_str());
+                exit(1);
+            }
+            tokens.push_back(strdup(buffer.c_str())); 
         } else {
-            currentToken->type = Identifier;
+            fprintf(stderr, "The token starts with an invalid character '%c'.\n", code[i]);
+            exit(1);
         }
 
-        vectorPush(&tokenVector, currentToken);
+        if (buffer == keyEnd) {
+            break;
+        }
     }
 
-    for (size_t i = 0; i != tokenVector.size; ++i) {
-        printf("%s ", ((Token*)vectorGet(&tokenVector, i))->value);
-    }
-
-    return tokenVector;
+    free(code);
 }
 
 void tokenVectorDtor(Vector* vec) {
@@ -85,6 +94,7 @@ bool isKeyWord(const char* const word) {
     else if (!strcmp(word, keyMul)) return true;
     else if (!strcmp(word, keyDiv)) return true;
     else if (!strcmp(word, keySemicolon)) return true;
+    else if (!strcmp(word, keyEqual)) return true;
     else if (!strcmp(word, keyLeftParenthesis)) return true; // doesnt exist in the tree
     else if (!strcmp(word, keyRightParenthesis)) return true; // doesnt exist in the tree
     else if (!strcmp(word, keyLeftCurlyBracket)) return true; // doesnt exist in the tree

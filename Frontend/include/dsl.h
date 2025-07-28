@@ -4,9 +4,9 @@
 #include "tokenizer.h"
 
 #define CHECK_LEFT_PARENTHESIS \
-    do { if (strcmp(GET_TOKEN(*pos), "(")) syntaxError(__LINE__); } while(0);
+    do { if (strcmp(tokens[*pos], "(")) syntaxError(__LINE__); } while(0);
 #define CHECK_RIGHT_PARENTHESIS \
-    do { if (strcmp(GET_TOKEN(*pos), ")")) syntaxError(__LINE__); } while(0);
+    do { if (strcmp(tokens[*pos], ")")) syntaxError(__LINE__); } while(0);
 
 #define GET_TOKEN(pos_) \
     (((Token*)vectorGet(&tokenVector, pos_))->value)

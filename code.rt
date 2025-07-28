@@ -12,7 +12,8 @@ a = 5 ;
 k = call factorial ( a ) ;
 print_int ( k ) ;
 
-k = ( ( 1 + a ) * 5 ) ;
+k = ( ( 1 + a ) * 5  - 10) ;
+print_ascii ( k ) ;
 print_int ( k ) ;
 
 end

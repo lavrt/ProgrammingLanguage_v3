@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <vector>
 
 #include "headers.h"
 #include "generator.h"
@@ -8,16 +9,19 @@
 #include "tokenizer.h"
 
 int main() {
-    Vector tokens = tokenizer();     
+    std::vector<char*> tokens;
+    tokenizer(tokens);
+
     tNode* root = runParser(tokens);
-    // saveTree(root); 
+    saveTree(root); 
+
+
   
 
 
 
 
-    // tNode* newRoot = ReadTree();
-    dump(root);
+    tNode* newRoot = ReadTree();
 
     TCodeGen cg;
     CodeGenCtor(&cg);
@@ -26,14 +30,9 @@ int main() {
     CreateElfHeader(&ehdr);
 
     CodegenProgram(&cg, root, &ehdr);
-    // backendTreeDtor(newRoot);
 
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, cg.size);
-
-    tokenVectorDtor(&tokens);        
-    free(tokens.data);               
-    treeDtor(root);
 
     FILE* file = fopen("output.elf", "wb");
     if (!file) {
