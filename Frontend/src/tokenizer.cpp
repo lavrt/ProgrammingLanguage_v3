@@ -70,10 +70,10 @@ void tokenizer(std::vector<char*>& tokens) {
     free(code);
 }
 
-void tokenVectorDtor(Vector* vec) {
-    FREE(((Token*)vectorGet(vec, 0))->left->value);
-    FREE(((Token*)vectorGet(vec, 0))->left);
-    freeAllocatedVectorCells(vec);
+void freeTokens(std::vector<char*>& tokens) {
+    for (char* token : tokens) {
+        free(token);
+    }
 }
 
 size_t getFileSize(FILE* file) {

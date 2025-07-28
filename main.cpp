@@ -15,13 +15,13 @@ int main() {
     tNode* root = runParser(tokens);
     saveTree(root); 
 
-
-  
-
-
+    freeTokens(tokens);
+    treeDtor(root);
 
 
-    tNode* newRoot = ReadTree();
+
+    std::vector<std::pair<NodeType, char*>> nodes;
+    tNode* newRoot = ReadTree(nodes);
 
     TCodeGen cg;
     CodeGenCtor(&cg);
@@ -29,7 +29,7 @@ int main() {
     Elf64_Ehdr ehdr;
     CreateElfHeader(&ehdr);
 
-    CodegenProgram(&cg, root, &ehdr);
+    CodegenProgram(&cg, newRoot, &ehdr);
 
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, cg.size);
@@ -46,6 +46,9 @@ int main() {
     printf("ELF file created\n");
 
     CodeGenDtor(&cg); 
+
+    freeNodes(nodes);
+    treeDtor(newRoot);
 
     return 0;
 }

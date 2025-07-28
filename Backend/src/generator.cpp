@@ -81,15 +81,7 @@ void CodeGenCtor(TCodeGen* cg) {
 
 void CodeGenDtor(TCodeGen* cg) {
     free(cg->code);
-
-    for (int i = 0; i != cg->varCount; ++i) {
-        free(cg->vars[i].id);
-    }
     free(cg->vars);
-
-    for (int i = 0; i != cg->funcCount; ++i) {
-        free(cg->funcs[i].name);
-    }
     free(cg->funcs);
 }
 
@@ -125,11 +117,11 @@ void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr) {
 void AddFunc(TCodeGen* cg, const char* name) {
     if (cg->funcCount >= kAdditionalCapacityOfNameTable) {
         cg->funcs = (TFunctions*)realloc(
-            cg->funcs, (cg->funcCount + kAdditionalCapacityOfNameTable) * sizeof(TFunctions)
+            cg->funcs, ((long unsigned)(cg->funcCount + kAdditionalCapacityOfNameTable)) * sizeof(TFunctions)
         );
         assert(cg->funcs);
     }
-    cg->funcs[cg->funcCount].name = strdup(name);
+    cg->funcs[cg->funcCount].name = name;
     cg->funcs[cg->funcCount].addr = cg->size;
     ++cg->funcCount;
 }
@@ -171,11 +163,11 @@ static void AddVar(TCodeGen* cg, const char* id) {
     int& varOffset = cg->isLocal ? cg->localStackOffset : cg->stackOffset;
     if (cg->varCount >= kAdditionalCapacityOfNameTable) {
         cg->vars = (TVariables*)realloc(
-            cg->vars, (cg->varCount + kAdditionalCapacityOfNameTable) * sizeof(TVariables)
+            cg->vars, ((long unsigned)(cg->varCount + kAdditionalCapacityOfNameTable)) * sizeof(TVariables)
         );
         assert(cg->vars);
     }
-    cg->vars[cg->varCount].id = strdup(id);
+    cg->vars[cg->varCount].id = id;
     varOffset += 8;
     cg->vars[cg->varCount].offset = varOffset;
     ++cg->varCount;
@@ -255,7 +247,7 @@ static void CodeGenStmt(TCodeGen* cg, tNode* node) {
 }
 
 static void GenExpr::EmitNumber(TCodeGen* cg, tNode* node) {
-    push_imm32(cg, (int32_t)atoi(node->value));
+    push_imm32(cg, atoi(node->value));
 }
 
 static void GenExpr::EmitIdentifier(TCodeGen* cg, tNode* node) {
@@ -344,7 +336,7 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
         fprintf(stderr, "Undefined function\n");
         exit(EXIT_FAILURE);
     }
-    call_rel32(cg, addr - (cg->size + 5));
+    call_rel32(cg, (int32_t)(addr - (cg->size + 5)));
 
     pop_reg(cg, REG_R9);
     pop_reg(cg, REG_R8);
@@ -369,7 +361,7 @@ static void GenStmt::EmitFunction(TCodeGen* cg, tNode* node) {
     mov_reg_reg(cg, REG_BP, REG_SP);
 
     tNode* arg = node->left;
-    size_t argCount = 0;
+    int argCount = 0;
     while (arg && argCount < 6) {
         AddVar(cg, arg->value);
         int offset = cg->vars[cg->varCount - 1].offset;
@@ -432,7 +424,7 @@ static void GenStmt::Operation::EmitPrintAscii(TCodeGen* cg, tNode* node) {
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DI);
 
-    call_rel32(cg, printAsciiAddr - (cg->size + 5));
+    call_rel32(cg, (int32_t)(printAsciiAddr - (cg->size + 5)));
 
     pop_reg(cg, REG_DI);
     pop_reg(cg, REG_SI);
@@ -456,7 +448,7 @@ static void GenStmt::Operation::EmitPrintInt(TCodeGen* cg, tNode* node) {
     push_reg(cg, REG_DX);
     push_reg(cg, REG_DI);
 
-    call_rel32(cg, printIntAddr - (cg->size + 5));
+    call_rel32(cg, (int32_t)(printIntAddr - (cg->size + 5)));
 
     pop_reg(cg, REG_DI);
     pop_reg(cg, REG_DX);

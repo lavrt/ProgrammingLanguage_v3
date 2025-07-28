@@ -146,13 +146,9 @@ static tNode* getDef(std::vector<char*>& tokens, size_t* pos) {
 
 static tNode* getOperation(std::vector<char*>& tokens, size_t* pos) {
     if (!strcmp(tokens[*pos], keyIf)) {
-        (*pos)++;
-        tNode* node = getIf(tokens, pos);
-        return node;
+        return getIf(tokens, pos);
     } else if (!strcmp(tokens[*pos], keyWhile)) {
-        (*pos)++;
-        tNode* node = getWhile(tokens, pos);
-        return node;
+        return getWhile(tokens, pos);
     } else if (!strcmp(tokens[*pos], keyPrintAscii)) {
         size_t op = *pos;
         (*pos)++;
@@ -170,12 +166,12 @@ static tNode* getOperation(std::vector<char*>& tokens, size_t* pos) {
         tNode* leftNode = getComparsion(tokens, pos);
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-
         return newNode(Operation, tokens[op], leftNode, nullptr);
     } else if (!strcmp(tokens[*pos], keyReturn)) {
+        size_t op = *pos;
         (*pos)++;
         tNode* leftNode = getComparsion(tokens, pos);
-        return newNode(Operation, keyReturn, leftNode, NULL);
+        return newNode(Operation, tokens[op], leftNode, nullptr);
     } else if (!strcmp(tokens[*pos], keyLeftCurlyBracket)) {
         (*pos)++;
         tNode* leftNode = getOperation(tokens, pos);
@@ -184,10 +180,10 @@ static tNode* getOperation(std::vector<char*>& tokens, size_t* pos) {
         }
         while (strcmp(tokens[*pos], keyRightCurlyBracket)) {
             tNode* rightNode = getOperation(tokens, pos);
-            if (strcmp(tokens[(*pos)++], keySemicolon)) {
+            if (strcmp(tokens[(*pos)], keySemicolon)) {
                 syntaxError(__LINE__);
             }
-            leftNode = SEMICOLON(leftNode, rightNode);
+            leftNode = newNode(Operation, tokens[(*pos)++], leftNode, rightNode);
         }
 
         if (strcmp(tokens[(*pos)++], keyRightCurlyBracket)) {
@@ -203,6 +199,8 @@ static tNode* getOperation(std::vector<char*>& tokens, size_t* pos) {
 }
 
 static tNode* getIf(std::vector<char*>& tokens, size_t* pos) {
+    size_t op = *pos;
+    (*pos)++;
     CHECK_LEFT_PARENTHESIS;
     (*pos)++;
     tNode* leftNode = getComparsion(tokens, pos);
@@ -211,10 +209,12 @@ static tNode* getIf(std::vector<char*>& tokens, size_t* pos) {
 
     tNode* rightNode = getOperation(tokens, pos);
 
-    return IF(leftNode, rightNode);
+    return newNode(Operation, tokens[op], leftNode, rightNode);
 }
 
 static tNode* getWhile(std::vector<char*>& tokens, size_t* pos) {
+    size_t op = *pos;
+    (*pos)++;
     CHECK_LEFT_PARENTHESIS;
     (*pos)++;
     tNode* leftNode = getComparsion(tokens, pos);
@@ -223,15 +223,16 @@ static tNode* getWhile(std::vector<char*>& tokens, size_t* pos) {
 
     tNode* rightNode = getOperation(tokens, pos);
 
-    return WHILE(leftNode, rightNode);
+    return newNode(Operation, tokens[op], leftNode, rightNode);
 }
 
 static tNode* getAssignment(std::vector<char*>& tokens, size_t* pos) {
     tNode* leftNode = getVariable(tokens, pos);
-    tNode* rightNode = NULL;
+    tNode* rightNode = nullptr;
     if (strcmp(tokens[*pos], keyEqual)) {
         syntaxError(__LINE__);
     }
+    size_t op = *pos;
     (*pos)++;
     if (!strcmp(tokens[*pos], keyCall)) {
         (*pos)++;
@@ -242,16 +243,16 @@ static tNode* getAssignment(std::vector<char*>& tokens, size_t* pos) {
         tNode* leftNode = getVariable(tokens, pos);
         while (!strcmp(tokens[*pos], keySemicolon)) {
             (*pos)++;
-            leftNode->left = newNode(Identifier, tokens[*pos], NULL, NULL);
+            leftNode->left = newNode(Identifier, tokens[*pos], nullptr, nullptr);
             (*pos)++;
         }
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-        rightNode = newNode(Calling, name, leftNode, NULL); 
+        rightNode = newNode(Calling, name, leftNode, nullptr); 
     } else {
         rightNode = getComparsion(tokens, pos);
     }
-    return EQUAL(leftNode, rightNode);
+    return newNode(Operation, tokens[op], leftNode, rightNode);
 }
 
 static void syntaxError(int line) {

@@ -8,12 +8,12 @@
 #include "node.h"
 
 struct TVariables {
-    char* id;
+    const char* id;
     int offset;
 };
 
 struct TFunctions {
-    char* name;
+    const char* name;
     size_t addr; 
 };
 

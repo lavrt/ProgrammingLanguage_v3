@@ -20,6 +20,6 @@ struct Token {
 void tokenizer(std::vector<char*>& tokens);
 size_t getFileSize(FILE* file);
 bool isKeyWord(const char* const word);
-void tokenVectorDtor(Vector* vec);
+void freeTokens(std::vector<char*>& tokens);
 
 #endif // TOKENIZER_H

@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
 
 #define FREE(ptr_) \
     do { free(ptr_); ptr_ = NULL; } while(0);
@@ -27,7 +28,7 @@ void dump(tNode* root);
 tNode* copyNode(tNode* node);
 bool subtreeContainsVariable(tNode* node);
 void saveTree(tNode* root);
-tNode* ReadTree();
-void backendTreeDtor(tNode* node);
+tNode* ReadTree(std::vector<std::pair<NodeType, char*>>& nodes);
+void freeNodes(std::vector<std::pair<NodeType, char*>>& nodes);
 
 #endif // TREE_H

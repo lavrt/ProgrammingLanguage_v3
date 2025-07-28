@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <vector>
 
 #include "tokenizer.h"
 #include "debug.h"
@@ -150,7 +149,7 @@ void saveTree(tNode* root) {
     FCLOSE(outputFile);
 } 
 
-tNode* ReadTree() {
+tNode* ReadTree(std::vector<std::pair<NodeType, char*>>& nodes) {
     FILE* file = fopen(kNameOfFileWithTree, "rb");
     assert(file);
 
@@ -163,7 +162,6 @@ tNode* ReadTree() {
 
     FCLOSE(file);
 
-    std::vector<std::pair<NodeType, char*>> nodes;
     if (char* ptr = strtok(dataArray, " ")) {
         NodeType type = (NodeType)atoi(ptr);
         ptr = strtok(NULL, " ");
@@ -179,16 +177,11 @@ tNode* ReadTree() {
     return ReadTreeFromFile(nodes, 0).first;
 }
 
-// void backendTreeDtor(tNode* node) {
-//     if (node->left) {
-//         backendTreeDtor(node->left);
-//     }
-//     if (node->right) {
-//         backendTreeDtor(node->right);
-//     }
-//     FREE(node->value);
-//     FREE(node);
-// }
+void freeNodes(std::vector<std::pair<NodeType, char*>>& nodes) {
+    for (std::pair<NodeType, char*>& node : nodes) {
+        free(node.second);
+    }
+}
 
 // static --------------------------------------------------------------------------------------------------------------
 
