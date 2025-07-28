@@ -54,6 +54,10 @@ Vector tokenizer() {
         vectorPush(&tokenVector, currentToken);
     }
 
+    for (size_t i = 0; i != tokenVector.size; ++i) {
+        printf("%s ", ((Token*)vectorGet(&tokenVector, i))->value);
+    }
+
     return tokenVector;
 }
 
@@ -75,29 +79,32 @@ size_t getFileSize(FILE* file) {
 }
 
 bool isKeyWord(const char* const word) {
-         if (!strcmp(word, keyIf               )) return true;
-    else if (!strcmp(word, keyDef              )) return true;
-    else if (!strcmp(word, keyAdd              )) return true;
-    else if (!strcmp(word, keySub              )) return true;
-    else if (!strcmp(word, keyMul              )) return true;
-    else if (!strcmp(word, keyDiv              )) return true;
-    else if (!strcmp(word, keyEnd              )) return true;
-    else if (!strcmp(word, keyCall             )) return true;
-    else if (!strcmp(word, keyLess             )) return true;
-    else if (!strcmp(word, keyWhile            )) return true;
-    else if (!strcmp(word, keyPrintAscii       )) return true;
-    else if (!strcmp(word, keyPrintInt         )) return true;
-    else if (!strcmp(word, keyReturn           )) return true;
-    else if (!strcmp(word, keyGreater          )) return true;
-    else if (!strcmp(word, keySemicolon        )) return true;
-    else if (!strcmp(word, keyIdentical        )) return true;
-    else if (!strcmp(word, keyLessOrEqual      )) return true;
-    else if (!strcmp(word, keyNotIdentical     )) return true;
-    else if (!strcmp(word, keyGreaterOrEqual   )) return true;
-    else if (!strcmp(word, keyLeftParenthesis  )) return true;
-    else if (!strcmp(word, keyRightParenthesis )) return true;
-    else if (!strcmp(word, keyLeftCurlyBracket )) return true;
-    else if (!strcmp(word, keyRightCurlyBracket)) return true;
+         
+         if (!strcmp(word, keyAdd)) return true;
+    else if (!strcmp(word, keySub)) return true;
+    else if (!strcmp(word, keyMul)) return true;
+    else if (!strcmp(word, keyDiv)) return true;
+    else if (!strcmp(word, keySemicolon)) return true;
+    else if (!strcmp(word, keyLeftParenthesis)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyRightParenthesis)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyLeftCurlyBracket)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyRightCurlyBracket)) return true; // doesnt exist in the tree
+
+    else if (!strcmp(word, keyLess)) return true;
+    else if (!strcmp(word, keyGreater)) return true;
+    else if (!strcmp(word, keyIdentical)) return true;
+    else if (!strcmp(word, keyLessOrEqual)) return true;
+    else if (!strcmp(word, keyNotIdentical)) return true;
+    else if (!strcmp(word, keyGreaterOrEqual)) return true;
+
+    else if (!strcmp(word, keyIf)) return true;
+    else if (!strcmp(word, keyWhile)) return true;
+    else if (!strcmp(word, keyPrintAscii)) return true;
+    else if (!strcmp(word, keyPrintInt)) return true;
+    else if (!strcmp(word, keyReturn)) return true;
+    else if (!strcmp(word, keyEnd)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyDef)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyCall)) return true; // doesnt exist in the tree
 
     else return false;
 }

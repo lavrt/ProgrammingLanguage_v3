@@ -167,12 +167,12 @@ tNode* ReadTree() {
     if (char* ptr = strtok(dataArray, " ")) {
         NodeType type = (NodeType)atoi(ptr);
         ptr = strtok(NULL, " ");
-        nodes.push_back({type, strdup(ptr)});
+        nodes.push_back({ type, strdup(ptr) });
 
         while ((ptr = strtok(NULL, " "))) {
             NodeType type = (NodeType)atoi(ptr);
             ptr = strtok(NULL, " ");
-            nodes.push_back({type, strdup(ptr)});        
+            nodes.push_back({ type, strdup(ptr) });        
         }
     }
     

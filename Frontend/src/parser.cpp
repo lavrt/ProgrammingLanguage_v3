@@ -124,10 +124,10 @@ static tNode* getParentheses(Vector tokenVector, size_t* pos) {
         }
         (*pos)++;
         return node;
-    } else if (GET_TOKEN_TYPE(*pos) == Identifier) {
+    } else if (!isdigit(GET_TOKEN(*pos)[0])) {
         tNode* node = getVariable(tokenVector, pos);
         return node;
-    } else if (GET_TOKEN_TYPE(*pos) == Number) {
+    } else if (isdigit(GET_TOKEN(*pos)[0])) {
         return getNumber(tokenVector, pos);
     } else assert(0);
 }

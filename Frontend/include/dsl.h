@@ -10,8 +10,6 @@
 
 #define GET_TOKEN(pos_) \
     (((Token*)vectorGet(&tokenVector, pos_))->value)
-#define GET_TOKEN_TYPE(pos_) \
-    (((Token*)vectorGet(&tokenVector, pos_))->type)
 
 #define NUM(value_) \
     newNode(Number, value_, NULL, NULL)

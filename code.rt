@@ -12,4 +12,7 @@ a = 5 ;
 k = call factorial ( a ) ;
 print_int ( k ) ;
 
+k = ( ( 1 + a ) * 5 ) ;
+print_int ( k ) ;
+
 end
