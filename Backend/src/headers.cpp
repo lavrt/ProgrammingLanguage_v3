@@ -12,7 +12,7 @@ void CreateElfHeader(Elf64_Ehdr* ehdr) {
     ehdr->e_ident[EI_VERSION] = EV_CURRENT;
     ehdr->e_ident[EI_OSABI] = ELFOSABI_SYSV;
     ehdr->e_ident[EI_ABIVERSION] = 0;
-    memset(&ehdr->e_ident + EI_PAD, 0, EI_NIDENT - EI_PAD);
+    memset(ehdr->e_ident + EI_PAD, 0, EI_NIDENT - EI_PAD);
 
     ehdr->e_type = ET_EXEC;
     ehdr->e_machine = EM_X86_64;
