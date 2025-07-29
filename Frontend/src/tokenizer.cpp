@@ -49,12 +49,9 @@ void tokenizer(std::vector<char*>& tokens) {
             }
             tokens.push_back(strdup(buffer.c_str())); 
         } else if (kAllowedSpecialChars.contains(code[i])) {
-            while (i < fileSize && kAllowedSpecialChars.contains(code[i])) {
+            buffer += code[i++];
+            if (code[i] == '=') {
                 buffer += code[i++];
-            }
-            if (!isKeyWord(buffer.c_str())) {
-                fprintf(stderr, "Unknown operator '%s'", buffer.c_str());
-                exit(1);
             }
             tokens.push_back(strdup(buffer.c_str())); 
         } else {

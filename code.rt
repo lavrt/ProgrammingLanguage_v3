@@ -1,19 +1,19 @@
-def factorial ( a1 ) {
-    if ( a1 == 1 ) {
-        return ( 1 ) ;
-    } ;
-    a2 = a1 - 1 ;
-    a3 = call factorial ( a2 ) ;
-    return ( a1 * a3 ) ;
-} ;
+def factorial (a1) {
+    if (a1 == 1) {
+        return (1);
+    };
+    a2 = a1 - 1;
+    a3 = call factorial (a2);
+    return (a1 * a3);
+};
 
-a = 5 ; 
+a = 5; 
 
-k = call factorial ( a ) ;
-print_int ( k ) ;
+k = call factorial (a);
+print_int (k) ;
 
-k = ( ( 1 + a ) * 5  - 10 ) ;
-print_ascii ( k ) ;
-print_int ( k ) ;
+k = ((1 + a) * 5 - 10);
+print_ascii (k);
+print_int (k);
 
 end
