@@ -168,7 +168,7 @@ tNode* ReadTree(std::vector<std::pair<NodeType, char*>>& nodes) {
         nodes.push_back({ type, strdup(ptr) });
 
         while ((ptr = strtok(NULL, " "))) {
-            NodeType type = (NodeType)atoi(ptr);
+            type = (NodeType)atoi(ptr);
             ptr = strtok(NULL, " ");
             nodes.push_back({ type, strdup(ptr) });        
         }

@@ -240,15 +240,15 @@ static tNode* getAssignment(std::vector<char*>& tokens, size_t* pos) {
         (*pos)++;
         CHECK_LEFT_PARENTHESIS;
         (*pos)++;
-        tNode* leftNode = getVariable(tokens, pos);
+        tNode* argNode = getVariable(tokens, pos);
         while (!strcmp(tokens[*pos], keySemicolon)) {
             (*pos)++;
-            leftNode->left = newNode(Identifier, tokens[*pos], nullptr, nullptr);
+            argNode->left = newNode(Identifier, tokens[*pos], nullptr, nullptr);
             (*pos)++;
         }
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-        rightNode = newNode(Calling, name, leftNode, nullptr); 
+        rightNode = newNode(Calling, name, argNode, nullptr); 
     } else {
         rightNode = getComparsion(tokens, pos);
     }

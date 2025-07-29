@@ -100,7 +100,7 @@ static void CreatePrintInt(TCodeGen* cg) {
     int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 6);
     jne_rel32(cg, jmpOffset_2);
 
-    int32_t jmpTarget_4 = cg->size;
+    int32_t jmpTarget_4 = (int32_t)cg->size;
 
     cmp_reg_imm32(cg, REG_CX, 0);
     int32_t jmpPos_3 = (int32_t)cg->size;
@@ -132,7 +132,7 @@ static void CreatePrintInt(TCodeGen* cg) {
 
     dec_reg(cg, REG_CX);
 
-    int32_t jmpPos_4 = cg->size;
+    int32_t jmpPos_4 = (int32_t)cg->size;
     int32_t jmpOffset_4 = jmpTarget_4 - (jmpPos_4 + 5);
     jmp_rel32(cg, jmpOffset_4); 
 

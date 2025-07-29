@@ -221,7 +221,7 @@ static void CodeGenExpr(TCodeGen* cg, tNode* node) {
 
 static void CodeGenStmt(TCodeGen* cg, tNode* node) {
     switch (node->type) {
-        case Function:      GenStmt::EmitFunction(cg, node);        break;
+        case Function:              GenStmt::EmitFunction(cg, node);                    break;
         case Operation: {
             switch (GetOperationType(node->value)) {
                 case Semicolon:     GenStmt::Operation::EmitSemicolon(cg, node);        break;
