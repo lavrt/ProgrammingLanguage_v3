@@ -184,9 +184,9 @@ static size_t FindFunc(const TCodeGen* const cg, const char* name) {
 
 static void CodeGenExpr(TCodeGen* cg, tNode* node) {
     switch (node->type) {
-        case Number:        GenExpr::EmitNumber(cg, node);      break;
-        case Identifier:    GenExpr::EmitIdentifier(cg, node);  break;      
-        case Calling:       GenExpr::EmitCalling(cg, node);     break;
+        case Number:                    GenExpr::EmitNumber(cg, node);              break;
+        case Identifier:                GenExpr::EmitIdentifier(cg, node);          break;      
+        case Calling:                   GenExpr::EmitCalling(cg, node);             break;
         case Binary: {
             CodeGenExpr(cg, node->left);
             CodeGenExpr(cg, node->right);

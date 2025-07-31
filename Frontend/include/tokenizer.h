@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "node.h"
-#include "vector.h"
 
 const int kInitialSizeOfTokenVector = 64;
 const char* const kNameOfFileWithCode = "code.rt";

@@ -4,10 +4,8 @@
 
 #pragma GCC push_options
 #pragma GCC optimize ("no-stack-protector")
-// Disabling stack protector is safe here because:
-// 1. All buffers are small and fixed-size (1-7 bytes)
-// 2. No buffer operations that could overflow
-// 3. No external inputs affect buffer sizes
+// Disabling stack protector is safe here because all buffers are small and fixed-size (1-7 bytes)
+// and there are no buffer operations that could overflow
 
 // PUSH r64
 // size: 1 byte

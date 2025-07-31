@@ -6,31 +6,30 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "vector.h"
 #include "tree.h"
 #include "debug.h"
 #include "dsl.h"
 
 // static --------------------------------------------------------------------------------------------------------------
 
-static tNode* getGrammar(std::vector<char*>& tokens);
-static tNode* getIf(std::vector<char*>& tokens, size_t* pos);
-static tNode* getDef(std::vector<char*>& tokens, size_t* pos);
-static tNode* getWhile(std::vector<char*>& tokens, size_t* pos);
-static tNode* getNumber(std::vector<char*>& tokens, size_t* pos);
-static tNode* getVariable(std::vector<char*>& tokens, size_t* pos);
-static tNode* getOperation(std::vector<char*>& tokens, size_t* pos);
-static tNode* getExpression(std::vector<char*>& tokens, size_t* pos);
-static tNode* getComparsion(std::vector<char*>& tokens, size_t* pos);
-static tNode* getAssignment(std::vector<char*>& tokens, size_t* pos);
-static tNode* getParentheses(std::vector<char*>& tokens, size_t* pos);
-static tNode* getMultiplication(std::vector<char*>& tokens, size_t* pos);
+static tNode* getGrammar(const std::vector<char*>& tokens);
+static tNode* getIf(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getDef(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getWhile(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getNumber(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getVariable(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getOperation(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getExpression(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getComparsion(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getAssignment(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getParentheses(const std::vector<char*>& tokens, size_t* pos);
+static tNode* getMultiplication(const std::vector<char*>& tokens, size_t* pos);
 
 [[noreturn]] static void syntaxError(int line);
 
 // global --------------------------------------------------------------------------------------------------------------
 
-tNode* runParser(std::vector<char*>& tokens) {
+tNode* runParser(const std::vector<char*>& tokens) {
     tNode* root = getGrammar(tokens);
 
     return root;
@@ -38,7 +37,7 @@ tNode* runParser(std::vector<char*>& tokens) {
 
 // static --------------------------------------------------------------------------------------------------------------
 
-static tNode* getGrammar(std::vector<char*>& tokens) {
+static tNode* getGrammar(const std::vector<char*>& tokens) {
     size_t pos = 0;
 
     tNode* leftNode = getDef(tokens, &pos);
@@ -56,7 +55,7 @@ static tNode* getGrammar(std::vector<char*>& tokens) {
     return leftNode;
 }
 
-static tNode* getExpression(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getExpression(const std::vector<char*>& tokens, size_t* pos) {
     tNode* leftNode = getMultiplication(tokens, pos);
 
     while (!strcmp(tokens[*pos], keyAdd) || !strcmp(tokens[*pos], keySub)) {
@@ -68,7 +67,7 @@ static tNode* getExpression(std::vector<char*>& tokens, size_t* pos) {
     return leftNode;
 }
 
-static tNode* getComparsion(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getComparsion(const std::vector<char*>& tokens, size_t* pos) {
     tNode* leftNode = getExpression(tokens, pos);
 
     if (!strcmp(tokens[*pos], keyGreater) || !strcmp(tokens[*pos], keyLess ) || !strcmp(tokens[*pos], keyIdentical) ||
@@ -83,7 +82,7 @@ static tNode* getComparsion(std::vector<char*>& tokens, size_t* pos) {
     return leftNode;
 }
 
-static tNode* getMultiplication(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getMultiplication(const std::vector<char*>& tokens, size_t* pos) {
     tNode* leftNode = getParentheses(tokens, pos);
 
     while (!strcmp(tokens[*pos], keyMul) || !strcmp(tokens[*pos], keyDiv)) {
@@ -95,7 +94,7 @@ static tNode* getMultiplication(std::vector<char*>& tokens, size_t* pos) {
     return leftNode;
 }
 
-static tNode* getParentheses(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getParentheses(const std::vector<char*>& tokens, size_t* pos) {
     if (!strcmp(tokens[*pos], keyLeftParenthesis)) {
         (*pos)++;
         tNode* node = getComparsion(tokens, pos);
@@ -112,15 +111,15 @@ static tNode* getParentheses(std::vector<char*>& tokens, size_t* pos) {
     } else assert(0);
 }
 
-static tNode* getNumber(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getNumber(const std::vector<char*>& tokens, size_t* pos) {
     return newNode(Number, tokens[(*pos)++], nullptr, nullptr);
 }
 
-static tNode* getVariable(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getVariable(const std::vector<char*>& tokens, size_t* pos) {
     return newNode(Identifier, tokens[(*pos)++], nullptr, nullptr);
 }
 
-static tNode* getDef(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getDef(const std::vector<char*>& tokens, size_t* pos) {
     if (!strcmp(tokens[*pos], keyDef)) {
         (*pos)++;
         char* name = tokens[*pos];
@@ -144,7 +143,7 @@ static tNode* getDef(std::vector<char*>& tokens, size_t* pos) {
     return leftNode;
 }
 
-static tNode* getOperation(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getOperation(const std::vector<char*>& tokens, size_t* pos) {
     if (!strcmp(tokens[*pos], keyIf)) {
         return getIf(tokens, pos);
     } else if (!strcmp(tokens[*pos], keyWhile)) {
@@ -198,7 +197,7 @@ static tNode* getOperation(std::vector<char*>& tokens, size_t* pos) {
     }
 }
 
-static tNode* getIf(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getIf(const std::vector<char*>& tokens, size_t* pos) {
     size_t op = *pos;
     (*pos)++;
     CHECK_LEFT_PARENTHESIS;
@@ -212,7 +211,7 @@ static tNode* getIf(std::vector<char*>& tokens, size_t* pos) {
     return newNode(Operation, tokens[op], leftNode, rightNode);
 }
 
-static tNode* getWhile(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getWhile(const std::vector<char*>& tokens, size_t* pos) {
     size_t op = *pos;
     (*pos)++;
     CHECK_LEFT_PARENTHESIS;
@@ -226,7 +225,7 @@ static tNode* getWhile(std::vector<char*>& tokens, size_t* pos) {
     return newNode(Operation, tokens[op], leftNode, rightNode);
 }
 
-static tNode* getAssignment(std::vector<char*>& tokens, size_t* pos) {
+static tNode* getAssignment(const std::vector<char*>& tokens, size_t* pos) {
     tNode* leftNode = getVariable(tokens, pos);
     tNode* rightNode = nullptr;
     if (strcmp(tokens[*pos], keyEqual)) {
