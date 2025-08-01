@@ -12,8 +12,8 @@
 #define FCLOSE(ptr_) \
     do { fclose(ptr_); ptr_ = NULL; } while(0);
 
-const char* const kDumpFileName = "./Frontend/dump/dump.gv";
-const char* const kNameOfFileWithTree = "./Frontend/dump/tree.txt";
+const char* const kDumpFileName = "./tmp/dump.gv";
+const char* const kNameOfFileWithTree = "./tmp/tree.txt";
 
 const char* const kFunction = "def";
 const char* const kNumber = "number";
@@ -22,6 +22,7 @@ const char* const kOperation = "operation";
 const char* const kCalling = "calling";
 const char* const kBinary = "binary";
 
+size_t getFileSize(FILE* file);
 tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right);
 void treeDtor(tNode* node);
 void dump(tNode* root);

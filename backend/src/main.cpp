@@ -1,24 +1,10 @@
-#include <stdio.h>
 #include <vector>
 
-#include "headers.h"
-#include "generator.h"
-#include "parser.h"
 #include "tree.h"
-#include "tokenizer.h"
+#include "generator.h"
+#include "headers.h"
 
 int main() {
-    std::vector<char*> tokens;
-    tokenizer(tokens);
-
-    tNode* root = runParser(tokens);
-    saveTree(root); 
-
-    freeTokens(tokens);
-    treeDtor(root);
-
-
-
     std::vector<std::pair<NodeType, char*>> nodes;
     tNode* newRoot = ReadTree(nodes);
 
@@ -33,10 +19,10 @@ int main() {
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, cg.size);
 
-    FILE* file = fopen("output.elf", "wb");
+    FILE* file = fopen("./bin/output.elf", "wb");
     if (!file) {
         fprintf(stderr, "Cannot open output file\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     fwrite(&ehdr, sizeof(Elf64_Ehdr), 1, file);
     fwrite(&phdr, sizeof(Elf64_Phdr), 1, file);

@@ -1,6 +1,7 @@
 *.elf
-*.json
 
+.vscode/
 build/
 dump/
 bin/
+tmp/

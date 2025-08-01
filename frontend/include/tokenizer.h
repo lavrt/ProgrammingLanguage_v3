@@ -7,7 +7,7 @@
 #include "node.h"
 
 const int kInitialSizeOfTokenVector = 64;
-const char* const kNameOfFileWithCode = "code.rt";
+const char* const kNameOfFileWithCode = "./examples/code.rt";
 
 struct Token {
     NodeType type;
@@ -17,7 +17,6 @@ struct Token {
 };
 
 void tokenizer(std::vector<char*>& tokens);
-size_t getFileSize(FILE* file);
 bool isKeyWord(const char* const word);
 void freeTokens(std::vector<char*>& tokens);
 

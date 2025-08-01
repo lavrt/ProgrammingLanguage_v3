@@ -4,8 +4,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "tokenizer.h"
-#include "debug.h"
+// #include "debug.h"
 
 #define GRAPHVIZ 
 
@@ -18,6 +17,17 @@ static void saveTreeToFile(FILE* file, tNode* node);
 static std::pair<tNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, char*>>& nodes, size_t pos);
 
 // global ------------------------------------------------------------------------------------------
+
+size_t getFileSize(FILE* file) {
+    assert(file);
+
+    long currentPos = ftell(file);
+    fseek(file, 0, SEEK_END);
+    size_t size = (size_t)ftell(file);
+    fseek(file, currentPos, SEEK_SET);
+
+    return size;
+}
 
 tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right) {
     tNode* node = NULL;

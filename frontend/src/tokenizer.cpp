@@ -73,17 +73,6 @@ void freeTokens(std::vector<char*>& tokens) {
     }
 }
 
-size_t getFileSize(FILE* file) {
-    assert(file);
-
-    long currentPos = ftell(file);
-    fseek(file, 0, SEEK_END);
-    size_t size = (size_t)ftell(file);
-    fseek(file, currentPos, SEEK_SET);
-
-    return size;
-}
-
 bool isKeyWord(const char* const word) {
          
          if (!strcmp(word, keyAdd)) return true;
