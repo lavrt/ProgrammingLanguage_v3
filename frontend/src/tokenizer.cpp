@@ -20,7 +20,7 @@ static const std::unordered_set<char> kAllowedSpecialChars = {
 // global ------------------------------------------------------------------------------------------
 
 void tokenizer(std::vector<char*>& tokens) {
-    FILE* file = fopen(kNameOfFileWithCode, "r");
+    FILE* file = fopen(kNameOfFileWithCode, "rb");
     assert(file);
 
     size_t fileSize = getFileSize(file);
@@ -73,34 +73,4 @@ void freeTokens(std::vector<char*>& tokens) {
     }
 }
 
-bool isKeyWord(const char* const word) {
-         
-         if (!strcmp(word, keyAdd)) return true;
-    else if (!strcmp(word, keySub)) return true;
-    else if (!strcmp(word, keyMul)) return true;
-    else if (!strcmp(word, keyDiv)) return true;
-    else if (!strcmp(word, keySemicolon)) return true;
-    else if (!strcmp(word, keyEqual)) return true;
-    else if (!strcmp(word, keyLeftParenthesis)) return true; // doesnt exist in the tree
-    else if (!strcmp(word, keyRightParenthesis)) return true; // doesnt exist in the tree
-    else if (!strcmp(word, keyLeftCurlyBracket)) return true; // doesnt exist in the tree
-    else if (!strcmp(word, keyRightCurlyBracket)) return true; // doesnt exist in the tree
 
-    else if (!strcmp(word, keyLess)) return true;
-    else if (!strcmp(word, keyGreater)) return true;
-    else if (!strcmp(word, keyIdentical)) return true;
-    else if (!strcmp(word, keyLessOrEqual)) return true;
-    else if (!strcmp(word, keyNotIdentical)) return true;
-    else if (!strcmp(word, keyGreaterOrEqual)) return true;
-
-    else if (!strcmp(word, keyIf)) return true;
-    else if (!strcmp(word, keyWhile)) return true;
-    else if (!strcmp(word, keyPrintAscii)) return true;
-    else if (!strcmp(word, keyPrintInt)) return true;
-    else if (!strcmp(word, keyReturn)) return true;
-    else if (!strcmp(word, keyEnd)) return true; // doesnt exist in the tree
-    else if (!strcmp(word, keyDef)) return true; // doesnt exist in the tree
-    else if (!strcmp(word, keyCall)) return true; // doesnt exist in the tree
-
-    else return false;
-}

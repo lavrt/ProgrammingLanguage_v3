@@ -8,7 +8,6 @@
 
 #include "tree.h"
 #include "debug.h"
-#include "dsl.h"
 
 // static --------------------------------------------------------------------------------------------------------------
 
@@ -26,13 +25,12 @@ static tNode* getParentheses(const std::vector<char*>& tokens, size_t* pos);
 static tNode* getMultiplication(const std::vector<char*>& tokens, size_t* pos);
 
 [[noreturn]] static void syntaxError(int line);
+static bool isKeyWord(const char* const word);
 
 // global --------------------------------------------------------------------------------------------------------------
 
 tNode* runParser(const std::vector<char*>& tokens) {
-    tNode* root = getGrammar(tokens);
-
-    return root;
+    return getGrammar(tokens);
 }
 
 // static --------------------------------------------------------------------------------------------------------------
@@ -258,4 +256,35 @@ static void syntaxError(int line) {
     fprintf(stderr, "Syntax error in %d\n", line);
 
     exit(EXIT_FAILURE);
+}
+
+static bool isKeyWord(const char* const word) {
+         if (!strcmp(word, keyAdd)) return true;
+    else if (!strcmp(word, keySub)) return true;
+    else if (!strcmp(word, keyMul)) return true;
+    else if (!strcmp(word, keyDiv)) return true;
+    else if (!strcmp(word, keySemicolon)) return true;
+    else if (!strcmp(word, keyEqual)) return true;
+    else if (!strcmp(word, keyLeftParenthesis)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyRightParenthesis)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyLeftCurlyBracket)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyRightCurlyBracket)) return true; // doesnt exist in the tree
+
+    else if (!strcmp(word, keyLess)) return true;
+    else if (!strcmp(word, keyGreater)) return true;
+    else if (!strcmp(word, keyIdentical)) return true;
+    else if (!strcmp(word, keyLessOrEqual)) return true;
+    else if (!strcmp(word, keyNotIdentical)) return true;
+    else if (!strcmp(word, keyGreaterOrEqual)) return true;
+
+    else if (!strcmp(word, keyIf)) return true;
+    else if (!strcmp(word, keyWhile)) return true;
+    else if (!strcmp(word, keyPrintAscii)) return true;
+    else if (!strcmp(word, keyPrintInt)) return true;
+    else if (!strcmp(word, keyReturn)) return true;
+    else if (!strcmp(word, keyEnd)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyDef)) return true; // doesnt exist in the tree
+    else if (!strcmp(word, keyCall)) return true; // doesnt exist in the tree
+
+    else return false;
 }

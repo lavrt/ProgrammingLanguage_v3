@@ -4,6 +4,12 @@
 #include "generator.h"
 #include "headers.h"
 
+// static ------------------------------------------------------------------------------------------
+
+static const char* const kNameOfOutputFile = "./bin/output.elf";
+
+// global ------------------------------------------------------------------------------------------
+
 int main() {
     std::vector<std::pair<NodeType, char*>> nodes;
     tNode* newRoot = ReadTree(nodes);
@@ -19,7 +25,7 @@ int main() {
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, cg.size);
 
-    FILE* file = fopen("./bin/output.elf", "wb");
+    FILE* file = fopen(kNameOfOutputFile, "wb");
     if (!file) {
         fprintf(stderr, "Cannot open output file\n");
         exit(EXIT_FAILURE);

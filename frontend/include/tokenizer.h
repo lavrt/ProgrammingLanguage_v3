@@ -17,7 +17,6 @@ struct Token {
 };
 
 void tokenizer(std::vector<char*>& tokens);
-bool isKeyWord(const char* const word);
 void freeTokens(std::vector<char*>& tokens);
 
 #endif // TOKENIZER_H
