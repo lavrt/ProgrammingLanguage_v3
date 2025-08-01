@@ -7,5 +7,5 @@ cmake -B build && cmake --build build
 ./build/frontend/frontend
 ./build/backend/backend
 
-chmod +x "bin/output.elf"
+chmod +x bin/output.elf
 ./bin/output.elf
