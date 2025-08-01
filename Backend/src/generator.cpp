@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "asmCommands.h"
-#include "standartFunctions.h"
+#include "standardFunctions.h"
 
 // static ------------------------------------------------------------------------------------------
 

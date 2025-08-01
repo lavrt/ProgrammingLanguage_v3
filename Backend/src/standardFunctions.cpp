@@ -1,4 +1,4 @@
-#include "standartFunctions.h"
+#include "standardFunctions.h"
 
 #include <string.h>
 

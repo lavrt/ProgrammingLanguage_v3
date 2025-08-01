@@ -15,11 +15,11 @@ DUMP_DIR = ./Frontend/dump
 
 SRC_MAIN = ./main.cpp
 SRC_FRONTEND = $(SRC_DIR_FRONTEND)/tokenizer.cpp $(SRC_DIR_FRONTEND)/parser.cpp $(SRC_DIR_FRONTEND)/tree.cpp 
-SRC_BACKEND = $(SRC_DIR_BACKEND)/asmCommands.cpp $(SRC_DIR_BACKEND)/generator.cpp $(SRC_DIR_BACKEND)/headers.cpp $(SRC_DIR_BACKEND)/standartFunctions.cpp
+SRC_BACKEND = $(SRC_DIR_BACKEND)/asmCommands.cpp $(SRC_DIR_BACKEND)/generator.cpp $(SRC_DIR_BACKEND)/headers.cpp $(SRC_DIR_BACKEND)/standardFunctions.cpp
 
 OBJ_MAIN = $(BUILD_DIR_MAIN)/main.o
 OBJ_FRONTEND = $(BUILD_DIR_FRONTEND)/tokenizer.o $(BUILD_DIR_FRONTEND)/parser.o $(BUILD_DIR_FRONTEND)/tree.o
-OBJ_BACKEND = $(BUILD_DIR_BACKEND)/asmCommands.o $(BUILD_DIR_BACKEND)/generator.o $(BUILD_DIR_BACKEND)/headers.o $(BUILD_DIR_BACKEND)/standartFunctions.o
+OBJ_BACKEND = $(BUILD_DIR_BACKEND)/asmCommands.o $(BUILD_DIR_BACKEND)/generator.o $(BUILD_DIR_BACKEND)/headers.o $(BUILD_DIR_BACKEND)/standardFunctions.o
 
 $(BIN_DIR)/$(TARGET): $(OBJ_MAIN) $(OBJ_FRONTEND) $(OBJ_BACKEND)
 	@mkdir -p $(BIN_DIR)
@@ -57,7 +57,7 @@ $(BUILD_DIR_BACKEND)/headers.o: $(SRC_DIR_BACKEND)/headers.cpp
 	@mkdir -p $(BUILD_DIR_BACKEND)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR_BACKEND)/standartFunctions.o: $(SRC_DIR_BACKEND)/standartFunctions.cpp
+$(BUILD_DIR_BACKEND)/standardFunctions.o: $(SRC_DIR_BACKEND)/standardFunctions.cpp
 	@mkdir -p $(BUILD_DIR_BACKEND)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
