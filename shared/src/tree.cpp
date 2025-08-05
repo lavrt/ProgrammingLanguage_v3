@@ -10,6 +10,8 @@
 
 // static ------------------------------------------------------------------------------------------
 
+static const char* const kSpaceDelimiter = " ";
+
 static tNode* memoryAllocationForNode();
 static void dumpTreeTraversal(tNode* node, FILE* dumpFile);
 static void dumpTreeTraversalWithArrows(tNode* node, FILE* dumpFile);
@@ -156,7 +158,7 @@ void saveTree(tNode* root) {
 
     saveTreeToFile(outputFile, root);
 
-    FCLOSE(outputFile);
+    fclose(outputFile);
 } 
 
 tNode* ReadTree(std::vector<std::pair<NodeType, char*>>& nodes) {
@@ -170,17 +172,17 @@ tNode* ReadTree(std::vector<std::pair<NodeType, char*>>& nodes) {
 
     fread(dataArray, sizeof(char), fileSize, file);
 
-    FCLOSE(file);
+    fclose(file);
 
-    if (char* ptr = strtok(dataArray, " ")) {
+    if (char* ptr = strtok(dataArray, kSpaceDelimiter)) {
         NodeType type = (NodeType)atoi(ptr);
-        ptr = strtok(NULL, " ");
-        nodes.push_back({ type, strdup(ptr) });
+        ptr = strtok(NULL, kSpaceDelimiter);
+        nodes.push_back({type, strdup(ptr)});
 
-        while ((ptr = strtok(NULL, " "))) {
+        while ((ptr = strtok(NULL, kSpaceDelimiter))) {
             type = (NodeType)atoi(ptr);
-            ptr = strtok(NULL, " ");
-            nodes.push_back({ type, strdup(ptr) });        
+            ptr = strtok(NULL, kSpaceDelimiter);
+            nodes.push_back({type, strdup(ptr)});        
         }
     }
     
@@ -297,11 +299,11 @@ static void saveTreeToFile(FILE* file, tNode* node) {
 
 static std::pair<tNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, char*>>& nodes, size_t pos) { 
     if (nodes[pos].first == Null) {
-        return { nullptr, pos + 1 };
+        return {nullptr, pos + 1};
     }
 
     tNode* node = newNode(nodes[pos].first, nodes[pos].second, nullptr, nullptr); 
     std::tie(node->left, pos) = ReadTreeFromFile(nodes, pos + 1);
     std::tie(node->right, pos) = ReadTreeFromFile(nodes, pos);
-    return { node, pos };
+    return {node, pos};
 } 
