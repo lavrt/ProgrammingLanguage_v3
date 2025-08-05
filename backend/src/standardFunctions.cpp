@@ -12,7 +12,7 @@ static void CreatePrintInt(TCodeGen* cg);
 // global ------------------------------------------------------------------------------------------
 
 void CreateStandartFunctions(TCodeGen* cg, Elf64_Ehdr* ehdr) {
-    nop(cg); // it is not allowed to place functions with size = 0
+    nop(cg); // it is not allowed to place functions with cg->size = 0
 
     CreatePrintAscii(cg);
     CreatePrintInt(cg);

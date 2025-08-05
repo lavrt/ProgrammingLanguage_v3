@@ -12,7 +12,7 @@ static const char* const kNameOfOutputFile = "./bin/output.elf";
 
 int main() {
     std::vector<std::pair<NodeType, char*>> nodes;
-    tNode* newRoot = ReadTree(nodes);
+    tNode* root = ReadTree(nodes);
 
     TCodeGen cg;
     CodeGenCtor(&cg);
@@ -20,7 +20,7 @@ int main() {
     Elf64_Ehdr ehdr;
     CreateElfHeader(&ehdr);
 
-    CodegenProgram(&cg, newRoot, &ehdr);
+    CodegenProgram(&cg, root, &ehdr);
 
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, cg.size);
@@ -34,12 +34,12 @@ int main() {
     fwrite(&phdr, sizeof(Elf64_Phdr), 1, file);
     fwrite(cg.code, 1, cg.size, file);
     fclose(file);
-    printf("ELF file created\n");
+    printf("Executable file created\n");
 
     CodeGenDtor(&cg); 
 
     freeNodes(nodes);
-    treeDtor(newRoot);
+    treeDtor(root);
 
     return 0;
 }

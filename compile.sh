@@ -9,5 +9,3 @@ cmake --build build
 ./build/backend/backend &&
 chmod +x bin/output.elf &&
 echo "Executable file: ./bin/output.elf"
-
-
