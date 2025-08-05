@@ -48,7 +48,7 @@ void tokenizer(std::vector<char*>& tokens) {
                 buffer += code[i++];
             }
             tokens.push_back(strdup(buffer.c_str())); 
-        } else if (kAllowedSpecialChars.contains(code[i])) {
+        } else if (i < fileSize && kAllowedSpecialChars.contains(code[i])) {
             buffer += code[i++];
             if (code[i] == '=') {
                 buffer += code[i++];
@@ -72,5 +72,3 @@ void freeTokens(std::vector<char*>& tokens) {
         free(token);
     }
 }
-
-
