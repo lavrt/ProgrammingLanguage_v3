@@ -472,10 +472,10 @@ static void GenStmt::Operation::EmitIf(TCodeGen* cg, tNode* node) {
 }
 
 static void GenStmt::Operation::EmitWhile(TCodeGen* cg, tNode* node) {
+    int32_t jmpTarget_2 = (int32_t)cg->size;
+    
     CodeGenExpr(cg, node->left);
     pop_reg(cg, REG_AX);
-
-    int32_t jmpTarget_2 = (int32_t)cg->size;
 
     cmp_reg_imm32(cg, REG_AX, 0);
     int32_t jmpPos_1 = (int32_t)cg->size;

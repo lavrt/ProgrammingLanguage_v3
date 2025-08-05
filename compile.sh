@@ -2,10 +2,12 @@
 
 mkdir -p build bin tmp
 
-cmake -B build && cmake --build build
+cmake -B build &&
+cmake --build build
 
-./build/frontend/frontend
-./build/backend/backend
+./build/frontend/frontend &&
+./build/backend/backend &&
+chmod +x bin/output.elf &&
+echo "Executable file: ./bin/output.elf"
 
-chmod +x bin/output.elf
-./bin/output.elf
+

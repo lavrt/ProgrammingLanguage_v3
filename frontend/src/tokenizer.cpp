@@ -54,6 +54,10 @@ void tokenizer(std::vector<char*>& tokens) {
                 buffer += code[i++];
             }
             tokens.push_back(strdup(buffer.c_str())); 
+        } else if (code[i] == '#') {
+            while (i < fileSize && code[i] != '\n') {
+                ++i;
+            }
         } else {
             fprintf(stderr, "The token starts with an invalid character '%c'.\n", code[i]);
             exit(EXIT_FAILURE);

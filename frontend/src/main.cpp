@@ -9,7 +9,8 @@ int main() {
     tokenizer(tokens);
 
     tNode* root = runParser(tokens);
-    saveTree(root); 
+    saveTree(root);
+    dump(root);
 
     freeTokens(tokens);
     treeDtor(root);
