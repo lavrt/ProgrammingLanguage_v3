@@ -12,7 +12,7 @@ def factorial (a1) {
 };
 
 k1 = call factorial (a);
-print_int (k1) ;
+print_int (k1);
 
 # calculating the factorial using a loop
 
