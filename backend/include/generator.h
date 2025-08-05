@@ -27,7 +27,6 @@ struct TCodeGen {
     int varCount;
     TFunctions* funcs;
     int funcCount;
-
     int localStackOffset;
     bool isLocal;
 };
