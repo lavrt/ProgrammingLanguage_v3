@@ -24,6 +24,10 @@ void tokenizer(std::vector<char*>& tokens) {
     assert(file);
 
     size_t fileSize = getFileSize(file);
+    if (!fileSize) {
+        fprintf(stderr, "The input file with the code is empty.\n");
+        exit(EXIT_FAILURE);
+    }
 
     char* code = (char*)calloc(fileSize + 1, sizeof(char));
     assert(code);
