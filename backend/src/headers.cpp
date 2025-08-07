@@ -8,9 +8,6 @@
 static const uint64_t kBaseLoadAddress = 0x400000;
 static const uint64_t kPageSize = 0x1000;
 
-static constexpr uint64_t kElfHeaderSize = sizeof(Elf64_Ehdr);
-static constexpr uint64_t kProgramHeaderSize = sizeof(Elf64_Phdr);
-
 // global ------------------------------------------------------------------------------------------
 
 void CreateElfHeader(Elf64_Ehdr* ehdr) {

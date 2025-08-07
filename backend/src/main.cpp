@@ -30,8 +30,8 @@ int main() {
         fprintf(stderr, "Cannot open output file\n");
         exit(EXIT_FAILURE);
     }
-    fwrite(&ehdr, sizeof(Elf64_Ehdr), 1, file);
-    fwrite(&phdr, sizeof(Elf64_Phdr), 1, file);
+    fwrite(&ehdr, kElfHeaderSize, 1, file);
+    fwrite(&phdr, kProgramHeaderSize, 1, file);
     fwrite(cg.code, 1, cg.size, file);
     fclose(file);
     printf("Executable file created\n");
