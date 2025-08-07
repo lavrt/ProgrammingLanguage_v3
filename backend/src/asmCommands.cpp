@@ -2,18 +2,13 @@
 
 #include "generator.h"
 
-#pragma GCC push_options
-#pragma GCC optimize ("no-stack-protector")
-// Disabling stack protector is safe here because all buffers are small and fixed-size (1-7 bytes)
-// and there are no buffer operations that could overflow
-
 // PUSH r64
 // size: 1 byte
 void push_reg(TCodeGen* cg, ERegister reg) {
     if (reg <= REG_DI) {
         // opcode: 0x50 + rd
-        uint8_t opcode = 0x50 + (reg & 0x7);
-        AppendCode(cg, &opcode, 1);
+        uint8_t opcode[] = {(uint8_t)(0x50 + (reg & 0x7))};
+        AppendCode(cg, opcode, 1);
     } else {
         // opcode: REX + 0x50 + reg<<3
         // REX.B: 0x41
@@ -380,6 +375,3 @@ void movzx_reg_reg(TCodeGen* cg, ERegister dst, ERegister src) {
     const uint8_t opcode[] = {0x48, 0x0f, 0xb6, modrm};
     AppendCode(cg, opcode, 4);
 }
-
-#pragma GCC pop_options
-// return to previous settings: stack-protector is enabled
