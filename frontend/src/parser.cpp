@@ -246,6 +246,14 @@ static tNode* getAssignment(const std::vector<char*>& tokens, size_t* pos) {
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
         rightNode = newNode(Calling, name, argNode, nullptr); 
+    } else if (!strcmp(tokens[*pos], keyReadInt)) {
+        size_t op1 = *pos;
+        (*pos)++;
+        CHECK_LEFT_PARENTHESIS;
+        (*pos)++;
+        CHECK_RIGHT_PARENTHESIS;
+        (*pos)++;
+        rightNode = newNode(Operation, tokens[op1], nullptr, nullptr);
     } else {
         rightNode = getComparsion(tokens, pos);
     }
@@ -281,6 +289,7 @@ static bool isKeyWord(const char* const word) {
     else if (!strcmp(word, keyWhile)) return true;
     else if (!strcmp(word, keyPrintAscii)) return true;
     else if (!strcmp(word, keyPrintInt)) return true;
+    else if (!strcmp(word, keyReadInt)) return true;
     else if (!strcmp(word, keyReturn)) return true;
     else if (!strcmp(word, keyEnd)) return true; // doesnt exist in the tree
     else if (!strcmp(word, keyDef)) return true; // doesnt exist in the tree

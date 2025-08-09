@@ -1,27 +1,4 @@
-a = 5; 
-
-# calculating the factorial using a recursion function
-
-def factorial (a1) {
-    if (a1 == 1) {
-        return (1);
-    };
-    a2 = a1 - 1;
-    a3 = call factorial (a2);
-    return (a1 * a3);
-};
-
-k1 = call factorial (a);
-print_int (k1);
-
-# calculating the factorial using a loop
-
-b1 = 1;
-k2 = 1;
-while (b1 <= a) {
-    k2 = k2 * b1;
-    b1 = b1 + 1;
-};
-print_int (k2);
+a = read_int();
+print_int(a);
 
 end

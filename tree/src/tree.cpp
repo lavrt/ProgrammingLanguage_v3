@@ -32,49 +32,10 @@ size_t getFileSize(FILE* file) {
 tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right) {
     tNode* node = NULL;
 
-    switch (type) {
-        case Number: {
-            node = memoryAllocationForNode();
-            node->type = Number;
-            break;
-        }
-        case Identifier: {
-            node = memoryAllocationForNode();
-            node->left = left;
-            node->right = right;
-            node->type = Identifier;
-            break;
-        }
-        case Operation: {
-            node = memoryAllocationForNode();
-            node->type = Operation;
-            node->left = left;
-            node->right = right;
-            break;
-        }
-        case Calling: {
-            node = memoryAllocationForNode();
-            node->type = Calling;
-            node->left = left;
-            node->right = right;
-            break;
-        }
-        case Function: {
-            node = memoryAllocationForNode();
-            node->type = Function;
-            node->left = left;
-            node->right = right;
-            break;
-        }
-        case Binary: {
-            node = memoryAllocationForNode();
-            node->type = Binary;
-            node->left = left;
-            node->right = right;
-            break;
-        }
-        default: assert(0); 
-    }
+    node = memoryAllocationForNode();
+    node->left = left;
+    node->right = right;
+    node->type = type;
 
     node->value = value;
 

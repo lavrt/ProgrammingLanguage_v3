@@ -23,6 +23,7 @@ enum Operations {
     Semicolon,
     PrintAscii,
     PrintInt,
+    ReadInt,
     While,
     If,
     Add,
@@ -54,6 +55,7 @@ const char* const keyGreater = ">";
 const char* const keyCall = "call";
 const char* const keyPrintAscii = "print_ascii";
 const char* const keyPrintInt = "print_int";
+const char* const keyReadInt = "read_int";
 const char* const keyWhile = "while";
 const char* const keySemicolon = ";";
 const char* const keyIdentical = "==";

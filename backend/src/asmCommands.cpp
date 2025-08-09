@@ -76,6 +76,16 @@ void mov_reg_mem(TCodeGen* cg, ERegister reg, int32_t offset) {
     AppendCode(cg, (uint8_t*)&offset, 4);
 }
 
+// MOV r8, r/m8
+// size: 2 byte
+void mov_reg8_mem(TCodeGen* cg, ERegister dst, ERegister src) {
+    // opcode: REX + 8A /r
+    // ModR/M: (Mod=00, Reg=dst, R/M=src)
+    uint8_t modrm = (uint8_t)(((dst & 0x7) << 3) + (src & 0x7));
+    uint8_t opcode[] = {0x8a, modrm};
+    AppendCode(cg, opcode, 2);
+}
+
 // MOV [rbp-offset], r64
 // size: 7 byte
 void mov_mem_reg(TCodeGen* cg, int32_t offset, ERegister reg) { 
@@ -194,6 +204,24 @@ void jmp_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: E9 cd
     uint8_t opcode[] = {0xe9};
     AppendCode(cg, opcode, 1);
+    AppendCode(cg, (uint8_t*)&offset, 4);
+}
+
+// JL rel32
+// size: 6 byte
+void jl_rel32(TCodeGen* cg, int32_t offset) {
+    // opcode: 0F 8C cd
+    uint8_t opcode[] = {0x0f, 0x8c};
+    AppendCode(cg, opcode, 2);
+    AppendCode(cg, (uint8_t*)&offset, 4);
+}
+
+// JG rel32
+// size: 6 byte
+void jg_rel32(TCodeGen* cg, int32_t offset) {
+    // opcode: 0F 8F cd
+    uint8_t opcode[] = {0x0f, 0x8f};
+    AppendCode(cg, opcode, 2);
     AppendCode(cg, (uint8_t*)&offset, 4);
 }
 

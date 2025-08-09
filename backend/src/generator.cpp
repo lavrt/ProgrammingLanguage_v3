@@ -40,6 +40,10 @@ namespace GenExpr {
         static void EmitIdentical(TCodeGen* cg);
         static void EmitNotIdentical(TCodeGen* cg);
     }
+
+    namespace Operation {
+        static void EmitReadInt(TCodeGen* cg);
+    }
 }
 
 namespace GenStmt {
@@ -138,6 +142,7 @@ static Operations GetOperationType(const char* const word) {
     else if (!strcmp(word, keyEqual)) return Equal; 
     else if (!strcmp(word, keyPrintAscii)) return PrintAscii;
     else if (!strcmp(word, keyPrintInt)) return PrintInt;
+    else if (!strcmp(word, keyReadInt)) return ReadInt;
     else if (!strcmp(word, keyReturn)) return Return;
     else if (!strcmp(word, keyGreater)) return Greater;
     else if (!strcmp(word, keyLess)) return Less;
@@ -210,6 +215,16 @@ static void CodeGenExpr(TCodeGen* cg, tNode* node) {
                 }
             }
             push_reg(cg, REG_AX);
+        } break;
+        case Operation: {
+            switch (GetOperationType(node->value)) {
+                case ReadInt:           GenExpr::Operation::EmitReadInt(cg);  break; 
+                
+                default: {
+                    fprintf(stderr, "Unknown operation \"%s\"\n", node->value);
+                    exit(EXIT_FAILURE);
+                }
+            }
         } break;
         
         default: {
@@ -344,6 +359,26 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
     pop_reg(cg, REG_DX);
     pop_reg(cg, REG_SI);
     pop_reg(cg, REG_DI);
+
+    push_reg(cg, REG_AX);
+}
+
+static void GenExpr::Operation::EmitReadInt(TCodeGen* cg) {
+    size_t readIntAddr = FindFunc(cg, keyReadInt);
+    if (!readIntAddr) {
+        fprintf(stderr, "Function %s not found\n", keyReadInt);
+        exit(EXIT_FAILURE);
+    }
+  
+    push_reg(cg, REG_CX);
+    push_reg(cg, REG_DX);
+    push_reg(cg, REG_DI);
+
+    call_rel32(cg, (int32_t)(readIntAddr - (cg->size + 5)));
+
+    pop_reg(cg, REG_DI);
+    pop_reg(cg, REG_DX);
+    pop_reg(cg, REG_CX);
 
     push_reg(cg, REG_AX);
 }
