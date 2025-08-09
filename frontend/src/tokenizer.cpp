@@ -5,7 +5,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unordered_set>
-#include <string>
+#include <fstream>
+#include <filesystem>
+#include <iostream>
 
 #include "node.h"
 #include "tree.h"
@@ -19,22 +21,26 @@ static const std::unordered_set<char> kAllowedSpecialChars = {
 
 // global ------------------------------------------------------------------------------------------
 
-void tokenizer(std::vector<char*>& tokens) {
-    FILE* file = fopen(kNameOfFileWithCode, "rb");
-    assert(file);
-
-    size_t fileSize = getFileSize(file);
-    if (!fileSize) {
-        fprintf(stderr, "The input file with the code is empty.\n");
+void tokenizer(std::vector<std::string>& tokens) {
+    std::ifstream file(kNameOfFileWithCode);
+    if (!file) {
+        std::cerr << "The \"" << kNameOfFileWithCode << "\" file cannot be opened." << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    char* code = (char*)calloc(fileSize + 1, sizeof(char));
+    std::filesystem::path filePath = kNameOfFileWithCode;
+    size_t fileSize = std::filesystem::file_size(filePath);
+    if (!fileSize) {
+        std::cerr << "The \"" << kNameOfFileWithCode << "\" file is empty." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    char* code = (char*)calloc(fileSize, sizeof(char));
     assert(code);
 
-    fread(code, sizeof(char), fileSize, file);
+    file.read(code, fileSize);
 
-    fclose(file);
+    file.close();
 
     for (size_t i = 0; i < fileSize;) {
         while (i < fileSize && isspace(code[i])) {
@@ -46,24 +52,24 @@ void tokenizer(std::vector<char*>& tokens) {
             while (i < fileSize && (isalnum(code[i]) || code[i] == '_')) {
                 buffer += code[i++];
             }
-            tokens.push_back(strdup(buffer.c_str()));
+            tokens.push_back(buffer);
         } else if (isdigit(code[i])) {
             while (i < fileSize && isdigit(code[i])) {
                 buffer += code[i++];
             }
-            tokens.push_back(strdup(buffer.c_str())); 
+            tokens.push_back(buffer);
         } else if (i < fileSize && kAllowedSpecialChars.contains(code[i])) {
             buffer += code[i++];
             if (code[i] == '=') {
                 buffer += code[i++];
             }
-            tokens.push_back(strdup(buffer.c_str())); 
+            tokens.push_back(buffer);
         } else if (code[i] == '#') {
             while (i < fileSize && code[i] != '\n') {
                 ++i;
             }
         } else {
-            fprintf(stderr, "The token starts with an invalid character '%c'.\n", code[i]);
+            std::cerr << "The token starts with an invalid character '" << code[i] << "'." << std::endl;
             exit(EXIT_FAILURE);
         }
 
@@ -73,10 +79,4 @@ void tokenizer(std::vector<char*>& tokens) {
     }
 
     free(code);
-}
-
-void freeTokens(std::vector<char*>& tokens) {
-    for (char* token : tokens) {
-        free(token);
-    }
 }

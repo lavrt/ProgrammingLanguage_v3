@@ -1,4 +1,6 @@
 #include <vector>
+#include <fstream>
+#include <iostream>
 
 #include "tree.h"
 #include "generator.h"
@@ -11,8 +13,9 @@ static const char* const kNameOfOutputFile = "./bin/output.elf";
 // global ------------------------------------------------------------------------------------------
 
 int main() {
-    std::vector<std::pair<NodeType, char*>> nodes;
+    std::vector<std::pair<NodeType, std::string>> nodes;
     tNode* root = ReadTree(nodes);
+    dump(root);
 
     TCodeGen cg;
     CodeGenCtor(&cg);
@@ -25,20 +28,27 @@ int main() {
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, cg.size);
 
-    FILE* file = fopen(kNameOfOutputFile, "wb");
+    std::ofstream file(kNameOfOutputFile, std::ios::binary);
     if (!file) {
-        fprintf(stderr, "Cannot open output file\n");
+        std::cerr << "The \"" << kNameOfOutputFile << "\" file cannot be opened." << std::endl;
         exit(EXIT_FAILURE);
     }
-    fwrite(&ehdr, kElfHeaderSize, 1, file);
-    fwrite(&phdr, kProgramHeaderSize, 1, file);
-    fwrite(cg.code, 1, cg.size, file);
-    fclose(file);
-    printf("Executable file created\n");
+
+    file.write(reinterpret_cast<const char*>(&ehdr), kElfHeaderSize);
+    file.write(reinterpret_cast<const char*>(&phdr), kProgramHeaderSize);
+    file.write(reinterpret_cast<const char*>(cg.code), cg.size);
+
+    if (!file.good()) {
+        std::cerr << "Error writing to the \"" << kNameOfOutputFile << "\" file." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    file.close();
+
+    std::cout << "Executable file created\n";
 
     CodeGenDtor(&cg); 
 
-    freeNodes(nodes);
     treeDtor(root);
 
     return 0;

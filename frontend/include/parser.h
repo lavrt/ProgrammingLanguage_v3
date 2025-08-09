@@ -4,12 +4,13 @@
 #include "node.h"
 
 #include <vector>
+#include <string>
 
 #define CHECK_LEFT_PARENTHESIS \
-    do { if (strcmp(tokens[*pos], keyLeftParenthesis)) syntaxError(__LINE__); } while(0);
+    do { if (tokens[*pos] != keyLeftParenthesis) syntaxError(__LINE__); } while(0);
 #define CHECK_RIGHT_PARENTHESIS \
-    do { if (strcmp(tokens[*pos], keyRightParenthesis)) syntaxError(__LINE__); } while(0);
+    do { if (tokens[*pos] != keyRightParenthesis) syntaxError(__LINE__); } while(0);
 
-tNode* runParser(const std::vector<char*>& tokens);
+tNode* runParser(const std::vector<std::string>& tokens);
 
 #endif // PARSER_H

@@ -8,12 +8,12 @@
 #include "node.h"
 
 struct TVariables {
-    const char* id;
+    std::string id;
     int offset;
 };
 
 struct TFunctions {
-    const char* name;
+    std::string name;
     size_t addr; 
 };
 
@@ -35,6 +35,6 @@ void CodeGenCtor(TCodeGen* cg);
 void CodeGenDtor(TCodeGen* cg);
 void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len);
 void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr);
-void AddFunc(TCodeGen* cg, const char* name);
+void AddFunc(TCodeGen* cg, std::string name);
 
 #endif // GENERATOR_H

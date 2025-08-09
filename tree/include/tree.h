@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include <string>
 
 #define FREE(ptr_) \
     do { free(ptr_); ptr_ = NULL; } while(0);
@@ -15,21 +16,12 @@
 const char* const kDumpFileName = "./tmp/dump.gv";
 const char* const kNameOfFileWithTree = "./tmp/tree.txt";
 
-const char* const kFunction = "def";
-const char* const kNumber = "number";
-const char* const kVariable = "variable";
-const char* const kOperation = "operation";
-const char* const kCalling = "calling";
-const char* const kBinary = "binary";
-
-size_t getFileSize(FILE* file);
-tNode* newNode(NodeType type, const char* value, tNode* left, tNode* right);
+tNode* newNode(NodeType type, std::string value, tNode* left, tNode* right);
 void treeDtor(tNode* node);
 void dump(tNode* root);
 tNode* copyNode(tNode* node);
 bool subtreeContainsVariable(tNode* node);
 void saveTree(tNode* root);
-tNode* ReadTree(std::vector<std::pair<NodeType, char*>>& nodes);
-void freeNodes(std::vector<std::pair<NodeType, char*>>& nodes);
+tNode* ReadTree(std::vector<std::pair<NodeType, std::string>>& nodes);
 
 #endif // TREE_H
