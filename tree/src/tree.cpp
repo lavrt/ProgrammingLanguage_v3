@@ -42,7 +42,6 @@ void treeDtor(tNode* node) {
         treeDtor(node->right);
     }
 
-    // memset(node, 0, sizeof(tNode));
     free(node);
 }
 
@@ -150,8 +149,12 @@ static void dumpTreeTraversal(tNode* node, std::ofstream& dumpFile) {
     dumpFile << "    node_" << node << " [rank=" << rank << ",label=\" { node: " << node;
 
     std::string type = kNodeTypeToString.at(node->type);
-    if (type == keyLess || type == keyGreater || type == keyIdentical ||
-        type == keyLessOrEqual || type == keyGreaterOrEqual || type == keyNotIdentical)
+    if (type == keyLess ||
+        type == keyGreater ||
+        type == keyIdentical ||
+        type == keyLessOrEqual ||
+        type == keyGreaterOrEqual ||
+        type == keyNotIdentical)
     {
         dumpFile << " | type: \\" << type << " | value: \\" << *node->value << " | ";
     } else {

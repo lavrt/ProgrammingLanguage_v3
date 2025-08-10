@@ -38,6 +38,10 @@ tNode* runParser(const std::vector<std::string>& tokens) {
 static tNode* getGrammar(const std::vector<std::string>& tokens) {
     size_t pos = 0;
 
+    if (tokens[pos] == keyEnd) {
+        return newNode(End, tokens[pos], nullptr, nullptr);
+    }
+
     tNode* leftNode = getDef(tokens, &pos);
     if (tokens[pos++] != keySemicolon) {
         syntaxError(__LINE__);
@@ -60,7 +64,7 @@ static tNode* getExpression(const std::vector<std::string>& tokens, size_t* pos)
         size_t op = *pos;
         (*pos)++;
         tNode* rightNode = getMultiplication(tokens, pos); 
-        leftNode = newNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);//NOTE
+        leftNode = newNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);
     }
     return leftNode;
 }
@@ -78,7 +82,7 @@ static tNode* getComparsion(const std::vector<std::string>& tokens, size_t* pos)
         size_t op = *pos;
         (*pos)++;
         tNode* rightNode = getExpression(tokens, pos);
-        leftNode = newNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);//NOTE
+        leftNode = newNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);
     }
 
     return leftNode;
@@ -91,7 +95,7 @@ static tNode* getMultiplication(const std::vector<std::string>& tokens, size_t* 
         size_t op = *pos;
         (*pos)++;
         tNode* rightNode = getParentheses(tokens, pos);
-        leftNode = newNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);//NOTE
+        leftNode = newNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);
     }
     return leftNode;
 }

@@ -30,7 +30,9 @@ int main() {
 
     std::ofstream file(kNameOfOutputFile, std::ios::binary);
     if (!file) {
-        std::cerr << "The \"" << kNameOfOutputFile << "\" file cannot be opened." << std::endl;
+        std::cerr << "The \"" << kNameOfOutputFile << "\" file cannot be opened. " << std::endl <<
+            "It is possible that this file is already being used by another process. "
+            "Try to kill this process or delete the file." << std::endl;
         exit(EXIT_FAILURE);
     }
 

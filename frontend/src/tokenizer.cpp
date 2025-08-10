@@ -21,55 +21,42 @@ static const std::unordered_set<char> kAllowedSpecialChars = {
 
 // global ------------------------------------------------------------------------------------------
 
-void tokenizer(std::vector<std::string>& tokens) {
-    std::ifstream file(kNameOfFileWithCode);
-    if (!file) {
-        std::cerr << "The \"" << kNameOfFileWithCode << "\" file cannot be opened." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    std::filesystem::path filePath = kNameOfFileWithCode;
-    size_t fileSize = std::filesystem::file_size(filePath);
-    if (!fileSize) {
-        std::cerr << "The \"" << kNameOfFileWithCode << "\" file is empty." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    char* code = (char*)calloc(fileSize, sizeof(char));
-    assert(code);
-
-    file.read(code, fileSize);
-
-    file.close();
-
-    for (size_t i = 0; i < fileSize;) {
-        while (i < fileSize && isspace(code[i])) {
+std::vector<std::string> tokenizer(std::string data) {
+    std::vector<std::string> tokens;
+    
+    for (size_t i = 0; i < data.size();) {
+        while (i < data.size() && isspace(data[i])) {
             ++i;
         }
 
+        if (i == data.size()) {
+            std::cerr << "The file does not contain the keyword \"" << keyEnd <<"\"." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
         std::string buffer;
-        if (isalpha(code[i])) {
-            while (i < fileSize && (isalnum(code[i]) || code[i] == '_')) {
-                buffer += code[i++];
+        if (isalpha(data[i])) {
+            while (i < data.size() && (isalnum(data[i]) || data[i] == '_')) {
+                buffer += data[i++];
             }
             tokens.push_back(buffer);
-        } else if (isdigit(code[i])) {
-            while (i < fileSize && isdigit(code[i])) {
-                buffer += code[i++];
+        } else if (isdigit(data[i])) {
+            while (i < data.size() && isdigit(data[i])) {
+                buffer += data[i++];
             }
             tokens.push_back(buffer);
-        } else if (i < fileSize && kAllowedSpecialChars.contains(code[i])) {
-            buffer += code[i++];
-            if (code[i] == '=') {
-                buffer += code[i++];
+        } else if (i < data.size() && kAllowedSpecialChars.contains(data[i])) {
+            buffer += data[i++];
+            if (data[i] == '=') {
+                buffer += data[i++];
             }
             tokens.push_back(buffer);
-        } else if (code[i] == '#') {
-            while (i < fileSize && code[i] != '\n') {
+        } else if (data[i] == '#') {
+            while (i < data.size() && data[i] != '\n') {
                 ++i;
             }
         } else {
-            std::cerr << "The token starts with an invalid character '" << code[i] << "'." << std::endl;
+            std::cerr << "The token starts with an invalid character '" << data[i] << "'." << i << std::endl;
             exit(EXIT_FAILURE);
         }
 
@@ -78,5 +65,5 @@ void tokenizer(std::vector<std::string>& tokens) {
         }
     }
 
-    free(code);
+    return tokens;
 }

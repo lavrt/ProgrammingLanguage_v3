@@ -187,6 +187,7 @@ static void CodeGenExpr(TCodeGen* cg, tNode* node) {
 
 static void CodeGenStmt(TCodeGen* cg, tNode* node) {
     switch (node->type) {
+        case End:                                                   break;
         case Def:           GenStmt::EmitDef(cg, node);             break;
         case Semicolon:     GenStmt::EmitSemicolon(cg, node);       break;
         case Equal:         GenStmt::EmitEqual(cg, node);           break;

@@ -30,6 +30,7 @@ enum NodeType {
     GreaterOrEqual,
     Call,
     Return,
+    End,
 };
 
 struct tNode {
@@ -93,6 +94,7 @@ const std::unordered_map<NodeType, std::string> kNodeTypeToString {
     {GreaterOrEqual, keyGreaterOrEqual},
     {Call, keyCall},
     {Return, keyReturn},
+    {End, keyEnd},
 };
 
 const std::unordered_map<std::string, NodeType> kStringToNodeType {
@@ -119,6 +121,7 @@ const std::unordered_map<std::string, NodeType> kStringToNodeType {
     {keyGreaterOrEqual, GreaterOrEqual},
     {keyCall, Call},
     {keyReturn, Return},
+    {keyEnd, End},
 };
 
 #endif // NODE_H
