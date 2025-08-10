@@ -27,13 +27,13 @@ int main() {
 
     file.close();
 
-    std::vector<std::string> tokens = tokenizer(data);
+    std::vector<std::string> tokens = Tokenizer(data);
 
-    tNode* root = runParser(tokens);
-    saveTree(root);
-    // dump(root);
+    TNode* root = RunParser(tokens);
+    SaveTree(root);
+    // Dump(root);
 
-    treeDtor(root);
+    TreeDtor(root);
 
     return 0;
 }

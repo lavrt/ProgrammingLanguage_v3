@@ -6,6 +6,6 @@
 
 const char* const kNameOfFileWithCode = "./examples/code.rt";
 
-std::vector<std::string> tokenizer(std::string data);
+std::vector<std::string> Tokenizer(std::string data);
 
 #endif // TOKENIZER_H

@@ -11,17 +11,15 @@
 
 // static ------------------------------------------------------------------------------------------
 
-static const char* const kSpaceDelimiter = " ";
-
-static void dumpTreeTraversal(tNode* node, std::ofstream& dumpFile);
-static void dumpTreeTraversalWithArrows(tNode* node, std::ofstream& dumpFile);
-static void saveTreeToFile(std::ofstream& file, tNode* node);
-static std::pair<tNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, std::string>>& nodes, size_t pos);
+static void DumpTreeTraversal(TNode* node, std::ofstream& dumpFile);
+static void DumpTreeTraversalWithArrows(TNode* node, std::ofstream& dumpFile);
+static void SaveTreeToFile(std::ofstream& file, TNode* node);
+static std::pair<TNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, std::string>>& nodes, size_t pos);
 
 // global ------------------------------------------------------------------------------------------
 
-tNode* newNode(NodeType type, const std::string& value, tNode* left, tNode* right) {
-    tNode* node = (tNode*)calloc(1, sizeof(tNode));
+TNode* NewNode(NodeType type, const std::string& value, TNode* left, TNode* right) {
+    TNode* node = (TNode*)calloc(1, sizeof(TNode));
     assert(node);
 
     node->left = left;
@@ -32,20 +30,20 @@ tNode* newNode(NodeType type, const std::string& value, tNode* left, tNode* righ
     return node;
 }
 
-void treeDtor(tNode* node) {
+void TreeDtor(TNode* node) {
     assert(node);
 
     if (node->left) {
-        treeDtor(node->left);
+        TreeDtor(node->left);
     }
     if (node->right) {
-        treeDtor(node->right);
+        TreeDtor(node->right);
     }
 
     free(node);
 }
 
-void dump(tNode* root) {
+void Dump(TNode* root) {
     assert(root);
 
     std::ofstream dumpFile(kDumpFileName);
@@ -57,8 +55,8 @@ void dump(tNode* root) {
     dumpFile << "node [shape=record,style = filled,penwidth = 2.5];\n    ";
     dumpFile << "bgcolor = \"#FDFBE4\";\n\n";
 
-    dumpTreeTraversal(root, dumpFile);
-    dumpTreeTraversalWithArrows(root, dumpFile);
+    DumpTreeTraversal(root, dumpFile);
+    DumpTreeTraversalWithArrows(root, dumpFile);
 
     dumpFile << "}\n";
 
@@ -69,41 +67,16 @@ void dump(tNode* root) {
     #endif
 }
 
-bool subtreeContainsVariable(tNode* node) {
-    if (!node) {
-        return false;
-    }
- 
-    static int rank = 0;
-    static bool presenceOfVariable = false;
-
-    if (node->type == Identifier) {
-        presenceOfVariable = true;
-    } else {
-        rank++;
-        subtreeContainsVariable(node->left);
-        subtreeContainsVariable(node->right);
-        rank--;
-    }
-
-    if (presenceOfVariable && !rank) {
-        presenceOfVariable = false;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-void saveTree(tNode* root) {
+void SaveTree(TNode* root) {
     std::ofstream file(kNameOfFileWithTree);
     assert(file);
 
-    saveTreeToFile(file, root);
+    SaveTreeToFile(file, root);
 
     file.close();
 } 
 
-tNode* ReadTree(std::vector<std::pair<NodeType, std::string>>& nodes) {
+TNode* ReadTree(std::vector<std::pair<NodeType, std::string>>& nodes) {
     std::ifstream file(kNameOfFileWithTree);
     assert(file);
 
@@ -139,7 +112,7 @@ tNode* ReadTree(std::vector<std::pair<NodeType, std::string>>& nodes) {
 
 // static ------------------------------------------------------------------------------------------
 
-static void dumpTreeTraversal(tNode* node, std::ofstream& dumpFile) {
+static void DumpTreeTraversal(TNode* node, std::ofstream& dumpFile) {
     assert(dumpFile);
     if (!node) {
         return;
@@ -177,16 +150,16 @@ static void dumpTreeTraversal(tNode* node, std::ofstream& dumpFile) {
 
     if (node->left) {
         rank++;
-        dumpTreeTraversal(node->left, dumpFile);
+        DumpTreeTraversal(node->left, dumpFile);
     }
     if (node->right) {
         rank++;
-        dumpTreeTraversal(node->right, dumpFile);
+        DumpTreeTraversal(node->right, dumpFile);
     }
     rank--;
 }
 
-static void dumpTreeTraversalWithArrows(tNode* node, std::ofstream& dumpFile) {
+static void DumpTreeTraversalWithArrows(TNode* node, std::ofstream& dumpFile) {
     assert(dumpFile);
     if (!node) {
         return;
@@ -199,7 +172,7 @@ static void dumpTreeTraversalWithArrows(tNode* node, std::ofstream& dumpFile) {
         } else {
             dumpFile << "    node_" << node << " -> node_" << node->left << " ";
         }
-        dumpTreeTraversalWithArrows(node->left, dumpFile);
+        DumpTreeTraversalWithArrows(node->left, dumpFile);
     }
     if (node->right) {
         if (flag++) {
@@ -207,7 +180,7 @@ static void dumpTreeTraversalWithArrows(tNode* node, std::ofstream& dumpFile) {
         } else {
             dumpFile << "    node_" << node << " -> node_" << node->right << " ";
         }
-        dumpTreeTraversalWithArrows(node->right, dumpFile);
+        DumpTreeTraversalWithArrows(node->right, dumpFile);
     }
     if (flag) {
         dumpFile << ";\n";
@@ -215,7 +188,7 @@ static void dumpTreeTraversalWithArrows(tNode* node, std::ofstream& dumpFile) {
     flag = 0;
 }
 
-static void saveTreeToFile(std::ofstream& file, tNode* node) {
+static void SaveTreeToFile(std::ofstream& file, TNode* node) {
     if (!node) {
         file << "0 NULL ";
         return;
@@ -223,16 +196,16 @@ static void saveTreeToFile(std::ofstream& file, tNode* node) {
 
     file << node->type << " " << *node->value << " ";
 
-    saveTreeToFile(file, node->left);
-    saveTreeToFile(file, node->right);    
+    SaveTreeToFile(file, node->left);
+    SaveTreeToFile(file, node->right);    
 }
 
-static std::pair<tNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, std::string>>& nodes, size_t pos) { 
+static std::pair<TNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, std::string>>& nodes, size_t pos) { 
     if (nodes[pos].first == Null) {
         return {nullptr, pos + 1};
     }
 
-    tNode* node = newNode(nodes[pos].first, nodes[pos].second, nullptr, nullptr); 
+    TNode* node = NewNode(nodes[pos].first, nodes[pos].second, nullptr, nullptr); 
     std::tie(node->left, pos) = ReadTreeFromFile(nodes, pos + 1);
     std::tie(node->right, pos) = ReadTreeFromFile(nodes, pos);
     return {node, pos};

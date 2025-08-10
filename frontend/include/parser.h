@@ -11,6 +11,6 @@
 #define CHECK_RIGHT_PARENTHESIS \
     do { if (tokens[*pos] != keyRightParenthesis) syntaxError(__LINE__); } while(0);
 
-tNode* runParser(const std::vector<std::string>& tokens);
+TNode* RunParser(const std::vector<std::string>& tokens);
 
 #endif // PARSER_H

@@ -21,7 +21,7 @@ static const std::unordered_set<char> kAllowedSpecialChars = {
 
 // global ------------------------------------------------------------------------------------------
 
-std::vector<std::string> tokenizer(std::string data) {
+std::vector<std::string> Tokenizer(std::string data) {
     std::vector<std::string> tokens;
     
     for (size_t i = 0; i < data.size();) {
@@ -30,7 +30,7 @@ std::vector<std::string> tokenizer(std::string data) {
         }
 
         if (i == data.size()) {
-            std::cerr << "The file does not contain the keyword \"" << keyEnd <<"\"." << std::endl;
+            std::cerr << "The file does not contain the keyword \"" << keyEnd << "\"." << std::endl;
             exit(EXIT_FAILURE);
         }
 

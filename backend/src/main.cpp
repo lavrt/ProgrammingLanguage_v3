@@ -14,8 +14,8 @@ static const char* const kNameOfOutputFile = "./bin/output.elf";
 
 int main() {
     std::vector<std::pair<NodeType, std::string>> nodes;
-    tNode* root = ReadTree(nodes);
-    dump(root);
+    TNode* root = ReadTree(nodes);
+    Dump(root);
 
     TCodeGen cg;
     CodeGenCtor(&cg);
@@ -51,7 +51,7 @@ int main() {
 
     CodeGenDtor(&cg); 
 
-    treeDtor(root);
+    TreeDtor(root);
 
     return 0;
 }

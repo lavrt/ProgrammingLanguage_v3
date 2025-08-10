@@ -33,11 +33,11 @@ enum NodeType {
     End,
 };
 
-struct tNode {
+struct TNode {
     NodeType type;
     const std::string* value;
-    tNode* left;
-    tNode* right;
+    TNode* left;
+    TNode* right;
 };
 
 inline const std::string keyIf = "if";
