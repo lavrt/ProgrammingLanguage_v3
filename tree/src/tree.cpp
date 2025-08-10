@@ -20,14 +20,14 @@ static std::pair<tNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<No
 
 // global ------------------------------------------------------------------------------------------
 
-tNode* newNode(NodeType type, std::string value, tNode* left, tNode* right) {
+tNode* newNode(NodeType type, const std::string& value, tNode* left, tNode* right) {
     tNode* node = (tNode*)calloc(1, sizeof(tNode));
     assert(node);
 
     node->left = left;
     node->right = right;
     node->type = type;
-    node->value = value;
+    node->value = &value;
 
     return node;
 }
@@ -42,7 +42,7 @@ void treeDtor(tNode* node) {
         treeDtor(node->right);
     }
 
-    memset(node, 0, sizeof(tNode));
+    // memset(node, 0, sizeof(tNode));
     free(node);
 }
 
@@ -68,12 +68,6 @@ void dump(tNode* root) {
     #if defined GRAPHVIZ
         system("dot ./tmp/dump.gv -Tpng -o ./tmp/dump.png");
     #endif
-}
-
-tNode* copyNode(tNode* node) {
-    return (node)
-                  ? newNode(node->type, node->value, copyNode(node->left), copyNode(node->right))
-                  : NULL;
 }
 
 bool subtreeContainsVariable(tNode* node) {
@@ -159,9 +153,9 @@ static void dumpTreeTraversal(tNode* node, std::ofstream& dumpFile) {
     if (type == keyLess || type == keyGreater || type == keyIdentical ||
         type == keyLessOrEqual || type == keyGreaterOrEqual || type == keyNotIdentical)
     {
-        dumpFile << " | type: \\" << type << " | value: \\" << node->value << " | ";
+        dumpFile << " | type: \\" << type << " | value: \\" << *node->value << " | ";
     } else {
-        dumpFile << " | type: " << type << " | value: " << node->value << " | ";
+        dumpFile << " | type: " << type << " | value: " << *node->value << " | ";
     }
 
     dumpFile << "{ left: " << node->left << " | right: " << node->right << " }} \"";
@@ -224,7 +218,7 @@ static void saveTreeToFile(std::ofstream& file, tNode* node) {
         return;
     }
 
-    file << node->type << " " << node->value << " ";
+    file << node->type << " " << *node->value << " ";
 
     saveTreeToFile(file, node->left);
     saveTreeToFile(file, node->right);    

@@ -16,7 +16,7 @@
 const char* const kDumpFileName = "./tmp/dump.gv";
 const char* const kNameOfFileWithTree = "./tmp/tree.txt";
 
-tNode* newNode(NodeType type, std::string value, tNode* left, tNode* right);
+tNode* newNode(NodeType type, const std::string& value, tNode* left, tNode* right);
 void treeDtor(tNode* node);
 void dump(tNode* root);
 tNode* copyNode(tNode* node);

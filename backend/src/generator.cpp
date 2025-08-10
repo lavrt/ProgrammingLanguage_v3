@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <iostream>
 
 #include "asmCommands.h"
 #include "standardFunctions.h"
@@ -14,9 +15,9 @@ static const int kAdditionalCapacityOfNameTable = 16;
 static const std::string kNameOfEntryFunction = "_start";
 static const ERegister kArgRegs[] {REG_DI, REG_SI, REG_DX, REG_CX, REG_R8, REG_R9};
 
-static int FindVar(const TCodeGen* const cg, std::string id);
-static void AddVar(TCodeGen* cg, std::string id);
-static size_t FindFunc(const TCodeGen* const cg, std::string name);
+static int FindVar(const TCodeGen* const cg, const std::string& id);
+static void AddVar(TCodeGen* cg, const std::string& id);
+static size_t FindFunc(const TCodeGen* const cg, const std::string& name);
 static void CodeGenExpr(TCodeGen* cg, tNode* node);
 static void CodeGenStmt(TCodeGen* cg, tNode* node);
 
@@ -114,30 +115,30 @@ void CodegenProgram(TCodeGen* cg, tNode* program, Elf64_Ehdr* ehdr) {
     syscall(cg);
 }
 
-void AddFunc(TCodeGen* cg, std::string name) {
+void AddFunc(TCodeGen* cg, const std::string& name) {
     if (cg->funcCount >= kAdditionalCapacityOfNameTable) {
         cg->funcs = (TFunctions*)realloc(
             cg->funcs, ((long unsigned)(cg->funcCount + kAdditionalCapacityOfNameTable)) * sizeof(TFunctions)
         );
         assert(cg->funcs);
     }
-    cg->funcs[cg->funcCount].name = name;
+    cg->funcs[cg->funcCount].name = &name;
     cg->funcs[cg->funcCount].addr = cg->size;
     ++cg->funcCount;
 }
 
 // static ------------------------------------------------------------------------------------------
 
-static int FindVar(const TCodeGen* const cg, std::string id) {
+static int FindVar(const TCodeGen* const cg, const std::string& id) {
     for (int i = 0; i != cg->varCount; ++i) {
-        if (cg->vars[i].id == id) {
+        if (*(cg->vars[i].id) == id) {
             return cg->vars[i].offset;
         }
     }
     return -1;
 }
 
-static void AddVar(TCodeGen* cg, std::string id) {
+static void AddVar(TCodeGen* cg, const std::string& id) {
     int& varOffset = cg->isLocal ? cg->localStackOffset : cg->stackOffset;
     if (cg->varCount >= kAdditionalCapacityOfNameTable) {
         cg->vars = (TVariables*)realloc(
@@ -145,15 +146,15 @@ static void AddVar(TCodeGen* cg, std::string id) {
         );
         assert(cg->vars);
     }
-    cg->vars[cg->varCount].id = id;
+    cg->vars[cg->varCount].id = &id;
     varOffset += 8;
     cg->vars[cg->varCount].offset = varOffset;
     ++cg->varCount;
 }
 
-static size_t FindFunc(const TCodeGen* const cg, std::string name) {
+static size_t FindFunc(const TCodeGen* const cg, const std::string& name) {
     for (int i = 0; i < cg->funcCount; i++) {
-        if (cg->funcs[i].name == name) {
+        if (*cg->funcs[i].name == name) {
             return cg->funcs[i].addr;
         }
     }
@@ -203,11 +204,11 @@ static void CodeGenStmt(TCodeGen* cg, tNode* node) {
 }
 
 static void GenExpr::EmitNumber(TCodeGen* cg, tNode* node) {
-    push_imm32(cg, std::stoi(node->value));
+    push_imm32(cg, std::stoi(*node->value));
 }
 
 static void GenExpr::EmitIdentifier(TCodeGen* cg, tNode* node) {
-    int offset = FindVar(cg, node->value);
+    int offset = FindVar(cg, *node->value);
     if (offset == -1) {
         fprintf(stderr, "Undefined variable\n");
         exit(EXIT_FAILURE);
@@ -357,7 +358,7 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
         arg = arg->left;
     }
 
-    size_t addr = FindFunc(cg, node->value);
+    size_t addr = FindFunc(cg, *node->value);
     if (!addr) {
         fprintf(stderr, "Undefined function\n");
         exit(EXIT_FAILURE);
@@ -377,7 +378,7 @@ static void GenExpr::EmitCalling(TCodeGen* cg, tNode* node) {
 static void GenExpr::Operation::EmitReadInt(TCodeGen* cg) {
     size_t readIntAddr = FindFunc(cg, keyReadInt);
     if (!readIntAddr) {
-        fprintf(stderr, "Function %s not found\n", keyReadInt);
+        std::cerr << "Function \"" << keyReadInt << "\" is not found." << std::endl;
         exit(EXIT_FAILURE);
     }
   
@@ -401,7 +402,7 @@ static void GenStmt::EmitDef(TCodeGen* cg, tNode* node) {
     int32_t jmpPos1 = (int32_t)cg->size;
     jmp_rel32(cg, 0);
 
-    AddFunc(cg, node->value);
+    AddFunc(cg, *node->value);
 
     push_reg(cg, REG_BP);
     mov_reg_reg(cg, REG_BP, REG_SP);
@@ -409,7 +410,7 @@ static void GenStmt::EmitDef(TCodeGen* cg, tNode* node) {
     tNode* arg = node->left;
     int argCount = 0;
     while (arg && argCount < 6) {
-        AddVar(cg, arg->value);
+        AddVar(cg, *arg->value);
         int offset = cg->vars[cg->varCount - 1].offset;
         mov_mem_reg(cg, -offset, kArgRegs[argCount]);
         arg = arg->left;
@@ -444,9 +445,9 @@ static void GenStmt::EmitEqual(TCodeGen* cg, tNode* node) {
     CodeGenExpr(cg, node->right);
     pop_reg(cg, REG_AX);
 
-    int offset = FindVar(cg, node->left->value);
+    int offset = FindVar(cg, *node->left->value);
     if (offset == -1) {
-        AddVar(cg, node->left->value);
+        AddVar(cg, *node->left->value);
         offset = cg->vars[cg->varCount - 1].offset;
         sub_reg_imm32(cg, REG_SP, 8);
     }
@@ -457,7 +458,7 @@ static void GenStmt::EmitEqual(TCodeGen* cg, tNode* node) {
 static void GenStmt::EmitPrintAscii(TCodeGen* cg, tNode* node) {
     size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
     if (!printAsciiAddr) {
-        fprintf(stderr, "Function %s not found\n", keyPrintAscii);
+        std::cerr << "Function \"" << keyPrintAscii << "\" is not found." << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -482,7 +483,7 @@ static void GenStmt::EmitPrintAscii(TCodeGen* cg, tNode* node) {
 static void GenStmt::EmitPrintInt(TCodeGen* cg, tNode* node) { 
     size_t printIntAddr = FindFunc(cg, keyPrintInt);
     if (!printIntAddr) {
-        fprintf(stderr, "Function %s not found\n", keyPrintInt);
+        std::cerr << "Function \"" << keyPrintInt << "\" is not found." << std::endl;
         exit(EXIT_FAILURE);
     }
 

@@ -124,7 +124,7 @@ static tNode* getVariable(const std::vector<std::string>& tokens, size_t* pos) {
 static tNode* getDef(const std::vector<std::string>& tokens, size_t* pos) {
     if (tokens[*pos] == keyDef) {
         (*pos)++;
-        std::string name = tokens[*pos];
+        const std::string* name = &tokens[*pos];
         (*pos)++;
         CHECK_LEFT_PARENTHESIS;
         (*pos)++;
@@ -139,7 +139,7 @@ static tNode* getDef(const std::vector<std::string>& tokens, size_t* pos) {
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
         tNode* rightNode = getOperation(tokens, pos);
-        return newNode(Def, name, node, rightNode);
+        return newNode(Def, *name, node, rightNode);
     }
     tNode* leftNode = getOperation(tokens, pos);
     return leftNode;
@@ -237,7 +237,7 @@ static tNode* getAssignment(const std::vector<std::string>& tokens, size_t* pos)
     (*pos)++;
     if (tokens[*pos] == keyCall) {
         (*pos)++;
-        std::string name = tokens[*pos];
+        const std::string* name = &tokens[*pos];
         (*pos)++;
         CHECK_LEFT_PARENTHESIS;
         (*pos)++;
@@ -249,7 +249,7 @@ static tNode* getAssignment(const std::vector<std::string>& tokens, size_t* pos)
         }
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-        rightNode = newNode(Calling, name, argNode, nullptr); 
+        rightNode = newNode(Calling, *name, argNode, nullptr); 
     } else if (tokens[*pos] == keyReadInt) {
         size_t op1 = *pos;
         (*pos)++;

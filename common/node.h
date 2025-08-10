@@ -34,7 +34,7 @@ enum NodeType {
 
 struct tNode {
     NodeType type;
-    std::string value;
+    const std::string* value;
     tNode* left;
     tNode* right;
 };
