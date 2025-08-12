@@ -42,35 +42,35 @@ static TNode* GetGrammar(const std::vector<std::string>& tokens) {
         return NewNode(End, tokens[pos], nullptr, nullptr);
     }
 
-    TNode* lefTNode = GetDef(tokens, &pos);
+    TNode* leftNode = GetDef(tokens, &pos);
     if (tokens[pos++] != keySemicolon) {
         syntaxError(__LINE__);
     }
     while (tokens[pos] != keyEnd) {
-        TNode* righTNode = GetDef(tokens, &pos);
+        TNode* rightNode = GetDef(tokens, &pos);
         if (tokens[pos] != keySemicolon) {
             syntaxError(__LINE__);
         }
-        lefTNode = NewNode(Semicolon, tokens[pos++], lefTNode, righTNode);
+        leftNode = NewNode(Semicolon, tokens[pos++], leftNode, rightNode);
     }
 
-    return lefTNode;
+    return leftNode;
 }
 
 static TNode* GetExpression(const std::vector<std::string>& tokens, size_t* pos) {
-    TNode* lefTNode = GetMultiplication(tokens, pos);
+    TNode* leftNode = GetMultiplication(tokens, pos);
 
     while (tokens[*pos] == keyAdd || tokens[*pos] == keySub) {
         size_t op = *pos;
         (*pos)++;
-        TNode* righTNode = GetMultiplication(tokens, pos); 
-        lefTNode = NewNode(kStringToNodeType.at(tokens[op]), tokens[op], lefTNode, righTNode);
+        TNode* rightNode = GetMultiplication(tokens, pos); 
+        leftNode = NewNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);
     }
-    return lefTNode;
+    return leftNode;
 }
 
 static TNode* GetComparsion(const std::vector<std::string>& tokens, size_t* pos) {
-    TNode* lefTNode = GetExpression(tokens, pos);
+    TNode* leftNode = GetExpression(tokens, pos);
 
     if (tokens[*pos] == keyLess ||
         tokens[*pos] == keyGreater || 
@@ -81,23 +81,23 @@ static TNode* GetComparsion(const std::vector<std::string>& tokens, size_t* pos)
     {
         size_t op = *pos;
         (*pos)++;
-        TNode* righTNode = GetExpression(tokens, pos);
-        lefTNode = NewNode(kStringToNodeType.at(tokens[op]), tokens[op], lefTNode, righTNode);
+        TNode* rightNode = GetExpression(tokens, pos);
+        leftNode = NewNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);
     }
 
-    return lefTNode;
+    return leftNode;
 }
 
 static TNode* GetMultiplication(const std::vector<std::string>& tokens, size_t* pos) {
-    TNode* lefTNode = GetParentheses(tokens, pos);
+    TNode* leftNode = GetParentheses(tokens, pos);
 
     while (tokens[*pos] == keyMul || tokens[*pos] == keyDiv) {
         size_t op = *pos;
         (*pos)++;
-        TNode* righTNode = GetParentheses(tokens, pos);
-        lefTNode = NewNode(kStringToNodeType.at(tokens[op]), tokens[op], lefTNode, righTNode);
+        TNode* rightNode = GetParentheses(tokens, pos);
+        leftNode = NewNode(kStringToNodeType.at(tokens[op]), tokens[op], leftNode, rightNode);
     }
-    return lefTNode;
+    return leftNode;
 }
 
 static TNode* GetParentheses(const std::vector<std::string>& tokens, size_t* pos) {
@@ -132,21 +132,21 @@ static TNode* GetDef(const std::vector<std::string>& tokens, size_t* pos) {
         (*pos)++;
         CHECK_LEFT_PARENTHESIS;
         (*pos)++;
-        TNode* lefTNode = GetVariable(tokens, pos);
-        TNode* node = lefTNode;
+        TNode* leftNode = GetVariable(tokens, pos);
+        TNode* node = leftNode;
         while (tokens[*pos] == keySemicolon) {
             (*pos)++;
-            lefTNode->left = NewNode(Identifier, tokens[*pos], nullptr, nullptr);
-            lefTNode = lefTNode->left;
+            leftNode->left = NewNode(Identifier, tokens[*pos], nullptr, nullptr);
+            leftNode = leftNode->left;
             (*pos)++;
         }
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-        TNode* righTNode = GetOperation(tokens, pos);
-        return NewNode(Def, *name, node, righTNode);
+        TNode* rightNode = GetOperation(tokens, pos);
+        return NewNode(Def, *name, node, rightNode);
     }
-    TNode* lefTNode = GetOperation(tokens, pos);
-    return lefTNode;
+    TNode* leftNode = GetOperation(tokens, pos);
+    return leftNode;
 }
 
 static TNode* GetOperation(const std::vector<std::string>& tokens, size_t* pos) {
@@ -159,43 +159,43 @@ static TNode* GetOperation(const std::vector<std::string>& tokens, size_t* pos) 
         (*pos)++;
         CHECK_LEFT_PARENTHESIS;
         (*pos)++;
-        TNode* lefTNode = GetComparsion(tokens, pos);
+        TNode* leftNode = GetComparsion(tokens, pos);
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-        return NewNode(PrintAscii, tokens[op], lefTNode, nullptr); 
+        return NewNode(PrintAscii, tokens[op], leftNode, nullptr); 
     } else if (tokens[*pos] == keyPrintInt) {
         size_t op = *pos;
         (*pos)++;
         CHECK_LEFT_PARENTHESIS;
         (*pos)++;
-        TNode* lefTNode = GetComparsion(tokens, pos);
+        TNode* leftNode = GetComparsion(tokens, pos);
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-        return NewNode(PrintInt, tokens[op], lefTNode, nullptr);
+        return NewNode(PrintInt, tokens[op], leftNode, nullptr);
     } else if (tokens[*pos] == keyReturn) {
         size_t op = *pos;
         (*pos)++;
-        TNode* lefTNode = GetComparsion(tokens, pos);
-        return NewNode(Return, tokens[op], lefTNode, nullptr);
+        TNode* leftNode = GetComparsion(tokens, pos);
+        return NewNode(Return, tokens[op], leftNode, nullptr);
     } else if (tokens[*pos] == keyLeftCurlyBracket) {
         (*pos)++;
-        TNode* lefTNode = GetOperation(tokens, pos);
+        TNode* leftNode = GetOperation(tokens, pos);
         if (tokens[(*pos)++] != keySemicolon) {
             syntaxError(__LINE__);
         }
         while (tokens[*pos] != keyRightCurlyBracket) {
-            TNode* righTNode = GetOperation(tokens, pos);
+            TNode* rightNode = GetOperation(tokens, pos);
             if (tokens[(*pos)] != keySemicolon) {
                 syntaxError(__LINE__);
             }
-            lefTNode = NewNode(Semicolon, tokens[(*pos)++], lefTNode, righTNode);
+            leftNode = NewNode(Semicolon, tokens[(*pos)++], leftNode, rightNode);
         }
 
         if (tokens[(*pos)++] != keyRightCurlyBracket) {
             syntaxError(__LINE__);
         }
 
-        return lefTNode;
+        return leftNode;
     } else if (!isKeyWord(tokens[*pos])) {
         return GetAssignment(tokens, pos);
     } else {
@@ -208,13 +208,13 @@ static TNode* GetIf(const std::vector<std::string>& tokens, size_t* pos) {
     (*pos)++;
     CHECK_LEFT_PARENTHESIS;
     (*pos)++;
-    TNode* lefTNode = GetComparsion(tokens, pos);
+    TNode* leftNode = GetComparsion(tokens, pos);
     CHECK_RIGHT_PARENTHESIS;
     (*pos)++;
 
-    TNode* righTNode = GetOperation(tokens, pos);
+    TNode* rightNode = GetOperation(tokens, pos);
 
-    return NewNode(If, tokens[op], lefTNode, righTNode);
+    return NewNode(If, tokens[op], leftNode, rightNode);
 }
 
 static TNode* GetWhile(const std::vector<std::string>& tokens, size_t* pos) {
@@ -222,18 +222,18 @@ static TNode* GetWhile(const std::vector<std::string>& tokens, size_t* pos) {
     (*pos)++;
     CHECK_LEFT_PARENTHESIS;
     (*pos)++;
-    TNode* lefTNode = GetComparsion(tokens, pos);
+    TNode* leftNode = GetComparsion(tokens, pos);
     CHECK_RIGHT_PARENTHESIS;
     (*pos)++;
 
-    TNode* righTNode = GetOperation(tokens, pos);
+    TNode* rightNode = GetOperation(tokens, pos);
 
-    return NewNode(While, tokens[op], lefTNode, righTNode);
+    return NewNode(While, tokens[op], leftNode, rightNode);
 }
 
 static TNode* GetAssignment(const std::vector<std::string>& tokens, size_t* pos) {
-    TNode* lefTNode = GetVariable(tokens, pos);
-    TNode* righTNode = nullptr;
+    TNode* leftNode = GetVariable(tokens, pos);
+    TNode* rightNode = nullptr;
     if (tokens[*pos] != keyEqual) {
         syntaxError(__LINE__);
     }
@@ -253,7 +253,7 @@ static TNode* GetAssignment(const std::vector<std::string>& tokens, size_t* pos)
         }
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-        righTNode = NewNode(Calling, *name, argNode, nullptr); 
+        rightNode = NewNode(Calling, *name, argNode, nullptr); 
     } else if (tokens[*pos] == keyReadInt) {
         size_t op1 = *pos;
         (*pos)++;
@@ -261,11 +261,11 @@ static TNode* GetAssignment(const std::vector<std::string>& tokens, size_t* pos)
         (*pos)++;
         CHECK_RIGHT_PARENTHESIS;
         (*pos)++;
-        righTNode = NewNode(ReadInt, tokens[op1], nullptr, nullptr);
+        rightNode = NewNode(ReadInt, tokens[op1], nullptr, nullptr);
     } else {
-        righTNode = GetComparsion(tokens, pos);
+        rightNode = GetComparsion(tokens, pos);
     }
-    return NewNode(Equal, tokens[op], lefTNode, righTNode);
+    return NewNode(Equal, tokens[op], leftNode, rightNode);
 }
 
 static void syntaxError(int line) {

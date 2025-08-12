@@ -1,27 +1,39 @@
-a = read_int(); 
+a = read_int();
 
 # calculating the factorial using a recursion function
-
-def factorial (a1) {
+def factorial_1 (a1) {
+    if (a < 0) {
+        return (0 - 1);
+    };
+    if (a1 == 0) {
+        return (1);
+    };
     if (a1 == 1) {
         return (1);
     };
     a2 = a1 - 1;
-    a3 = call factorial (a2);
+    a3 = call factorial_1 (a2);
     return (a1 * a3);
 };
 
-k1 = call factorial (a);
-print_int (k1);
-
 # calculating the factorial using a loop
-
-b1 = 1;
-k2 = 1;
-while (b1 <= a) {
-    k2 = k2 * b1;
-    b1 = b1 + 1;
+def factorial_2 (a2) {
+    if (a < 0) {
+        return (0 - 1);
+    };
+    b1 = 1;
+    k2 = 1;
+    while (b1 <= a) {
+        k2 = k2 * b1;
+        b1 = b1 + 1;
+    };
+    return (k2);
 };
-print_int (k2);
+
+res_1 = call factorial_1 (a);
+print_int (res_1);
+
+res_2 = call factorial_2 (a);
+print_int (res_2);
 
 end

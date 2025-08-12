@@ -13,7 +13,7 @@
 #define FCLOSE(ptr_) \
     do { fclose(ptr_); ptr_ = NULL; } while(0);
 
-const char* const kDumpFileName = "./tmp/Dump.gv";
+const char* const kDumpFileName = "./tmp/dump.gv";
 const char* const kNameOfFileWithTree = "./tmp/tree.txt";
 
 TNode* NewNode(NodeType type, const std::string& value, TNode* left, TNode* right);
