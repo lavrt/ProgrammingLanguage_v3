@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "node.h"
+#include "tree.h"
 
 #include <vector>
 #include <string>
@@ -11,6 +11,6 @@
 #define CHECK_RIGHT_PARENTHESIS \
     do { if (tokens[*pos] != keyRightParenthesis) syntaxError(__LINE__); } while(0);
 
-TNode* RunParser(const std::vector<std::string>& tokens);
+TTree RunParser(const std::vector<std::string>& tokens);
 
 #endif // PARSER_H

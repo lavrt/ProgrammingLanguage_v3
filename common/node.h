@@ -2,8 +2,8 @@
 #define NODE_H
 
 #include <unordered_map>
-#include <string_view>
 #include <string>
+#include <memory>
 
 enum NodeType {
     Null = 0,
@@ -33,11 +33,43 @@ enum NodeType {
     End,
 };
 
-struct TNode {
+class TNode {
+private:
     NodeType type;
-    const std::string* value;
-    TNode* left;
-    TNode* right;
+    std::string value;
+    std::unique_ptr<TNode> left;
+    std::unique_ptr<TNode> right;
+
+public:
+    TNode(NodeType t, const std::string& v, std::unique_ptr<TNode> l, std::unique_ptr<TNode> r)
+        : type(t), value(v), left(std::move(l)), right(std::move(r)) {}
+
+    TNode(NodeType t, const std::string& v)
+        : type(t), value(v), left(nullptr), right(nullptr) {}
+
+    void SetLeft(std::unique_ptr<TNode> l) {
+        left = std::move(l);
+    }
+
+    void SetRight(std::unique_ptr<TNode> r) {
+        right = std::move(r);
+    }
+
+    NodeType GetType() const {
+        return type;
+    }
+
+    std::string GetValue() const {
+        return value;
+    }
+
+    TNode* GetLeft() const {
+        return left.get();
+    }
+
+    TNode* GetRight() const {
+        return right.get();
+    }
 };
 
 inline const std::string keyIf = "if";

@@ -10,7 +10,6 @@
 #include <iostream>
 
 #include "node.h"
-#include "tree.h"
 #include "debug.h"
 
 // static ------------------------------------------------------------------------------------------

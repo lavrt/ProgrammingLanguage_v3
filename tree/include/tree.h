@@ -7,6 +7,31 @@
 #include <stdlib.h>
 #include <vector>
 #include <string>
+#include <memory>
+
+class TTree {
+private:
+    std::unique_ptr<TNode> root = nullptr;
+
+    void DefiningGraphNodes(std::ofstream& file, TNode* node) const;
+
+    void DefiningGraphDependencies(std::ofstream& file, TNode* node) const;
+
+    void PreOrderTraversal(std::ofstream& file, TNode* node) const;
+
+public:
+    TTree(std::unique_ptr<TNode> r) : root(std::move(r)) {}
+
+    TNode* GetRoot() const {
+        return root.get();
+    }
+
+    void Dump(const std::string& fileName) const;
+
+    void Serialize(const std::string& fileName) const;
+
+    void Deserialize(const std::string& fileName);
+};
 
 #define FREE(ptr_) \
     do { free(ptr_); ptr_ = NULL; } while(0);
@@ -16,10 +41,8 @@
 const char* const kDumpFileName = "./tmp/dump.gv";
 const char* const kNameOfFileWithTree = "./tmp/tree.txt";
 
-TNode* NewNode(NodeType type, const std::string& value, TNode* left, TNode* right);
-void TreeDtor(TNode* node);
-void Dump(TNode* root);
-void SaveTree(TNode* root);
-TNode* ReadTree(std::vector<std::pair<NodeType, std::string>>& nodes);
+// void Dump(TNode* root);
+// void SaveTree(TNode* root);
+// TNode* ReadTree(std::vector<std::pair<NodeType, std::string>>& nodes);
 
 #endif // TREE_H

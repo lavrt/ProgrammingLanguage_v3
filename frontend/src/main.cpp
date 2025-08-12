@@ -29,11 +29,10 @@ int main() {
 
     std::vector<std::string> tokens = Tokenizer(data);
 
-    TNode* root = RunParser(tokens);
-    SaveTree(root);
-    // Dump(root);
-
-    TreeDtor(root);
+    TTree ast = RunParser(tokens);
+    // ast.Save("./tmp/tree.txt");
+    ast.Dump("./tmp/dump.gv");
+    // TreeDtor(root);
 
     return 0;
 }
