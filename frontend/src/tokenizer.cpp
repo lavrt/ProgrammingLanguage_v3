@@ -1,28 +1,33 @@
 #include "tokenizer.h"
 
-#include <assert.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unordered_set>
 #include <fstream>
-#include <filesystem>
 #include <iostream>
 
 #include "node.h"
-#include "debug.h"
 
-// static ------------------------------------------------------------------------------------------
+Tokenizer::Tokenizer(const std::string& fn) {
+    std::ifstream file(kNameOfFileWithCode);
+    if (!file) {
+        std::cerr << "The \"" << kNameOfFileWithCode << "\" file cannot be opened." << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
-static const std::unordered_set<char> kAllowedSpecialChars = {
-    '{', '}', '(', ')', ';', '+', '-', '*', '/', '<', '>', '=', '!'
-};
+    std::string data {
+        std::istreambuf_iterator<char>(file),
+        std::istreambuf_iterator<char>()
+    };
 
-// global ------------------------------------------------------------------------------------------
+    file.close();
 
-std::vector<std::string> Tokenizer(std::string data) {
-    std::vector<std::string> tokens;
-    
+    if (data.empty()) {
+        std::cerr << "The \"" << kNameOfFileWithCode << "\" file is empty or cannot be read." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    SplitIntoTokens(data);
+}
+
+void Tokenizer::SplitIntoTokens(const std::string& data) {
     for (size_t i = 0; i < data.size();) {
         while (i < data.size() && isspace(data[i])) {
             ++i;
@@ -63,6 +68,4 @@ std::vector<std::string> Tokenizer(std::string data) {
             break;
         }
     }
-
-    return tokens;
 }

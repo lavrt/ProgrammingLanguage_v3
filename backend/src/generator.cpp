@@ -18,43 +18,42 @@ static const ERegister kArgRegs[] {REG_DI, REG_SI, REG_DX, REG_CX, REG_R8, REG_R
 static int FindVar(const TCodeGen* const cg, const std::string& id);
 static void AddVar(TCodeGen* cg, const std::string& id);
 static size_t FindFunc(const TCodeGen* const cg, const std::string& name);
-static void CodeGenExpr(TCodeGen* cg, TNode* node);
-static void CodeGenStmt(TCodeGen* cg, TNode* node);
+static void CodeGenExpr(TCodeGen* cg, Node* node);
+static void CodeGenStmt(TCodeGen* cg, Node* node);
 
 namespace GenExpr {
-    static void EmitNumber(TCodeGen* cg, TNode* node);
+    static void EmitNumber(TCodeGen* cg, Node* node);
 
-    static void EmitIdentifier(TCodeGen* cg, TNode* node);
+    static void EmitIdentifier(TCodeGen* cg, Node* node);
 
-    static void EmitCalling(TCodeGen* cg, TNode* node);
+    static void EmitCall(TCodeGen* cg, Node* node);
+
+    static void EmitReadInt(TCodeGen* cg);
 
     namespace Binary {
-        static void EmitAdd(TCodeGen* cg, TNode* node);
-        static void EmitSub(TCodeGen* cg, TNode* node);
-        static void EmitMul(TCodeGen* cg, TNode* node);
-        static void EmitDiv(TCodeGen* cg, TNode* node);
-        static void EmitGreater(TCodeGen* cg, TNode* node);
-        static void EmitGreaterOrEqual(TCodeGen* cg, TNode* node);
-        static void EmitLess(TCodeGen* cg, TNode* node);
-        static void EmitLessOrEqual(TCodeGen* cg, TNode* node);
-        static void EmitIdentical(TCodeGen* cg, TNode* node);
-        static void EmitNotIdentical(TCodeGen* cg, TNode* node);
-    }
-
-    namespace Operation {
-        static void EmitReadInt(TCodeGen* cg);
+        static void EmitAdd(TCodeGen* cg, Node* node);
+        static void EmitSub(TCodeGen* cg, Node* node);
+        static void EmitMul(TCodeGen* cg, Node* node);
+        static void EmitDiv(TCodeGen* cg, Node* node);
+        static void EmitGreater(TCodeGen* cg, Node* node);
+        static void EmitGreaterOrEqual(TCodeGen* cg, Node* node);
+        static void EmitLess(TCodeGen* cg, Node* node);
+        static void EmitLessOrEqual(TCodeGen* cg, Node* node);
+        static void EmitIdentical(TCodeGen* cg, Node* node);
+        static void EmitNotIdentical(TCodeGen* cg, Node* node);
     }
 }
 
 namespace GenStmt {
-    static void EmitDef(TCodeGen* cg, TNode* node);
-    static void EmitSemicolon(TCodeGen* cg, TNode* node);
-    static void EmitEqual(TCodeGen* cg, TNode* node);
-    static void EmitPrintAscii(TCodeGen* cg, TNode* node);
-    static void EmitPrintInt(TCodeGen* cg, TNode* node);
-    static void EmitIf(TCodeGen* cg, TNode* node);
-    static void EmitWhile(TCodeGen* cg, TNode* node);
-    static void EmitReturn(TCodeGen* cg, TNode* node);
+    static void EmitDef(TCodeGen* cg, Node* node);
+    static void EmitSemicolon(TCodeGen* cg, Node* node);
+    static void EmitEqual(TCodeGen* cg, Node* node);
+    static void EmitPrintAscii(TCodeGen* cg, Node* node);
+    static void EmitPrintInt(TCodeGen* cg, Node* node);
+    static void EmitIf(TCodeGen* cg, Node* node);
+    static void EmitWhile(TCodeGen* cg, Node* node);
+    static void EmitReturn(TCodeGen* cg, Node* node);
+    static void EmitCall(TCodeGen* cg, Node* node); 
 }
 
 // global ------------------------------------------------------------------------------------------
@@ -96,7 +95,7 @@ void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len) {
     cg->size += len;
 }
 
-void CodegenProgram(TCodeGen* cg, TNode* program, Elf64_Ehdr* ehdr) {
+void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
     CreateStandartFunctions(cg, ehdr);
     
     AddFunc(cg, kNameOfEntryFunction);
@@ -122,7 +121,7 @@ void AddFunc(TCodeGen* cg, const std::string& name) {
         );
         assert(cg->funcs);
     }
-    cg->funcs[cg->funcCount].name = &name;
+    cg->funcs[cg->funcCount].name = name;
     cg->funcs[cg->funcCount].addr = cg->size;
     ++cg->funcCount;
 }
@@ -131,7 +130,7 @@ void AddFunc(TCodeGen* cg, const std::string& name) {
 
 static int FindVar(const TCodeGen* const cg, const std::string& id) {
     for (int i = 0; i != cg->varCount; ++i) {
-        if (*(cg->vars[i].id) == id) {
+        if (cg->vars[i].id == id) {
             return cg->vars[i].offset;
         }
     }
@@ -146,7 +145,7 @@ static void AddVar(TCodeGen* cg, const std::string& id) {
         );
         assert(cg->vars);
     }
-    cg->vars[cg->varCount].id = &id;
+    cg->vars[cg->varCount].id = id;
     varOffset += 8;
     cg->vars[cg->varCount].offset = varOffset;
     ++cg->varCount;
@@ -154,18 +153,19 @@ static void AddVar(TCodeGen* cg, const std::string& id) {
 
 static size_t FindFunc(const TCodeGen* const cg, const std::string& name) {
     for (int i = 0; i < cg->funcCount; i++) {
-        if (*cg->funcs[i].name == name) {
+        if (cg->funcs[i].name == name) {
             return cg->funcs[i].addr;
         }
     }
     return 0;
 }
 
-static void CodeGenExpr(TCodeGen* cg, TNode* node) {
-    switch (node->type) {
+static void CodeGenExpr(TCodeGen* cg, Node* node) {
+    switch (node->GetType()) {
         case Number:            GenExpr::EmitNumber(cg, node);                  break;
         case Identifier:        GenExpr::EmitIdentifier(cg, node);              break;      
-        case Calling:           GenExpr::EmitCalling(cg, node);                 break;
+        case Call:              GenExpr::EmitCall(cg, node);                 break;
+        case ReadInt:           GenExpr::EmitReadInt(cg);                       break;     
         case Add:               GenExpr::Binary::EmitAdd(cg, node);             break;
         case Sub:               GenExpr::Binary::EmitSub(cg, node);             break;
         case Mul:               GenExpr::Binary::EmitMul(cg, node);             break;
@@ -176,17 +176,16 @@ static void CodeGenExpr(TCodeGen* cg, TNode* node) {
         case LessOrEqual:       GenExpr::Binary::EmitLessOrEqual(cg, node);     break;
         case Identical:         GenExpr::Binary::EmitIdentical(cg, node);       break;
         case NotIdentical:      GenExpr::Binary::EmitNotIdentical(cg, node);    break;
-        case ReadInt:           GenExpr::Operation::EmitReadInt(cg);            break; 
         
         default: {
-            fprintf(stderr, "Unknown expression type\n");
+            std::cerr << "Unknown expression type \"" << node->GetType() << "\"." << std::endl;
             exit(EXIT_FAILURE);
         }
     }
 }
 
-static void CodeGenStmt(TCodeGen* cg, TNode* node) {
-    switch (node->type) {
+static void CodeGenStmt(TCodeGen* cg, Node* node) {
+    switch (node->GetType()) {
         case End:                                                   break;
         case Def:           GenStmt::EmitDef(cg, node);             break;
         case Semicolon:     GenStmt::EmitSemicolon(cg, node);       break;
@@ -196,20 +195,21 @@ static void CodeGenStmt(TCodeGen* cg, TNode* node) {
         case If:            GenStmt::EmitIf(cg, node);              break;
         case While:         GenStmt::EmitWhile(cg, node);           break;
         case Return:        GenStmt::EmitReturn(cg, node);          break;
+        case Call:          GenStmt::EmitCall(cg, node);            break;
 
         default: {
-            fprintf(stderr, "Unknown node type\n");
+            std::cerr << "Unknown node type \"" << node->GetType() << "\"." << std::endl;
             exit(EXIT_FAILURE);
         }
     }
 }
 
-static void GenExpr::EmitNumber(TCodeGen* cg, TNode* node) {
-    push_imm32(cg, std::stoi(*node->value));
+static void GenExpr::EmitNumber(TCodeGen* cg, Node* node) {
+    push_imm32(cg, std::stoi(node->GetValue()));
 }
 
-static void GenExpr::EmitIdentifier(TCodeGen* cg, TNode* node) {
-    int offset = FindVar(cg, *node->value);
+static void GenExpr::EmitIdentifier(TCodeGen* cg, Node* node) {
+    int offset = FindVar(cg, node->GetValue());
     if (offset == -1) {
         fprintf(stderr, "Undefined variable\n");
         exit(EXIT_FAILURE);
@@ -219,9 +219,9 @@ static void GenExpr::EmitIdentifier(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitAdd(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitAdd(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
     
@@ -230,9 +230,9 @@ static void GenExpr::Binary::EmitAdd(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitSub(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitSub(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -241,9 +241,9 @@ static void GenExpr::Binary::EmitSub(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitMul(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitMul(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -252,9 +252,9 @@ static void GenExpr::Binary::EmitMul(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitDiv(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitDiv(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -264,9 +264,9 @@ static void GenExpr::Binary::EmitDiv(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitGreater(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitGreater(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -277,9 +277,9 @@ static void GenExpr::Binary::EmitGreater(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitGreaterOrEqual(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitGreaterOrEqual(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -290,9 +290,9 @@ static void GenExpr::Binary::EmitGreaterOrEqual(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitLess(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitLess(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -303,9 +303,9 @@ static void GenExpr::Binary::EmitLess(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitLessOrEqual(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitLessOrEqual(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -316,9 +316,9 @@ static void GenExpr::Binary::EmitLessOrEqual(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitIdentical(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitIdentical(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -329,9 +329,9 @@ static void GenExpr::Binary::EmitIdentical(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Binary::EmitNotIdentical(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
-    CodeGenExpr(cg, node->right);
+static void GenExpr::Binary::EmitNotIdentical(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_BX);
     pop_reg(cg, REG_AX);
 
@@ -342,7 +342,7 @@ static void GenExpr::Binary::EmitNotIdentical(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::EmitCalling(TCodeGen* cg, TNode* node) {
+static void GenExpr::EmitCall(TCodeGen* cg, Node* node) {
     push_reg(cg, REG_DI);
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DX);
@@ -350,16 +350,16 @@ static void GenExpr::EmitCalling(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_R8);
     push_reg(cg, REG_R9);
 
-    TNode* arg = node->left;
+    Node* arg = node->GetLeft();
 
     size_t argCount = 0;
     while (arg && argCount < 6) {
         CodeGenExpr(cg, arg);
         pop_reg(cg, kArgRegs[argCount++]);
-        arg = arg->left;
+        arg = arg->GetLeft();
     }
 
-    size_t addr = FindFunc(cg, *node->value);
+    size_t addr = FindFunc(cg, node->GetValue());
     if (!addr) {
         fprintf(stderr, "Undefined function\n");
         exit(EXIT_FAILURE);
@@ -376,7 +376,39 @@ static void GenExpr::EmitCalling(TCodeGen* cg, TNode* node) {
     push_reg(cg, REG_AX);
 }
 
-static void GenExpr::Operation::EmitReadInt(TCodeGen* cg) {
+static void GenStmt::EmitCall(TCodeGen* cg, Node* node) {
+    push_reg(cg, REG_DI);
+    push_reg(cg, REG_SI);
+    push_reg(cg, REG_DX);
+    push_reg(cg, REG_CX);
+    push_reg(cg, REG_R8);
+    push_reg(cg, REG_R9);
+
+    Node* arg = node->GetLeft();
+
+    size_t argCount = 0;
+    while (arg && argCount < 6) {
+        CodeGenExpr(cg, arg);
+        pop_reg(cg, kArgRegs[argCount++]);
+        arg = arg->GetLeft();
+    }
+        size_t addr = FindFunc(cg, node->GetValue());
+    if (!addr) {
+        fprintf(stderr, "Undefined function\n");
+        exit(EXIT_FAILURE);
+    }
+    call_rel32(cg, (int32_t)(addr - (cg->size + 5)));
+
+    pop_reg(cg, REG_R9);
+    pop_reg(cg, REG_R8);
+    pop_reg(cg, REG_CX);
+    pop_reg(cg, REG_DX);
+    pop_reg(cg, REG_SI);
+    pop_reg(cg, REG_DI);
+
+}
+
+static void GenExpr::EmitReadInt(TCodeGen* cg) {
     size_t readIntAddr = FindFunc(cg, keyReadInt);
     if (!readIntAddr) {
         std::cerr << "Function \"" << keyReadInt << "\" is not found." << std::endl;
@@ -396,30 +428,30 @@ static void GenExpr::Operation::EmitReadInt(TCodeGen* cg) {
     push_reg(cg, REG_AX);
 }
 
-static void GenStmt::EmitDef(TCodeGen* cg, TNode* node) {
+static void GenStmt::EmitDef(TCodeGen* cg, Node* node) {
     cg->isLocal = true;
     int varCountBeforeFunction = cg->varCount;
 
     int32_t jmpPos1 = (int32_t)cg->size;
     jmp_rel32(cg, 0);
 
-    AddFunc(cg, *node->value);
+    AddFunc(cg, node->GetValue());
 
     push_reg(cg, REG_BP);
     mov_reg_reg(cg, REG_BP, REG_SP);
 
-    TNode* arg = node->left;
+    Node* arg = node->GetLeft();
     int argCount = 0;
     while (arg && argCount < 6) {
-        AddVar(cg, *arg->value);
+        AddVar(cg, arg->GetValue());
         int offset = cg->vars[cg->varCount - 1].offset;
         mov_mem_reg(cg, -offset, kArgRegs[argCount]);
-        arg = arg->left;
+        arg = arg->GetLeft();
         ++argCount;
     }
     sub_reg_imm32(cg, REG_SP, 8 * argCount);
 
-    CodeGenStmt(cg, node->right);
+    CodeGenStmt(cg, node->GetRight());
 
     mov_reg_reg(cg, REG_SP, REG_BP);
     pop_reg(cg, REG_BP);
@@ -437,18 +469,18 @@ static void GenStmt::EmitDef(TCodeGen* cg, TNode* node) {
     cg->varCount = varCountBeforeFunction;
 }
 
-static void GenStmt::EmitSemicolon(TCodeGen* cg, TNode* node) {
-    CodeGenStmt(cg, node->left);
-    CodeGenStmt(cg, node->right);
+static void GenStmt::EmitSemicolon(TCodeGen* cg, Node* node) {
+    CodeGenStmt(cg, node->GetLeft());
+    CodeGenStmt(cg, node->GetRight());
 }
 
-static void GenStmt::EmitEqual(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->right);
+static void GenStmt::EmitEqual(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetRight());
     pop_reg(cg, REG_AX);
 
-    int offset = FindVar(cg, *node->left->value);
+    int offset = FindVar(cg, node->GetLeft()->GetValue());
     if (offset == -1) {
-        AddVar(cg, *node->left->value);
+        AddVar(cg, node->GetLeft()->GetValue());
         offset = cg->vars[cg->varCount - 1].offset;
         sub_reg_imm32(cg, REG_SP, 8);
     }
@@ -456,14 +488,14 @@ static void GenStmt::EmitEqual(TCodeGen* cg, TNode* node) {
     mov_mem_reg(cg, -offset, REG_AX);
 }
 
-static void GenStmt::EmitPrintAscii(TCodeGen* cg, TNode* node) {
+static void GenStmt::EmitPrintAscii(TCodeGen* cg, Node* node) {
     size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
     if (!printAsciiAddr) {
         std::cerr << "Function \"" << keyPrintAscii << "\" is not found." << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    CodeGenExpr(cg, node->left);
+    CodeGenExpr(cg, node->GetLeft());
     pop_reg(cg, REG_DI);  
 
     push_reg(cg, REG_AX);
@@ -481,14 +513,14 @@ static void GenStmt::EmitPrintAscii(TCodeGen* cg, TNode* node) {
     pop_reg(cg, REG_AX);
 }
 
-static void GenStmt::EmitPrintInt(TCodeGen* cg, TNode* node) { 
+static void GenStmt::EmitPrintInt(TCodeGen* cg, Node* node) { 
     size_t printIntAddr = FindFunc(cg, keyPrintInt);
     if (!printIntAddr) {
         std::cerr << "Function \"" << keyPrintInt << "\" is not found." << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    CodeGenExpr(cg, node->left);
+    CodeGenExpr(cg, node->GetLeft());
     pop_reg(cg, REG_DI);  
 
     push_reg(cg, REG_AX);    
@@ -504,32 +536,32 @@ static void GenStmt::EmitPrintInt(TCodeGen* cg, TNode* node) {
     pop_reg(cg, REG_AX);
 }
 
-static void GenStmt::EmitIf(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
+static void GenStmt::EmitIf(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
     pop_reg(cg, REG_AX);
     
     cmp_reg_imm32(cg, REG_AX, 0);
     int32_t jmpPos_1 = (int32_t)cg->size;
     je_rel32(cg, 0);
 
-    CodeGenStmt(cg, node->right);
+    CodeGenStmt(cg, node->GetRight());
 
     int32_t jmpTarget_1 = (int32_t)cg->size;
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
     memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
 }
 
-static void GenStmt::EmitWhile(TCodeGen* cg, TNode* node) {
+static void GenStmt::EmitWhile(TCodeGen* cg, Node* node) {
     int32_t jmpTarget_2 = (int32_t)cg->size;
     
-    CodeGenExpr(cg, node->left);
+    CodeGenExpr(cg, node->GetLeft());
     pop_reg(cg, REG_AX);
 
     cmp_reg_imm32(cg, REG_AX, 0);
     int32_t jmpPos_1 = (int32_t)cg->size;
     je_rel32(cg, 0);
 
-    CodeGenStmt(cg, node->right);
+    CodeGenStmt(cg, node->GetRight());
     
     int32_t jmpPos_2 = (int32_t)cg->size;
     int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 5);
@@ -540,8 +572,8 @@ static void GenStmt::EmitWhile(TCodeGen* cg, TNode* node) {
     memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
 }
 
-static void GenStmt::EmitReturn(TCodeGen* cg, TNode* node) {
-    CodeGenExpr(cg, node->left);
+static void GenStmt::EmitReturn(TCodeGen* cg, Node* node) {
+    CodeGenExpr(cg, node->GetLeft());
     pop_reg(cg, REG_AX);
 
     mov_reg_reg(cg, REG_SP, REG_BP);

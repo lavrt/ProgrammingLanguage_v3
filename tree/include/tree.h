@@ -1,29 +1,36 @@
 #ifndef TREE_H
 #define TREE_H
 
-#include "node.h"
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <vector>
 #include <string>
 #include <memory>
 
-class TTree {
+#include "node.h"
+
+class Tree {
 private:
-    std::unique_ptr<TNode> root = nullptr;
+    std::unique_ptr<Node> root = nullptr;
 
-    void DefiningGraphNodes(std::ofstream& file, TNode* node) const;
+    void DefiningGraphNodes(std::ofstream& file, Node* node) const;
 
-    void DefiningGraphDependencies(std::ofstream& file, TNode* node) const;
+    void DefiningGraphDependencies(std::ofstream& file, Node* node) const;
 
-    void PreOrderTraversal(std::ofstream& file, TNode* node) const;
+    void PreOrderTraversal(std::ofstream& file, Node* node) const;
+
+    std::pair<std::unique_ptr<Node>, size_t> ParseTreeFromTokens(
+        const std::vector<std::pair<NodeType, std::string>>& tokens, size_t pos = 0) const;
 
 public:
-    TTree(std::unique_ptr<TNode> r) : root(std::move(r)) {}
+    Tree() : root(nullptr) {}
 
-    TNode* GetRoot() const {
+    Tree(std::unique_ptr<Node> r) : root(std::move(r)) {}
+
+    Node* GetRoot() const {
         return root.get();
+    }
+
+    void SetRoot(std::unique_ptr<Node> r) {
+        root = std::move(r);
     }
 
     void Dump(const std::string& fileName) const;
@@ -32,17 +39,5 @@ public:
 
     void Deserialize(const std::string& fileName);
 };
-
-#define FREE(ptr_) \
-    do { free(ptr_); ptr_ = NULL; } while(0);
-#define FCLOSE(ptr_) \
-    do { fclose(ptr_); ptr_ = NULL; } while(0);
-
-const char* const kDumpFileName = "./tmp/dump.gv";
-const char* const kNameOfFileWithTree = "./tmp/tree.txt";
-
-// void Dump(TNode* root);
-// void SaveTree(TNode* root);
-// TNode* ReadTree(std::vector<std::pair<NodeType, std::string>>& nodes);
 
 #endif // TREE_H

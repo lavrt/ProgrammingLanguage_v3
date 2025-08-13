@@ -13,9 +13,9 @@ static const char* const kNameOfOutputFile = "./bin/output.elf";
 // global ------------------------------------------------------------------------------------------
 
 int main() {
-    std::vector<std::pair<NodeType, std::string>> nodes;
-    TNode* root = ReadTree(nodes);
-    Dump(root);
+    Tree ast;
+    ast.Deserialize("./tmp/tree.txt");
+    ast.Dump("./tmp/dump_backend");
 
     TCodeGen cg;
     CodeGenCtor(&cg);
@@ -23,7 +23,7 @@ int main() {
     Elf64_Ehdr ehdr;
     CreateElfHeader(&ehdr);
 
-    CodegenProgram(&cg, root, &ehdr);
+    CodegenProgram(&cg, ast.GetRoot(), &ehdr);
 
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, cg.size);
@@ -50,8 +50,6 @@ int main() {
     std::cout << "Executable file created\n";
 
     CodeGenDtor(&cg); 
-
-    TreeDtor(root);
 
     return 0;
 }

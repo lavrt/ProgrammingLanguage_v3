@@ -1,27 +1,12 @@
 #include "tree.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
 #include <iostream>
 #include <fstream>
-#include <filesystem>
 
-#define GRAPHVIZ 
-
-// static ------------------------------------------------------------------------------------------
-
-// static void DumpTreeTraversal(TNode* node, std::ofstream& dumpFile);
-// static void DumpTreeTraversalWithArrows(TNode* node, std::ofstream& dumpFile);
-// static void SaveTreeToFile(std::ofstream& file, TNode* node);
-// static std::pair<TNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, std::string>>& nodes, size_t pos);
-
-// global ------------------------------------------------------------------------------------------
-
-void TTree::Dump(const std::string& fileName) const {
-    std::ofstream file(fileName);
+void Tree::Dump(const std::string& fileName) const {
+    std::ofstream file(fileName + ".gv");
     if (!file) {
-        std::cerr << "The \"" << fileName << "\" file cannot be opened." << std::endl;
+        std::cerr << "The \"" << fileName + ".gv" << "\" file cannot be opened." << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -31,19 +16,18 @@ void TTree::Dump(const std::string& fileName) const {
          << "node [shape=record,style = filled,penwidth = 2.5];\n    "
          << "bgcolor = \"#FDFBE4\";\n\n";
 
-    TTree::DefiningGraphNodes(file, this->GetRoot());
-    TTree::DefiningGraphDependencies(file, this->GetRoot());
+    DefiningGraphNodes(file, this->GetRoot());
+    DefiningGraphDependencies(file, this->GetRoot());
 
     file << "}\n";
 
     file.close();
 
-    #if defined GRAPHVIZ
-        system("dot ./tmp/dump.gv -Tpng -o ./tmp/dump.png"); // FIXME
-    #endif
+    std::string dotCmd = "dot " + fileName + ".gv -Tpng -o " + fileName + ".png";
+    std::system(dotCmd.c_str());
 }
 
-void TTree::DefiningGraphNodes(std::ofstream& file, TNode* node) const {
+void Tree::DefiningGraphNodes(std::ofstream& file, Node* node) const {
     static size_t rank = 0;
     file << "    node_" << node << " [rank=" << rank << ",label=\" { node: " << node;
 
@@ -65,7 +49,7 @@ void TTree::DefiningGraphNodes(std::ofstream& file, TNode* node) const {
         file << ", color = \"#EBAEE6\"];\n";
     } else if (node->GetType() == Def) {
         file << ", color = \"#E7FFAC\"];\n";
-    } else if (node->GetType() == Calling) {
+    } else if (node->GetType() == Call) {
         file << ", color = \"#E8A79E\"];\n";
     } else {
         file << ", color = \"#E8D59E\"];\n";
@@ -73,16 +57,16 @@ void TTree::DefiningGraphNodes(std::ofstream& file, TNode* node) const {
 
     if (node->GetLeft()) {
         rank++;
-        TTree::DefiningGraphNodes(file, node->GetLeft());
+        DefiningGraphNodes(file, node->GetLeft());
     }
     if (node->GetRight()) {
         rank++;
-        TTree::DefiningGraphNodes(file, node->GetRight());
+        DefiningGraphNodes(file, node->GetRight());
     }
     rank--;
 }
 
-void TTree::DefiningGraphDependencies(std::ofstream& file, TNode* node) const {
+void Tree::DefiningGraphDependencies(std::ofstream& file, Node* node) const {
     static int flag = 0;
     if (node->GetLeft()) {
         if (flag++) {
@@ -90,7 +74,7 @@ void TTree::DefiningGraphDependencies(std::ofstream& file, TNode* node) const {
         } else {
             file << "    node_" << node << " -> node_" << node->GetLeft() << " ";
         }
-        TTree::DefiningGraphDependencies(file, node->GetLeft());
+        DefiningGraphDependencies(file, node->GetLeft());
     }
     if (node->GetRight()) {
         if (flag++) {
@@ -98,7 +82,7 @@ void TTree::DefiningGraphDependencies(std::ofstream& file, TNode* node) const {
         } else {
             file << "    node_" << node << " -> node_" << node->GetRight() << " ";
         }
-        TTree::DefiningGraphDependencies(file, node->GetRight());
+        DefiningGraphDependencies(file, node->GetRight());
     }
     if (flag) {
         file << ";\n";
@@ -106,19 +90,19 @@ void TTree::DefiningGraphDependencies(std::ofstream& file, TNode* node) const {
     flag = 0;
 }
 
-void TTree::Serialize(const std::string& fileName) const {
+void Tree::Serialize(const std::string& fileName) const {
     std::ofstream file(fileName);
     if (!file) {
         std::cerr << "The \"" << fileName << "\" file cannot be opened." << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    TTree::PreOrderTraversal(file, this->GetRoot());
+    PreOrderTraversal(file, this->GetRoot());
 
     file.close();
 }
 
-void TTree::PreOrderTraversal(std::ofstream& file, TNode* node) const {
+void Tree::PreOrderTraversal(std::ofstream& file, Node* node) const {
     if (!node) {
         file << "0 NULL ";
         return;
@@ -126,11 +110,11 @@ void TTree::PreOrderTraversal(std::ofstream& file, TNode* node) const {
 
     file << node->GetType() << " " << node->GetValue() << " ";
 
-    TTree::PreOrderTraversal(file, node->GetLeft());
-    TTree::PreOrderTraversal(file, node->GetRight());    
+    PreOrderTraversal(file, node->GetLeft());
+    PreOrderTraversal(file, node->GetRight());    
 }
 
-void TTree::Deserialize(const std::string& fileName) {
+void Tree::Deserialize(const std::string& fileName) {
     std::ifstream file(fileName);
     if (!file) {
         std::cerr << "The \"" << fileName << "\" file cannot be opened." << std::endl;
@@ -142,56 +126,47 @@ void TTree::Deserialize(const std::string& fileName) {
         std::istreambuf_iterator<char>()
     };
 
-    // TODO errors handling
-
     file.close();
 
-    // TODO
+    if (data.empty()) {
+        std::cerr << "Deserialization error." << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::vector<std::pair<NodeType, std::string>> tokens;
+    for (size_t i = 0; i < data.size(); ++i) {
+        std::string buffer;
+        while (i < data.size() && !std::isspace(data[i])) {
+            buffer += data[i++];
+        }
+        NodeType type = static_cast<NodeType>(std::stoi(buffer));
+        buffer.clear();
+
+        ++i;
+        while (i < data.size() && !std::isspace(data[i])) {
+            buffer += data[i++];
+        }
+        tokens.push_back({type, buffer});
+    }
+
+    this->SetRoot(ParseTreeFromTokens(tokens).first);
 }
+std::pair<std::unique_ptr<Node>, size_t> Tree::ParseTreeFromTokens(
+    const std::vector<std::pair<NodeType, std::string>>& tokens, size_t pos) const
+{
+    if (tokens[pos].first == Null) {
+        return {nullptr, pos + 1};
+    }
 
-// TNode* ReadTree(std::vector<std::pair<NodeType, std::string>>& nodes) {
-//     std::ifstream file(kNameOfFileWithTree);
-//     assert(file);
+    std::unique_ptr<Node> node = std::make_unique<Node>(tokens[pos].first, tokens[pos].second);
 
-//     std::filesystem::path filePath = kNameOfFileWithTree;
-//     size_t fileSize = std::filesystem::file_size(filePath);
+    auto [left, pos1] = ParseTreeFromTokens(tokens, pos + 1);
+    node->SetLeft(std::move(left));
+    pos = pos1;
 
-//     char* dataArray = (char*)calloc(fileSize + 1, sizeof(char));
-//     assert(dataArray);
+    auto [right, pos2] = ParseTreeFromTokens(tokens, pos);
+    node->SetRight(std::move(right));
+    pos = pos2;
 
-//     file.read(dataArray, fileSize);
-
-//     file.close();
-
-//     for (size_t i = 0; i < fileSize; ++i) {
-//         std::string buffer;
-//         while (i < fileSize && !isspace(dataArray[i])) {
-//             buffer += dataArray[i++];
-//         }
-//         NodeType type = (NodeType)std::stoi(buffer);
-//         buffer.clear();
-
-//         ++i;
-//         while (i < fileSize && !isspace(dataArray[i])) {
-//             buffer += dataArray[i++];
-//         }
-//         nodes.push_back({type, buffer});
-//     }
-
-//     free(dataArray);
-    
-//     return ReadTreeFromFile(nodes, 0).first;
-// }
-
-// // static ------------------------------------------------------------------------------------------
-
-// static std::pair<TNode*, size_t> ReadTreeFromFile(const std::vector<std::pair<NodeType, std::string>>& nodes, size_t pos) { 
-//     if (nodes[pos].first == Null) {
-//         return {nullptr, pos + 1};
-//     }
-
-//     TNode* node = NewNode(nodes[pos].first, nodes[pos].second, nullptr, nullptr); 
-//     std::tie(node->left, pos) = ReadTreeFromFile(nodes, pos + 1);
-//     std::tie(node->right, pos) = ReadTreeFromFile(nodes, pos);
-//     return {node, pos};
-// } 
+    return {std::move(node), pos};
+}

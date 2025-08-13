@@ -1,281 +1,261 @@
 #include "parser.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-#include <ctype.h>
+#include <iostream>
 
-#include "debug.h"
-
-// static --------------------------------------------------------------------------------------------------------------
-
-static std::unique_ptr<TNode> GetGrammar(const std::vector<std::string>& tokens);
-static std::unique_ptr<TNode> GetIf(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetDef(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetWhile(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetNumber(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetVariable(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetOperation(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetExpression(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetComparsion(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetAssignment(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetParentheses(const std::vector<std::string>& tokens, size_t* pos);
-static std::unique_ptr<TNode> GetMultiplication(const std::vector<std::string>& tokens, size_t* pos);
-
-[[noreturn]] static void syntaxError(int line);
-static bool isKeyWord(const std::string& word);
-
-// global --------------------------------------------------------------------------------------------------------------
-
-TTree RunParser(const std::vector<std::string>& tokens) {
-    std::unique_ptr<TNode> root = GetGrammar(tokens);
-    TTree ast(std::move(root));
-    
-    return ast;
-}
-
-// static --------------------------------------------------------------------------------------------------------------
-
-static std::unique_ptr<TNode> GetGrammar(const std::vector<std::string>& tokens) {
-    size_t pos = 0;
-
+std::unique_ptr<Node> Parser::GetGrammar() {
     if (tokens[pos] == keyEnd) {
-        return std::make_unique<TNode>(End, keyEnd);
+        return std::make_unique<Node>(End, keyEnd);
     }
 
-    std::unique_ptr<TNode> left = GetDef(tokens, &pos);
+    std::unique_ptr<Node> left = GetDef();
     if (tokens[pos++] != keySemicolon) {
         syntaxError(__LINE__);
     }
     while (tokens[pos] != keyEnd) {
-        std::unique_ptr<TNode> right = GetDef(tokens, &pos);
+        std::unique_ptr<Node> right = GetDef();
         if (tokens[pos++] != keySemicolon) {
             syntaxError(__LINE__);
         }
-        left = std::make_unique<TNode>(Semicolon, keySemicolon, std::move(left), std::move(right)); 
+        left = std::make_unique<Node>(Semicolon, keySemicolon, std::move(left), std::move(right)); 
     }
 
     return left;
 }
 
-static std::unique_ptr<TNode> GetExpression(const std::vector<std::string>& tokens, size_t* pos) {
-    std::unique_ptr<TNode> left = GetMultiplication(tokens, pos);
+std::unique_ptr<Node> Parser::GetExpression() {
+    std::unique_ptr<Node> left = GetMultiplication();
 
-    while (tokens[*pos] == keyAdd || tokens[*pos] == keySub) {
-        size_t op = *pos;
-        (*pos)++;
-        std::unique_ptr<TNode> right = GetMultiplication(tokens, pos); 
-        left = std::make_unique<TNode>(kStringToNodeType.at(tokens[op]), tokens[op], std::move(left), std::move(right));
+    while (tokens[pos] == keyAdd || tokens[pos] == keySub) {
+        size_t op = pos;
+        pos++;
+        std::unique_ptr<Node> right = GetMultiplication(); 
+        left = std::make_unique<Node>(kStringToNodeType.at(tokens[op]), tokens[op], std::move(left), std::move(right));
     }
     return left;
 }
 
-static std::unique_ptr<TNode> GetComparsion(const std::vector<std::string>& tokens, size_t* pos) {
-    std::unique_ptr<TNode> left = GetExpression(tokens, pos);
+std::unique_ptr<Node> Parser::GetComparsion() {
+    std::unique_ptr<Node> left = GetExpression();
 
-    if (tokens[*pos] == keyLess || tokens[*pos] == keyLessOrEqual ||
-        tokens[*pos] == keyGreater || tokens[*pos] == keyGreaterOrEqual ||
-        tokens[*pos] == keyIdentical || tokens[*pos] == keyNotIdentical) 
+    if (tokens[pos] == keyLess || tokens[pos] == keyLessOrEqual ||
+        tokens[pos] == keyGreater || tokens[pos] == keyGreaterOrEqual ||
+        tokens[pos] == keyIdentical || tokens[pos] == keyNotIdentical) 
     {
-        size_t op = *pos;
-        (*pos)++;
-        std::unique_ptr<TNode> right = GetExpression(tokens, pos);
-        left = std::make_unique<TNode>(kStringToNodeType.at(tokens[op]), tokens[op], std::move(left), std::move(right));
+        size_t op = pos;
+        pos++;
+        std::unique_ptr<Node> right = GetExpression();
+        left = std::make_unique<Node>(kStringToNodeType.at(tokens[op]), tokens[op], std::move(left), std::move(right));
     }
 
     return left;
 }
 
-static std::unique_ptr<TNode> GetMultiplication(const std::vector<std::string>& tokens, size_t* pos) {
-    std::unique_ptr<TNode> left = GetParentheses(tokens, pos);
+std::unique_ptr<Node> Parser::GetMultiplication() {
+    std::unique_ptr<Node> left = GetParentheses();
 
-    while (tokens[*pos] == keyMul || tokens[*pos] == keyDiv) {
-        size_t op = *pos;
-        (*pos)++;
-        std::unique_ptr<TNode> right = GetParentheses(tokens, pos);
-        left = std::make_unique<TNode>(kStringToNodeType.at(tokens[op]), tokens[op], std::move(left), std::move(right));
+    while (tokens[pos] == keyMul || tokens[pos] == keyDiv) {
+        size_t op = pos;
+        pos++;
+        std::unique_ptr<Node> right = GetParentheses();
+        left = std::make_unique<Node>(kStringToNodeType.at(tokens[op]), tokens[op], std::move(left), std::move(right));
     }
     return left;
 }
 
-static std::unique_ptr<TNode> GetParentheses(const std::vector<std::string>& tokens, size_t* pos) {
-    if (tokens[*pos] == keyLeftParenthesis) {
-        (*pos)++;
-        std::unique_ptr<TNode> node = GetComparsion(tokens, pos);
-        if (tokens[*pos] != keyRightParenthesis) {
+std::unique_ptr<Node> Parser::GetParentheses() {
+    if (tokens[pos] == keyLeftParenthesis) {
+        pos++;
+        std::unique_ptr<Node> node = GetComparsion();
+        if (tokens[pos] != keyRightParenthesis) {
             syntaxError(__LINE__);
         }
-        (*pos)++;
+        pos++;
         return node;
-    } else if (!isdigit(tokens[*pos][0])) {
-        return GetVariable(tokens, pos);
-    } else if (isdigit(tokens[*pos][0])) {
-        return GetNumber(tokens, pos);
+    } else if (!std::isdigit(tokens[pos][0])) {
+        return GetVariable();
+    } else if (std::isdigit(tokens[pos][0])) {
+        return GetNumber();
     } else {
         syntaxError(__LINE__);
     }
 }
 
-static std::unique_ptr<TNode> GetNumber(const std::vector<std::string>& tokens, size_t* pos) {
-    return std::make_unique<TNode>(Number, tokens[(*pos)++]);
+std::unique_ptr<Node> Parser::GetNumber() {
+    return std::make_unique<Node>(Number, tokens[pos++]);
 }
 
-static std::unique_ptr<TNode> GetVariable(const std::vector<std::string>& tokens, size_t* pos) {
-    return std::make_unique<TNode>(Identifier, tokens[(*pos)++]);
+std::unique_ptr<Node> Parser::GetVariable() {
+    return std::make_unique<Node>(Identifier, tokens[pos++]);
 }
 
-static std::unique_ptr<TNode> GetDef(const std::vector<std::string>& tokens, size_t* pos) {
-    if (tokens[*pos] == keyDef) {
-        (*pos)++;
-        size_t nameIndex = *pos;
-        (*pos)++;
+std::unique_ptr<Node> Parser::GetDef() {
+    if (tokens[pos] == keyDef) {
+        pos++;
+        size_t nameIndex = pos;
+        pos++;
+
         CHECK_LEFT_PARENTHESIS;
-        (*pos)++;
-        std::unique_ptr<TNode> left = GetVariable(tokens, pos);
-        TNode* node = left.get();
-        while (tokens[*pos] == keySemicolon) {
-            (*pos)++;
-            node->SetLeft(std::make_unique<TNode>(Identifier, tokens[*pos]));
-            node = node->GetLeft();
-            (*pos)++;
+        pos++;
+
+        std::unique_ptr<Node> firstArgNode = tokens[pos] == keyRightParenthesis ? nullptr : std::make_unique<Node>();
+        Node* root = firstArgNode.get();
+        while (tokens[pos] != keyRightParenthesis) {
+            root->SetType(Identifier);
+            root->SetValue(tokens[pos]);
+            pos++;
+            if (tokens[pos] == keySemicolon) {
+                pos++;
+                root->SetLeft(std::make_unique<Node>());
+                root = root->GetLeft();
+            }
         }
-        CHECK_RIGHT_PARENTHESIS;
-        (*pos)++;
-        std::unique_ptr<TNode> right = GetOperation(tokens, pos);
-        return std::make_unique<TNode>(Def, tokens[nameIndex], std::move(left), std::move(right));
+        pos++;
+        std::unique_ptr<Node> right = GetOperation();
+        return std::make_unique<Node>(Def, tokens[nameIndex], std::move(firstArgNode), std::move(right));
     }
-    return GetOperation(tokens, pos);
+    return GetOperation();
 }
 
-static std::unique_ptr<TNode> GetOperation(const std::vector<std::string>& tokens, size_t* pos) {
-    if (tokens[*pos] == keyIf) {
-        return GetIf(tokens, pos);
-    } else if (tokens[*pos] == keyWhile) {
-        return GetWhile(tokens, pos);
-    } else if (tokens[*pos] == keyPrintAscii) {
-        size_t op = *pos;
-        (*pos)++;
+std::unique_ptr<Node> Parser::GetOperation() {
+    if (tokens[pos] == keyCall) {
+        return GetCalling();
+    } else if (tokens[pos] == keyIf) {
+        return GetIf();
+    } else if (tokens[pos] == keyWhile) {
+        return GetWhile();
+    } else if (tokens[pos] == keyPrintAscii) {
+        size_t op = pos;
+        pos++;
         CHECK_LEFT_PARENTHESIS;
-        (*pos)++;
-        std::unique_ptr<TNode> left = GetComparsion(tokens, pos);
+        pos++;
+        std::unique_ptr<Node> left = GetComparsion();
         CHECK_RIGHT_PARENTHESIS;
-        (*pos)++;
-        return std::make_unique<TNode>(PrintAscii, keyPrintAscii, std::move(left), nullptr); 
-    } else if (tokens[*pos] == keyPrintInt) {
-        size_t op = *pos;
-        (*pos)++;
+        pos++;
+        return std::make_unique<Node>(PrintAscii, keyPrintAscii, std::move(left), nullptr); 
+    } else if (tokens[pos] == keyPrintInt) {
+        size_t op = pos;
+        pos++;
         CHECK_LEFT_PARENTHESIS;
-        (*pos)++;
-        std::unique_ptr<TNode> left = GetComparsion(tokens, pos);
+        pos++;
+        std::unique_ptr<Node> left = GetComparsion();
         CHECK_RIGHT_PARENTHESIS;
-        (*pos)++;
-        return std::make_unique<TNode>(PrintInt, keyPrintInt, std::move(left), nullptr); 
-    } else if (tokens[*pos] == keyReturn) {
-        size_t op = *pos;
-        (*pos)++;
-        std::unique_ptr<TNode> left = GetComparsion(tokens, pos);
-        return std::make_unique<TNode>(Return, keyReturn, std::move(left), nullptr);
-    } else if (tokens[*pos] == keyLeftCurlyBracket) {
-        (*pos)++;
-        std::unique_ptr<TNode> left = GetOperation(tokens, pos);
-        if (tokens[(*pos)++] != keySemicolon) {
+        pos++;
+        return std::make_unique<Node>(PrintInt, keyPrintInt, std::move(left), nullptr); 
+    } else if (tokens[pos] == keyReturn) {
+        size_t op = pos;
+        pos++;
+        std::unique_ptr<Node> left = GetComparsion();
+        return std::make_unique<Node>(Return, keyReturn, std::move(left), nullptr);
+    } else if (tokens[pos] == keyLeftCurlyBracket) {
+        pos++;
+        std::unique_ptr<Node> left = GetOperation();
+        if (tokens[pos++] != keySemicolon) {
             syntaxError(__LINE__);
         }
-        while (tokens[*pos] != keyRightCurlyBracket) {
-            std::unique_ptr<TNode> rightNode = GetOperation(tokens, pos);
-            if (tokens[(*pos)++] != keySemicolon) {
+        while (tokens[pos] != keyRightCurlyBracket) {
+            std::unique_ptr<Node> righNode = GetOperation();
+            if (tokens[pos++] != keySemicolon) {
                 syntaxError(__LINE__);
             }
-            left = std::make_unique<TNode>(Semicolon, keySemicolon, std::move(left), std::move(rightNode));
+            left = std::make_unique<Node>(Semicolon, keySemicolon, std::move(left), std::move(righNode));
         }
 
-        if (tokens[(*pos)++] != keyRightCurlyBracket) {
+        if (tokens[pos++] != keyRightCurlyBracket) {
             syntaxError(__LINE__);
         }
 
         return left;
-    } else if (!isKeyWord(tokens[*pos])) {
-        return GetAssignment(tokens, pos);
+    } else if (!isKeyWord(tokens[pos])) { 
+        return GetAssignment();
     } else {
         syntaxError(__LINE__);
     }
 }
 
-static std::unique_ptr<TNode> GetIf(const std::vector<std::string>& tokens, size_t* pos) {
-    size_t op = *pos;
-    (*pos)++;
+std::unique_ptr<Node> Parser::GetIf() {
+    size_t op = pos;
+    pos++;
     CHECK_LEFT_PARENTHESIS;
-    (*pos)++;
-    std::unique_ptr<TNode> left = GetComparsion(tokens, pos);
+    pos++;
+    std::unique_ptr<Node> left = GetComparsion();
     CHECK_RIGHT_PARENTHESIS;
-    (*pos)++;
+    pos++;
 
-    std::unique_ptr<TNode> right = GetOperation(tokens, pos);
+    std::unique_ptr<Node> right = GetOperation();
 
-    return std::make_unique<TNode>(If, keyIf, std::move(left), std::move(right));
+    return std::make_unique<Node>(If, keyIf, std::move(left), std::move(right));
 }
 
-static std::unique_ptr<TNode> GetWhile(const std::vector<std::string>& tokens, size_t* pos) {
-    size_t op = *pos;
-    (*pos)++;
+std::unique_ptr<Node> Parser::GetWhile() {
+    size_t op = pos;
+    pos++;
     CHECK_LEFT_PARENTHESIS;
-    (*pos)++;
-    std::unique_ptr<TNode> left = GetComparsion(tokens, pos);
+    pos++;
+    std::unique_ptr<Node> left = GetComparsion();
     CHECK_RIGHT_PARENTHESIS;
-    (*pos)++;
+    pos++;
 
-    std::unique_ptr<TNode> right = GetOperation(tokens, pos);
+    std::unique_ptr<Node> right = GetOperation();
 
-    return std::make_unique<TNode>(While, keyWhile, std::move(left), std::move(right));
+    return std::make_unique<Node>(While, keyWhile, std::move(left), std::move(right));
 }
 
-static std::unique_ptr<TNode> GetAssignment(const std::vector<std::string>& tokens, size_t* pos) {
-    std::unique_ptr<TNode> leftNode = GetVariable(tokens, pos);
-    std::unique_ptr<TNode> rightNode = nullptr;
+std::unique_ptr<Node> Parser::GetAssignment() {
+    std::unique_ptr<Node> lefNode = GetVariable();
+    std::unique_ptr<Node> righNode = nullptr;
 
-    if (tokens[*pos] != keyEqual) {
+    if (tokens[pos] != keyEqual) {
         syntaxError(__LINE__);
     }
 
-    size_t op = *pos;
-    (*pos)++;
-    if (tokens[*pos] == keyCall) {
-        (*pos)++;
-        size_t nameIndex = *pos;
-        (*pos)++;
+    size_t op = pos;
+    pos++;
+    if (tokens[pos] == keyCall) {
+        righNode = GetCalling();
+    } else if (tokens[pos] == keyReadInt) {
+        size_t op1 = pos;
+        pos++;
         CHECK_LEFT_PARENTHESIS;
-        (*pos)++;
-        std::unique_ptr<TNode> argNode = GetVariable(tokens, pos);
-        // while (tokens[*pos] == keySemicolon) { // FIXME ?? todo many args
-        //     (*pos)++;
-        //     argNode->left = NewNode(Identifier, tokens[*pos], nullptr, nullptr);
-        //     (*pos)++;
-        // }
+        pos++;
         CHECK_RIGHT_PARENTHESIS;
-        (*pos)++;
-        rightNode = std::make_unique<TNode>(Calling, tokens[nameIndex], std::move(argNode), nullptr); 
-    } else if (tokens[*pos] == keyReadInt) {
-        size_t op1 = *pos;
-        (*pos)++;
-        CHECK_LEFT_PARENTHESIS;
-        (*pos)++;
-        CHECK_RIGHT_PARENTHESIS;
-        (*pos)++;
-        rightNode = std::make_unique<TNode>(ReadInt, keyReadInt);
+        pos++;
+        righNode = std::make_unique<Node>(ReadInt, keyReadInt);
     } else {
-        rightNode = GetComparsion(tokens, pos);
+        righNode = GetComparsion();
     }
-    return std::make_unique<TNode>(Equal, keyEqual, std::move(leftNode), std::move(rightNode));
+    return std::make_unique<Node>(Equal, keyEqual, std::move(lefNode), std::move(righNode));
 }
 
-static void syntaxError(int line) {
+std::unique_ptr<Node> Parser::GetCalling() {
+    pos++;
+    size_t nameIndex = pos;
+    pos++;
+    CHECK_LEFT_PARENTHESIS;
+    pos++;
+    std::unique_ptr<Node> argNode = tokens[pos] == keyRightParenthesis ? nullptr : std::make_unique<Node>();
+    Node* node = argNode.get();
+    while (tokens[pos] != keyRightParenthesis) {
+        node->SetType(Identifier);
+        node->SetValue(tokens[pos]);
+        pos++;
+        if (tokens[pos] == keySemicolon) {
+            pos++;
+            node->SetLeft(std::make_unique<Node>());
+            node = node->GetLeft();
+        }
+    }
+    CHECK_RIGHT_PARENTHESIS;
+    pos++;
+    return std::make_unique<Node>(Call, tokens[nameIndex], std::move(argNode), nullptr);
+}
+
+void Parser::syntaxError(int line) {
     fprintf(stderr, "Syntax error in %d\n", line);
 
     exit(EXIT_FAILURE);
 }
 
-static bool isKeyWord(const std::string& word) {
+bool Parser::isKeyWord(const std::string& word) {
     return word == keyAdd ||
         word == keySub ||
         word == keyMul ||

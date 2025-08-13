@@ -7,11 +7,10 @@
 
 enum NodeType {
     Null = 0,
+    End,
+    Semicolon,
     Number,
     Identifier,
-    Def,
-    Calling,
-    Semicolon,
     PrintAscii,
     PrintInt,
     ReadInt,
@@ -28,30 +27,40 @@ enum NodeType {
     LessOrEqual,
     NotIdentical,
     GreaterOrEqual,
+    Def,
     Call,
     Return,
-    End,
 };
 
-class TNode {
+class Node {
 private:
     NodeType type;
     std::string value;
-    std::unique_ptr<TNode> left;
-    std::unique_ptr<TNode> right;
+    std::unique_ptr<Node> left;
+    std::unique_ptr<Node> right;
 
 public:
-    TNode(NodeType t, const std::string& v, std::unique_ptr<TNode> l, std::unique_ptr<TNode> r)
+    Node(NodeType t, const std::string& v, std::unique_ptr<Node> l, std::unique_ptr<Node> r)
         : type(t), value(v), left(std::move(l)), right(std::move(r)) {}
 
-    TNode(NodeType t, const std::string& v)
+    Node(NodeType t, const std::string& v)
         : type(t), value(v), left(nullptr), right(nullptr) {}
 
-    void SetLeft(std::unique_ptr<TNode> l) {
+    Node() : left(nullptr), right(nullptr) {}
+
+    void SetType(NodeType t) {
+        type = t;
+    }
+
+    void SetValue(const std::string& v) {
+        value = v;
+    }
+
+    void SetLeft(std::unique_ptr<Node> l) {
         left = std::move(l);
     }
 
-    void SetRight(std::unique_ptr<TNode> r) {
+    void SetRight(std::unique_ptr<Node> r) {
         right = std::move(r);
     }
 
@@ -63,11 +72,11 @@ public:
         return value;
     }
 
-    TNode* GetLeft() const {
+    Node* GetLeft() const {
         return left.get();
     }
 
-    TNode* GetRight() const {
+    Node* GetRight() const {
         return right.get();
     }
 };
@@ -100,14 +109,12 @@ inline const std::string keyRightCurlyBracket = "}";
 inline const std::string keyNumber = "number";
 inline const std::string keyIdentifier = "identifier";
 inline const std::string keyOperation = "operation";
-inline const std::string keyCalling = "calling";
 
 const std::unordered_map<NodeType, std::string> kNodeTypeToString {
+    {End, keyEnd},
+    {Semicolon, keySemicolon},
     {Number, keyNumber},
     {Identifier, keyIdentifier},
-    {Def, keyDef},
-    {Calling, keyCalling},
-    {Semicolon, keySemicolon},
     {PrintAscii, keyPrintAscii},
     {PrintInt, keyPrintInt},
     {ReadInt, keyReadInt},
@@ -124,16 +131,15 @@ const std::unordered_map<NodeType, std::string> kNodeTypeToString {
     {LessOrEqual, keyLessOrEqual},
     {NotIdentical, keyNotIdentical},
     {GreaterOrEqual, keyGreaterOrEqual},
+    {Def, keyDef},  
     {Call, keyCall},
     {Return, keyReturn},
-    {End, keyEnd},
 };
 
 const std::unordered_map<std::string, NodeType> kStringToNodeType {
     {keyNumber, Number},
     {keyIdentifier, Identifier},
     {keyDef, Def},
-    {keyCalling, Calling},
     {keySemicolon, Semicolon},
     {keyPrintAscii, PrintAscii},
     {keyPrintInt, PrintInt},

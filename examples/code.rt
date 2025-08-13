@@ -1,5 +1,12 @@
 a = read_int();
 
+def test() {
+    r = 5;
+    print_int(r);
+};
+
+call test();
+
 # calculating the factorial using a recursion function
 def factorial_1 (a1) {
     if (a < 0) {
