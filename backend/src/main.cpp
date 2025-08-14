@@ -26,7 +26,7 @@ int main() {
     CodegenProgram(&cg, ast.GetRoot(), &ehdr);
 
     Elf64_Phdr phdr;
-    CreateProgramHeader(&phdr, cg.size);
+    CreateProgramHeader(&phdr, cg.code.size());
 
     std::ofstream file(kNameOfOutputFile, std::ios::binary);
     if (!file) {
@@ -38,7 +38,7 @@ int main() {
 
     file.write(reinterpret_cast<const char*>(&ehdr), kElfHeaderSize);
     file.write(reinterpret_cast<const char*>(&phdr), kProgramHeaderSize);
-    file.write(reinterpret_cast<const char*>(cg.code), cg.size);
+    file.write(reinterpret_cast<const char*>(cg.code.data()), cg.code.size() * sizeof(uint8_t));
 
     if (!file.good()) {
         std::cerr << "Error writing to the \"" << kNameOfOutputFile << "\" file." << std::endl;
@@ -48,8 +48,6 @@ int main() {
     file.close();
 
     std::cout << "Executable file created\n";
-
-    CodeGenDtor(&cg); 
 
     return 0;
 }

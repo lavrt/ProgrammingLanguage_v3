@@ -10,8 +10,6 @@
 
 // static ------------------------------------------------------------------------------------------
 
-static const size_t kInitCapacityOfCodeArray = 4096;
-static const int kAdditionalCapacityOfNameTable = 16;
 static const std::string kNameOfEntryFunction = "_start";
 static const ERegister kArgRegs[] {REG_DI, REG_SI, REG_DX, REG_CX, REG_R8, REG_R9};
 
@@ -59,29 +57,15 @@ namespace GenStmt {
 // global ------------------------------------------------------------------------------------------
 
 void CodeGenCtor(TCodeGen* cg) {
-    cg->size = 0;
     cg->stackOffset = 0;
 
-    cg->capacity = kInitCapacityOfCodeArray;
-    cg->code = (uint8_t*)calloc(cg->capacity, sizeof(char));
-    assert(cg->code);
 
     cg->localStackOffset = 0;
     cg->isLocal = false;
 }
 
-void CodeGenDtor(TCodeGen* cg) {
-    free(cg->code);
-}
-
-void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len) {
-    if (cg->size + len > cg->capacity) {
-        cg->capacity *= 2;
-        cg->code = (uint8_t*)realloc(cg->code, cg->capacity);
-        assert(cg->code);
-    }
-    memcpy(cg->code + cg->size, data, len);
-    cg->size += len;
+void AppendCode(TCodeGen* cg, std::span<const uint8_t> data, size_t len) {
+    cg->code.insert(cg->code.end(), data.begin(), data.end());
 }
 
 void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
@@ -104,7 +88,7 @@ void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
 }
 
 void AddFunc(TCodeGen* cg, const std::string& name) {
-    cg->funcs[name] = cg->size;
+    cg->funcs[name] = cg->code.size();
 }
 
 // static ------------------------------------------------------------------------------------------
@@ -129,7 +113,7 @@ static void CodeGenExpr(TCodeGen* cg, Node* node) {
     switch (node->GetType()) {
         case Number:            GenExpr::EmitNumber(cg, node);                  break;
         case Identifier:        GenExpr::EmitIdentifier(cg, node);              break;      
-        case Call:              GenExpr::EmitCall(cg, node);                 break;
+        case Call:              GenExpr::EmitCall(cg, node);                    break;
         case ReadInt:           GenExpr::EmitReadInt(cg);                       break;     
         case Add:               GenExpr::Binary::EmitAdd(cg, node);             break;
         case Sub:               GenExpr::Binary::EmitSub(cg, node);             break;
@@ -329,7 +313,7 @@ static void GenExpr::EmitCall(TCodeGen* cg, Node* node) {
         fprintf(stderr, "Undefined function\n");
         exit(EXIT_FAILURE);
     }
-    call_rel32(cg, (int32_t)(addr - (cg->size + 5)));
+    call_rel32(cg, (int32_t)(addr - (cg->code.size() + 5)));
 
     pop_reg(cg, REG_R9);
     pop_reg(cg, REG_R8);
@@ -362,7 +346,7 @@ static void GenStmt::EmitCall(TCodeGen* cg, Node* node) {
         fprintf(stderr, "Undefined function\n");
         exit(EXIT_FAILURE);
     }
-    call_rel32(cg, (int32_t)(addr - (cg->size + 5)));
+    call_rel32(cg, (int32_t)(addr - (cg->code.size() + 5)));
 
     pop_reg(cg, REG_R9);
     pop_reg(cg, REG_R8);
@@ -384,7 +368,7 @@ static void GenExpr::EmitReadInt(TCodeGen* cg) {
     push_reg(cg, REG_DX);
     push_reg(cg, REG_DI);
 
-    call_rel32(cg, (int32_t)(readIntAddr - (cg->size + 5)));
+    call_rel32(cg, (int32_t)(readIntAddr - (cg->code.size() + 5)));
 
     pop_reg(cg, REG_DI);
     pop_reg(cg, REG_DX);
@@ -397,7 +381,7 @@ static void GenStmt::EmitDef(TCodeGen* cg, Node* node) {
     cg->isLocal = true;
     int varCountBeforeFunction = cg->varCount;
 
-    int32_t jmpPos1 = (int32_t)cg->size;
+    int32_t jmpPos1 = (int32_t)cg->code.size();
     jmp_rel32(cg, 0);
 
     AddFunc(cg, node->GetValue());
@@ -424,9 +408,9 @@ static void GenStmt::EmitDef(TCodeGen* cg, Node* node) {
     mov_reg_imm32(cg, REG_AX, -1);
     ret(cg);
 
-    int32_t jmpTarget1 = (int32_t)cg->size;
+    int32_t jmpTarget1 = (int32_t)cg->code.size();
     int32_t jmpOffset1 = jmpTarget1 - (jmpPos1 + 5);
-    memcpy(cg->code + jmpPos1 + 1, (uint8_t*)&jmpOffset1, 4);
+    std::copy((uint8_t*)&jmpOffset1, (uint8_t*)&jmpOffset1 + 4, cg->code.begin() + jmpPos1 + 1);
 
     cg->isLocal = false;
     cg->localStackOffset = 0;
@@ -469,7 +453,7 @@ static void GenStmt::EmitPrintAscii(TCodeGen* cg, Node* node) {
     push_reg(cg, REG_SI);
     push_reg(cg, REG_DI);
 
-    call_rel32(cg, (int32_t)(printAsciiAddr - (cg->size + 5)));
+    call_rel32(cg, (int32_t)(printAsciiAddr - (cg->code.size() + 5)));
 
     pop_reg(cg, REG_DI);
     pop_reg(cg, REG_SI);
@@ -493,7 +477,7 @@ static void GenStmt::EmitPrintInt(TCodeGen* cg, Node* node) {
     push_reg(cg, REG_DX);
     push_reg(cg, REG_DI);
 
-    call_rel32(cg, (int32_t)(printIntAddr - (cg->size + 5)));
+    call_rel32(cg, (int32_t)(printIntAddr - (cg->code.size() + 5)));
 
     pop_reg(cg, REG_DI);
     pop_reg(cg, REG_DX);
@@ -506,35 +490,35 @@ static void GenStmt::EmitIf(TCodeGen* cg, Node* node) {
     pop_reg(cg, REG_AX);
     
     cmp_reg_imm32(cg, REG_AX, 0);
-    int32_t jmpPos_1 = (int32_t)cg->size;
+    int32_t jmpPos_1 = (int32_t)cg->code.size();
     je_rel32(cg, 0);
 
     CodeGenStmt(cg, node->GetRight());
 
-    int32_t jmpTarget_1 = (int32_t)cg->size;
+    int32_t jmpTarget_1 = (int32_t)cg->code.size();
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
-    memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
+    std::copy((uint8_t*)&jmpOffset_1, (uint8_t*)&jmpOffset_1 + 4, cg->code.begin() + jmpPos_1 + 2);
 }
 
 static void GenStmt::EmitWhile(TCodeGen* cg, Node* node) {
-    int32_t jmpTarget_2 = (int32_t)cg->size;
+    int32_t jmpTarget_2 = (int32_t)cg->code.size();
     
     CodeGenExpr(cg, node->GetLeft());
     pop_reg(cg, REG_AX);
 
     cmp_reg_imm32(cg, REG_AX, 0);
-    int32_t jmpPos_1 = (int32_t)cg->size;
+    int32_t jmpPos_1 = (int32_t)cg->code.size();
     je_rel32(cg, 0);
 
     CodeGenStmt(cg, node->GetRight());
     
-    int32_t jmpPos_2 = (int32_t)cg->size;
+    int32_t jmpPos_2 = (int32_t)cg->code.size();
     int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 5);
     jmp_rel32(cg, jmpOffset_2);
 
-    int32_t jmpTarget_1 = (int32_t)cg->size;
+    int32_t jmpTarget_1 = (int32_t)cg->code.size();
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
-    memcpy(cg->code + jmpPos_1 + 2, (uint8_t*)&jmpOffset_1, 4);
+    std::copy((uint8_t*)&jmpOffset_1, (uint8_t*)&jmpOffset_1 + 4, cg->code.begin() + jmpPos_1 + 2);
 }
 
 static void GenStmt::EmitReturn(TCodeGen* cg, Node* node) {

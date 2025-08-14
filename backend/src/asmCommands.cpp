@@ -2,6 +2,14 @@
 
 #include "generator.h"
 
+template <typename T>
+std::span<uint8_t> AsBytes(T& value) {
+    return std::span<uint8_t>(
+        reinterpret_cast<uint8_t*>(&value),
+        sizeof(T)
+    );
+}
+
 // PUSH r64
 // size: 1 byte
 void push_reg(TCodeGen* cg, ERegister reg) {
@@ -23,7 +31,7 @@ void push_imm32(TCodeGen* cg, int32_t imm) {
     // opcode: 68 id
     uint8_t opcode[] = {0x68};
     AppendCode(cg, opcode, 1);
-    AppendCode(cg, (uint8_t*)&imm, 4);
+    AppendCode(cg, AsBytes(imm), 4);
 }
 
 // POP r64
@@ -31,8 +39,8 @@ void push_imm32(TCodeGen* cg, int32_t imm) {
 void pop_reg(TCodeGen* cg, ERegister reg) {
     if (reg <= REG_DI) {
         // opcode: 0x58 + rd
-        uint8_t opcode = 0x58 + (reg & 0x7);
-        AppendCode(cg, &opcode, 1);
+        uint8_t opcode[] = {0x58 + (reg & 0x7)};
+        AppendCode(cg, opcode, 1);
     } else {
         // opcode: REX + 0x58 + reg<<3
         // REX.B: 0x41
@@ -50,7 +58,7 @@ void mov_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
     uint8_t modrm = (uint8_t)(0xc0 + (reg & 0x7));
     uint8_t opcode[] = {0x48, 0xc7, modrm}; 
     AppendCode(cg, opcode, 3);
-    AppendCode(cg, (uint8_t*)&imm, 4);
+    AppendCode(cg, AsBytes(imm), 4);
 }
 
 // MOV r64, r/m64
@@ -73,7 +81,7 @@ void mov_reg_mem(TCodeGen* cg, ERegister reg, int32_t offset) {
     uint8_t modrm = (uint8_t)(0x85 + ((reg & 0x7) << 3));
     uint8_t opcode[] = {0x48, 0x8b, modrm};
     AppendCode(cg, opcode, 3);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // MOV r8, r/m8
@@ -95,7 +103,7 @@ void mov_mem_reg(TCodeGen* cg, int32_t offset, ERegister reg) {
     uint8_t modrm = (uint8_t)(0x85 + ((reg & 0x7) << 3));
     uint8_t opcode[] = {0x48, 0x89, modrm};
     AppendCode(cg, opcode, 3);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // ADD r/m64, r64
@@ -118,7 +126,7 @@ void add_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
     uint8_t modrm = (uint8_t)(0xc0 + (reg & 0x07));
     uint8_t opcode[] = {0x48, 0x81, modrm};
     AppendCode(cg, opcode, 3);
-    AppendCode(cg, (uint8_t*)&imm, 4);
+    AppendCode(cg, AsBytes(imm), 4);
 }
 
 // SUB r/m64, r64
@@ -141,7 +149,7 @@ void sub_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
     uint8_t modrm = (uint8_t)(0xe8 + (reg & 0x07));
     uint8_t opcode[] = {0x48, 0x81, modrm};
     AppendCode(cg, opcode, 3);
-    AppendCode(cg, (uint8_t*)&imm, 4);
+    AppendCode(cg, AsBytes(imm), 4);
 }
 
 // IMUL r64, r/m64
@@ -186,7 +194,7 @@ void cmp_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm) {
     uint8_t modrm = (uint8_t)(0xf8 + (reg & 0x07));
     uint8_t opcode[] = {0x48, 0x81, modrm};
     AppendCode(cg, opcode, 3);
-    AppendCode(cg, (uint8_t*)&imm, 4);
+    AppendCode(cg, AsBytes(imm), 4);
 }
 
 // JE rel32
@@ -195,7 +203,7 @@ void je_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: 0F 84 imm32
     uint8_t opcode[] = {0x0f, 0x84};
     AppendCode(cg, opcode, 2);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // JMP rel32
@@ -204,7 +212,7 @@ void jmp_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: E9 cd
     uint8_t opcode[] = {0xe9};
     AppendCode(cg, opcode, 1);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // JL rel32
@@ -213,7 +221,7 @@ void jl_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: 0F 8C cd
     uint8_t opcode[] = {0x0f, 0x8c};
     AppendCode(cg, opcode, 2);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // JG rel32
@@ -222,7 +230,7 @@ void jg_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: 0F 8F cd
     uint8_t opcode[] = {0x0f, 0x8f};
     AppendCode(cg, opcode, 2);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // JGE rel32
@@ -231,7 +239,7 @@ void jge_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: 0F 8D cd
     uint8_t opcode[] = {0x0f, 0x8d};
     AppendCode(cg, opcode, 2);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // JNE rel32
@@ -240,7 +248,7 @@ void jne_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: OF 85 cd
     uint8_t opcode[] = {0x0f, 0x85};
     AppendCode(cg, opcode, 2);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // CALL rel32
@@ -249,7 +257,7 @@ void call_rel32(TCodeGen* cg, int32_t offset) {
     // opcode: E8 cd
     uint8_t opcode[] = {0xe8};
     AppendCode(cg, opcode, 1);
-    AppendCode(cg, (uint8_t*)&offset, 4);
+    AppendCode(cg, AsBytes(offset), 4);
 }
 
 // XOR r/m64, r64
