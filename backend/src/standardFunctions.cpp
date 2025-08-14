@@ -12,14 +12,12 @@ static void CreateReadInt(TCodeGen* cg);
 
 // global ------------------------------------------------------------------------------------------
 
-void CreateStandartFunctions(TCodeGen* cg, Elf64_Ehdr* ehdr) {
-    nop(cg); // it is not allowed to place functions with cg->code.size() = 0
+void CreateStandartFunctions(TCodeGen* cg) {
+    x86_64::nop(cg); // it is not allowed to place functions with cg->code.size() = 0
 
     CreatePrintAscii(cg);
     CreatePrintInt(cg);
     CreateReadInt(cg);
-
-    ehdr->e_entry += cg->code.size();
 }
 
 // static ------------------------------------------------------------------------------------------
@@ -27,63 +25,63 @@ void CreateStandartFunctions(TCodeGen* cg, Elf64_Ehdr* ehdr) {
 static void CreatePrintAscii(TCodeGen* cg) {
     AddFunc(cg, keyPrintAscii); 
 
-    push_reg(cg, REG_BP);
-    mov_reg_reg(cg, REG_BP, REG_SP);
-    sub_reg_imm32(cg, REG_SP, 8);
+    x86_64::push(cg, x86_64::r64::rbp);
+    x86_64::mov(cg, x86_64::r64::rbp, x86_64::r64::rsp);
+    x86_64::sub(cg, x86_64::r64::rsp, 8);
 
-    push_reg(cg, REG_DI);
+    x86_64::push(cg, x86_64::r64::rdi);
 
-    mov_reg_imm32(cg, REG_AX, 1);
-    mov_reg_imm32(cg, REG_DI, 1);
-    mov_reg_reg(cg, REG_SI, REG_SP);
-    mov_reg_imm32(cg, REG_DX, 8);
+    x86_64::mov(cg, x86_64::r64::rax, 1);
+    x86_64::mov(cg, x86_64::r64::rdi, 1);
+    x86_64::mov(cg, x86_64::r64::rsi, x86_64::r64::rsp);
+    x86_64::mov(cg, x86_64::r64::rdx, 8);
 
-    syscall(cg);
+    x86_64::syscall(cg);
 
-    mov_reg_reg(cg, REG_SP, REG_BP);
-    pop_reg(cg, REG_BP);
-    ret(cg);
+    x86_64::mov(cg, x86_64::r64::rsp, x86_64::r64::rbp);
+    x86_64::pop(cg, x86_64::r64::rbp);
+    x86_64::ret(cg);
 }
 
 static void CreatePrintInt(TCodeGen* cg) {
     AddFunc(cg, keyPrintInt);
 
-    push_reg(cg, REG_BX);
+    x86_64::push(cg, x86_64::r64::rbx);
 
-    push_reg(cg, REG_BP);
-    mov_reg_reg(cg, REG_BP, REG_SP);
+    x86_64::push(cg, x86_64::r64::rbp);
+    x86_64::mov(cg, x86_64::r64::rbp, x86_64::r64::rsp);
 
-    xor_reg_reg(cg, REG_CX, REG_CX);
-    mov_reg_reg(cg, REG_AX, REG_DI);
+    x86_64::mov(cg, x86_64::r64::rcx, 0);
+    x86_64::mov(cg, x86_64::r64::rax, x86_64::r64::rdi);
 
-    cmp_reg_imm32(cg, REG_AX, 0); 
+    x86_64::cmp(cg, x86_64::r64::rax, 0); 
     int32_t jmpPos_1 = (int32_t)cg->code.size();
-    jge_rel32(cg, 0);
+    x86_64::jge(cg, 0);
 
-    neg_reg(cg, REG_AX); 
+    x86_64::neg(cg, x86_64::r64::rax); 
                                    
-    push_reg(cg, REG_AX);
-    push_reg(cg, REG_CX);
-    push_reg(cg, REG_DX);
-    push_reg(cg, REG_SI);
-    push_reg(cg, REG_DI);
+    x86_64::push(cg, x86_64::r64::rax);
+    x86_64::push(cg, x86_64::r64::rcx);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::push(cg, x86_64::r64::rsi);
+    x86_64::push(cg, x86_64::r64::rdi);
 
-    push_imm32(cg, '-');
+    x86_64::push(cg, '-');
 
-    mov_reg_imm32(cg, REG_AX, 1);
-    mov_reg_imm32(cg, REG_DI, 1);
-    mov_reg_reg(cg, REG_SI, REG_SP);
-    mov_reg_imm32(cg, REG_DX, 8);
+    x86_64::mov(cg, x86_64::r64::rax, 1);
+    x86_64::mov(cg, x86_64::r64::rdi, 1);
+    x86_64::mov(cg, x86_64::r64::rsi, x86_64::r64::rsp);
+    x86_64::mov(cg, x86_64::r64::rdx, 8);
 
-    syscall(cg);
+    x86_64::syscall(cg);
 
-    add_reg_imm32(cg, REG_SP, 8);
+    x86_64::add(cg, x86_64::r64::rsp, 8);
 
-    pop_reg(cg, REG_DI);
-    pop_reg(cg, REG_SI);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rdi);
+    x86_64::pop(cg, x86_64::r64::rsi);
+    x86_64::pop(cg, x86_64::r64::rdx);
+    x86_64::pop(cg, x86_64::r64::rcx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
     int32_t jmpTarget_1 = (int32_t)cg->code.size();
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
@@ -91,180 +89,184 @@ static void CreatePrintInt(TCodeGen* cg) {
 
     int32_t jmpTarget_2 = (int32_t)cg->code.size();
 
-    xor_reg_reg(cg, REG_DX, REG_DX);
-    mov_reg_imm32(cg, REG_BX, 10);
-    idiv_reg(cg, REG_BX);
-    push_reg(cg, REG_DX);
-    inc_reg(cg, REG_CX);
+    x86_64::mov(cg, x86_64::r64::rdx, 0);
+    x86_64::mov(cg, x86_64::r64::rbx, 10);
+    x86_64::idiv(cg, x86_64::r64::rbx);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::inc(cg, x86_64::r64::rcx);
 
-    cmp_reg_imm32(cg, REG_AX, 0);
+    x86_64::cmp(cg, x86_64::r64::rax, 0);
     int32_t jmpPos_2 = (int32_t)cg->code.size();
     int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 6);
-    jne_rel32(cg, jmpOffset_2);
+    x86_64::jne(cg, jmpOffset_2);
 
     int32_t jmpTarget_4 = (int32_t)cg->code.size();
 
-    cmp_reg_imm32(cg, REG_CX, 0);
+    x86_64::cmp(cg, x86_64::r64::rcx, 0);
     int32_t jmpPos_3 = (int32_t)cg->code.size();
-    je_rel32(cg, 0);
+    x86_64::je(cg, 0);
 
-    pop_reg(cg, REG_DI);
-    add_reg_imm32(cg, REG_DI, '0');
+    x86_64::pop(cg, x86_64::r64::rdi);
+    x86_64::add(cg, x86_64::r64::rdi, '0');
 
-    push_reg(cg, REG_AX);
-    push_reg(cg, REG_CX);
-    push_reg(cg, REG_DX);
-    push_reg(cg, REG_SI);
+    x86_64::push(cg, x86_64::r64::rax);
+    x86_64::push(cg, x86_64::r64::rcx);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::push(cg, x86_64::r64::rsi);
 
-    push_reg(cg, REG_DI);
+    x86_64::push(cg, x86_64::r64::rdi);
 
-    mov_reg_imm32(cg, REG_AX, 1);
-    mov_reg_imm32(cg, REG_DI, 1);
-    mov_reg_reg(cg, REG_SI, REG_SP);
-    mov_reg_imm32(cg, REG_DX, 8);
+    x86_64::mov(cg, x86_64::r64::rax, 1);
+    x86_64::mov(cg, x86_64::r64::rdi, 1);
+    x86_64::mov(cg, x86_64::r64::rsi, x86_64::r64::rsp);
+    x86_64::mov(cg, x86_64::r64::rdx, 8);
 
-    syscall(cg);
+    x86_64::syscall(cg);
 
-    pop_reg(cg, REG_DI);
+    x86_64::pop(cg, x86_64::r64::rdi);
 
-    pop_reg(cg, REG_SI);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rsi);
+    x86_64::pop(cg, x86_64::r64::rdx);
+    x86_64::pop(cg, x86_64::r64::rcx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    dec_reg(cg, REG_CX);
+    x86_64::dec(cg, x86_64::r64::rcx);
 
     int32_t jmpPos_4 = (int32_t)cg->code.size();
     int32_t jmpOffset_4 = jmpTarget_4 - (jmpPos_4 + 5);
-    jmp_rel32(cg, jmpOffset_4); 
+    x86_64::jmp(cg, jmpOffset_4); 
 
     int32_t jmpTarget_3 = (int32_t)cg->code.size();
     int32_t jmpOffset_3 = jmpTarget_3 - (jmpPos_3 + 6);
     std::copy((uint8_t*)&jmpOffset_3, (uint8_t*)&jmpOffset_3 + 4, cg->code.begin() + jmpPos_3 + 2);
                                    
-    push_reg(cg, REG_AX);
-    push_reg(cg, REG_CX);
-    push_reg(cg, REG_DX);
-    push_reg(cg, REG_SI);
-    push_reg(cg, REG_DI);
+    x86_64::push(cg, x86_64::r64::rax);
+    x86_64::push(cg, x86_64::r64::rcx);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::push(cg, x86_64::r64::rsi);
+    x86_64::push(cg, x86_64::r64::rdi);
 
-    push_imm32(cg, '\n');
+    x86_64::push(cg, '\n');
 
-    mov_reg_imm32(cg, REG_AX, 1);
-    mov_reg_imm32(cg, REG_DI, 1);
-    mov_reg_reg(cg, REG_SI, REG_SP);
-    mov_reg_imm32(cg, REG_DX, 8);
+    x86_64::mov(cg, x86_64::r64::rax, 1);
+    x86_64::mov(cg, x86_64::r64::rdi, 1);
+    x86_64::mov(cg, x86_64::r64::rsi, x86_64::r64::rsp);
+    x86_64::mov(cg, x86_64::r64::rdx, 8);
 
-    syscall(cg);
+    x86_64::syscall(cg);
 
-    add_reg_imm32(cg, REG_SP, 8);
+    x86_64::add(cg, x86_64::r64::rsp, 8);
     
-    pop_reg(cg, REG_DI);
-    pop_reg(cg, REG_SI);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rdi);
+    x86_64::pop(cg, x86_64::r64::rsi);
+    x86_64::pop(cg, x86_64::r64::rdx);
+    x86_64::pop(cg, x86_64::r64::rcx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    mov_reg_reg(cg, REG_SP, REG_BP);
-    pop_reg(cg, REG_BP);
+    x86_64::mov(cg, x86_64::r64::rsp, x86_64::r64::rbp);
+    x86_64::pop(cg, x86_64::r64::rbp);
 
-    pop_reg(cg, REG_BX);
+    x86_64::pop(cg, x86_64::r64::rbx);
 
-    ret(cg);
+    x86_64::ret(cg);
 }
 
 static void CreateReadInt(TCodeGen* cg) {
     AddFunc(cg, keyReadInt);
 
-    push_reg(cg, REG_BX);
+    x86_64::push(cg, x86_64::r64::rbx);
 
-    push_reg(cg, REG_BP);
-    mov_reg_reg(cg, REG_BP, REG_SP);
+    x86_64::push(cg, x86_64::r64::rbp);
+    x86_64::mov(cg, x86_64::r64::rbp, x86_64::r64::rsp);
 
-    sub_reg_imm32(cg, REG_SP, 32);
+    x86_64::sub(cg, x86_64::r64::rsp, 32);
 
-    mov_reg_imm32(cg, REG_AX, 0);
-    mov_reg_imm32(cg, REG_DI, 0);
-    mov_reg_reg(cg, REG_SI, REG_SP);
-    mov_reg_imm32(cg, REG_DX, 32);
+    x86_64::mov(cg, x86_64::r64::rax, 0);
+    x86_64::mov(cg, x86_64::r64::rdi, 0);
+    x86_64::mov(cg, x86_64::r64::rsi, x86_64::r64::rsp);
+    x86_64::mov(cg, x86_64::r64::rdx, 32);
 
-    syscall(cg);
+    x86_64::syscall(cg);
 
-    mov_reg_reg(cg, REG_CX, REG_AX);
-    xor_reg_reg(cg, REG_AX, REG_AX);
-    mov_reg_imm32(cg, REG_DI, 1);
-    mov_reg_reg(cg, REG_BX, REG_SP);
+    x86_64::mov(cg, x86_64::r64::rcx, x86_64::r64::rax);
+    x86_64::mov(cg, x86_64::r64::rax, 0);
+    x86_64::mov(cg, x86_64::r64::rdi, 1);
+    x86_64::mov(cg, x86_64::r64::rbx, x86_64::r64::rsp);
 
     int32_t jmpTarget_1 = (int32_t)cg->code.size();
     int32_t jmpTarget_2 = (int32_t)cg->code.size();
     int32_t jmpTarget_3 = (int32_t)cg->code.size();
     int32_t jmpTarget_4 = (int32_t)cg->code.size();
 
-    cmp_reg_imm32(cg, REG_CX, 0);
+    x86_64::cmp(cg, x86_64::r64::rcx, 0);
     int32_t jmpPos_7 = (int32_t)cg->code.size();
-    je_rel32(cg, 0);
+    x86_64::je(cg, 0);
 
-    mov_reg8_mem(cg, REG_DX, REG_BX);
-    inc_reg(cg, REG_BX);
-    dec_reg(cg, REG_CX);
+    x86_64::mov(cg, x86_64::r64::rdx, x86_64::r64::rbx, 0);
+    x86_64::movzx(cg, x86_64::r64::rdx, x86_64::r8::dl);
 
-    cmp_reg_imm32(cg, REG_DX, ' ');
+    x86_64::inc(cg, x86_64::r64::rbx);
+    x86_64::dec(cg, x86_64::r64::rcx);
+
+    x86_64::cmp(cg, x86_64::r64::rdx, ' ');
     int32_t jmpPos_1 = (int32_t)cg->code.size();
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
-    je_rel32(cg, jmpOffset_1);
+    x86_64::je(cg, jmpOffset_1);
 
-    cmp_reg_imm32(cg, REG_DX, '\n');
+    x86_64::cmp(cg, x86_64::r64::rdx, '\n');
     int32_t jmpPos_2 = (int32_t)cg->code.size();
     int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 6);
-    je_rel32(cg, jmpOffset_2);
+    x86_64::je(cg, jmpOffset_2);
 
-    cmp_reg_imm32(cg, REG_DX, '-');
+    x86_64::cmp(cg, x86_64::r64::rdx, '-');
     int32_t jmpPos_5 = (int32_t)cg->code.size();
-    jne_rel32(cg, 0);
+    x86_64::jne(cg, 0);
 
-    mov_reg_imm32(cg, REG_DI, -1);
+    x86_64::mov(cg, x86_64::r64::rdi, -1);
 
     int32_t jmpPos_3 = (int32_t)cg->code.size();
     int32_t jmpOffset_3 = jmpTarget_3 - (jmpPos_3 + 5);
-    jmp_rel32(cg, jmpOffset_3);
+    x86_64::jmp(cg, jmpOffset_3);
 
     int32_t jmpTarget_5 = (int32_t)cg->code.size();
     int32_t jmpOffset_5 = jmpTarget_5 - (jmpPos_5 + 6);
     std::copy((uint8_t*)&jmpOffset_5, (uint8_t*)&jmpOffset_5 + 4, cg->code.begin() + jmpPos_5 + 2);
 
-    cmp_reg_imm32(cg, REG_DX, '+');
+    x86_64::cmp(cg, x86_64::r64::rdx, '+');
     int32_t jmpPos_4 = (int32_t)cg->code.size();
     int32_t jmpOffset_4 = jmpTarget_4 - (jmpPos_4 + 6);
-    je_rel32(cg, jmpOffset_4);
+    x86_64::je(cg, jmpOffset_4);
 
-    mov_reg_imm32(cg, REG_SI, 10);
+    x86_64::mov(cg, x86_64::r64::rsi, 10);
 
     int32_t jmpTarget_6 = (int32_t)cg->code.size();
 
-    cmp_reg_imm32(cg, REG_CX, 0);
+    x86_64::cmp(cg, x86_64::r64::rcx, 0);
     int32_t jmpPos_8 = (int32_t)cg->code.size();
-    je_rel32(cg, 0);
+    x86_64::je(cg, 0);
     
-    sub_reg_imm32(cg, REG_DX, '0');
+    x86_64::sub(cg, x86_64::r64::rdx, '0');
 
-    cmp_reg_imm32(cg, REG_DX, 0);
+    x86_64::cmp(cg, x86_64::r64::rdx, 0);
     int32_t jmpPos_9 = (int32_t)cg->code.size();
-    jl_rel32(cg, 0);
+    x86_64::jl(cg, 0);
 
-    cmp_reg_imm32(cg, REG_DX, 9);
+    x86_64::cmp(cg, x86_64::r64::rdx, 9);
     int32_t jmpPos_10 = (int32_t)cg->code.size();
-    jg_rel32(cg, 0);
+    x86_64::jg(cg, 0);
 
-    imul_reg_reg(cg, REG_AX, REG_SI);
-    add_reg_reg(cg, REG_AX, REG_DX);
+    x86_64::imul(cg, x86_64::r64::rax, x86_64::r64::rsi);
+    x86_64::add(cg, x86_64::r64::rax, x86_64::r64::rdx);
 
-    mov_reg8_mem(cg, REG_DX, REG_BX);
-    inc_reg(cg, REG_BX);
-    dec_reg(cg, REG_CX);
+    x86_64::mov(cg, x86_64::r64::rdx, x86_64::r64::rbx, 0);
+    x86_64::movzx(cg, x86_64::r64::rdx, x86_64::r8::dl);
+
+    x86_64::inc(cg, x86_64::r64::rbx);
+    x86_64::dec(cg, x86_64::r64::rcx);
 
     int32_t jmpPos_6 = (int32_t)cg->code.size();
     int32_t jmpOffset_6 = jmpTarget_6 - (jmpPos_6 + 5);
-    jmp_rel32(cg, jmpOffset_6);
+    x86_64::jmp(cg, jmpOffset_6);
 
     int32_t jmpTarget_7 = (int32_t)cg->code.size();
     int32_t jmpOffset_7 = jmpTarget_7 - (jmpPos_7 + 6);
@@ -282,12 +284,12 @@ static void CreateReadInt(TCodeGen* cg) {
     int32_t jmpOffset_10 = jmpTarget_10 - (jmpPos_10 + 6);
     std::copy((uint8_t*)&jmpOffset_10, (uint8_t*)&jmpOffset_10 + 4, cg->code.begin() + jmpPos_10 + 2);
 
-    imul_reg_reg(cg, REG_AX, REG_DI);
+    x86_64::imul(cg, x86_64::r64::rax, x86_64::r64::rdi);
 
-    mov_reg_reg(cg, REG_SP, REG_BP);
-    pop_reg(cg, REG_BP);
+    x86_64::mov(cg, x86_64::r64::rsp, x86_64::r64::rbp);
+    x86_64::pop(cg, x86_64::r64::rbp);
 
-    pop_reg(cg, REG_BX);
+    x86_64::pop(cg, x86_64::r64::rbx);
 
-    ret(cg);
+    x86_64::ret(cg);
 }

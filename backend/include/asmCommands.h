@@ -3,62 +3,63 @@
 
 #include "generator.h"
 
-enum ERegister {
-    REG_AX = 0,  
-    REG_CX = 1, 
-    REG_DX = 2,  
-    REG_BX = 3,  
-    REG_SP = 4,  
-    REG_BP = 5,  
-    REG_SI = 6,  
-    REG_DI = 7,
-    REG_R8 = 8,
-    REG_R9 = 9,
-    REG_R10 = 10,
-    REG_R11 = 11,
-    REG_R12 = 12,
-    REG_R13 = 13,
-    REG_R14 = 14,
-    REG_R15 = 15,
-};
+class x86_64 {
+private:
+    template <typename T>
+    static std::span<uint8_t> AsBytes(T& value) {
+        return std::span<uint8_t>(
+            reinterpret_cast<uint8_t*>(&value),
+            sizeof(T)
+        );
+    }
 
-void push_reg(TCodeGen* cg, ERegister reg);
-void push_imm32(TCodeGen* cg, int32_t imm);
-void pop_reg(TCodeGen* cg, ERegister reg);
-void mov_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm);
-void mov_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
-void mov_reg_mem(TCodeGen* cg, ERegister reg, int32_t offset);
-void mov_reg8_mem(TCodeGen* cg, ERegister dst, ERegister src);
-void mov_mem_reg(TCodeGen* cg, int32_t offset, ERegister reg);
-void add_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
-void add_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm);
-void sub_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
-void sub_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm);
-void imul_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
-void idiv_reg(TCodeGen* cg, ERegister reg);
-void cmp_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
-void cmp_reg_imm32(TCodeGen* cg, ERegister reg, int32_t imm);
-void je_rel32(TCodeGen* cg, int32_t offset);
-void jmp_rel32(TCodeGen* cg, int32_t offset);
-void jl_rel32(TCodeGen* cg, int32_t offset);
-void jg_rel32(TCodeGen* cg, int32_t offset);
-void jge_rel32(TCodeGen* cg, int32_t offset);
-void jne_rel32(TCodeGen* cg, int32_t offset);
-void call_rel32(TCodeGen* cg, int32_t offset);
-void xor_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
-void xchg_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
-void neg_reg(TCodeGen* cg, ERegister reg);
-void inc_reg(TCodeGen* cg, ERegister reg);
-void dec_reg(TCodeGen* cg, ERegister reg);
-void ret(TCodeGen* cg);
-void syscall(TCodeGen* cg);
-void nop(TCodeGen* cg);
-void setg_reg(TCodeGen* cg, ERegister reg);
-void setge_reg(TCodeGen* cg, ERegister reg);
-void setl_reg(TCodeGen* cg, ERegister reg);
-void setle_reg(TCodeGen* cg, ERegister reg);
-void sete_reg(TCodeGen* cg, ERegister reg);
-void setne_reg(TCodeGen* cg, ERegister reg);
-void movzx_reg_reg(TCodeGen* cg, ERegister dst, ERegister src);
+public:
+    enum class r64 {
+        rax = 0,    rcx = 1,    rdx = 2,    rbx = 3,    rsp = 4,    rbp = 5,    rsi = 6,    rdi = 7,
+        r8 = 8,     r9 = 9,     r10 = 10,   r11 = 11,   r12 = 12,   r13 = 13,   r14 = 14,   r15 = 15,
+    };
+
+    enum class r8 {
+        al = 0,     cl = 1,     dl = 2,     bl = 3,     spl = 4,    bpl = 5,    sil = 6,    dil = 7, 
+        r8b = 8,    r9b = 9,    r10b = 10,  r11b = 11,  r12b = 12,  r13b = 13,  r14b = 14,  r15b = 15,
+    };
+
+    static void push(TCodeGen* cg, r64 reg);
+    static void push(TCodeGen* cg, int32_t imm);
+    static void pop(TCodeGen* cg, r64 reg);
+    static void mov(TCodeGen* cg, r64 reg, int32_t imm);
+    static void mov(TCodeGen* cg, r64 dst, r64 src);
+    static void mov(TCodeGen* cg, r64 dst, r64 src, int32_t offset);
+    static void mov(TCodeGen* cg, r64 src, int32_t offset, r64 dst);
+    static void add(TCodeGen* cg, r64 dst, r64 src);
+    static void add(TCodeGen* cg, r64 reg, int32_t imm);
+    static void sub(TCodeGen* cg, r64 dst, r64 src);
+    static void sub(TCodeGen* cg, r64 reg, int32_t imm);
+    static void imul(TCodeGen* cg, r64 dst, r64 src);
+    static void idiv(TCodeGen* cg, r64 reg);
+    static void cmp(TCodeGen* cg, r64 dst, r64 src);
+    static void cmp(TCodeGen* cg, r64 reg, int32_t imm);
+    static void je(TCodeGen* cg, int32_t offset);
+    static void jmp(TCodeGen* cg, int32_t offset);
+    static void jl(TCodeGen* cg, int32_t offset);
+    static void jg(TCodeGen* cg, int32_t offset);
+    static void jge(TCodeGen* cg, int32_t offset);
+    static void jne(TCodeGen* cg, int32_t offset);
+    static void call(TCodeGen* cg, int32_t offset);
+    static void xchg(TCodeGen* cg, r64 dst, r64 src);
+    static void neg(TCodeGen* cg, r64 reg);
+    static void inc(TCodeGen* cg, r64 reg);
+    static void dec(TCodeGen* cg, r64 reg);
+    static void ret(TCodeGen* cg);
+    static void syscall(TCodeGen* cg);
+    static void nop(TCodeGen* cg);
+    static void setg(TCodeGen* cg, r64 reg);
+    static void setge(TCodeGen* cg, r64 reg);
+    static void setl(TCodeGen* cg, r64 reg);
+    static void setle(TCodeGen* cg, r64 reg);
+    static void sete(TCodeGen* cg, r64 reg);
+    static void setne(TCodeGen* cg, r64 reg);
+    static void movzx(TCodeGen* cg, r64 dst, r8 src);
+};
 
 #endif // ASM_COMMANDS_H

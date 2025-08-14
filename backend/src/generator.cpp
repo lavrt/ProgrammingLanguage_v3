@@ -11,14 +11,20 @@
 // static ------------------------------------------------------------------------------------------
 
 static const std::string kEntryFunctionName = "main";
-static const ERegister kArgRegs[] {REG_DI, REG_SI, REG_DX, REG_CX, REG_R8, REG_R9};
+static const x86_64::r64 kArgRegs[] {
+    x86_64::r64::rdi,
+    x86_64::r64::rsi,
+    x86_64::r64::rdx,
+    x86_64::r64::rcx,
+    x86_64::r64::r8,
+    x86_64::r64::r9,
+};
 
 static int FindVar(const TCodeGen* const cg, const std::string& id);
 static void AddVar(TCodeGen* cg, const std::string& id);
 static size_t FindFunc(const TCodeGen* const cg, const std::string& name);
 static void CodeGenExpr(TCodeGen* cg, Node* node);
 static void CodeGenStmt(TCodeGen* cg, Node* node);
-
 
 static void EmitNumber(TCodeGen* cg, Node* node);
 static void EmitIdentifier(TCodeGen* cg, Node* node);
@@ -54,12 +60,12 @@ void CodeGenCtor(TCodeGen* cg) {
     cg->isLocal = false;
 }
 
-void AppendCode(TCodeGen* cg, std::span<const uint8_t> data, size_t len) {
+void AppendCode(TCodeGen* cg, std::span<uint8_t> data) {
     cg->code.insert(cg->code.end(), data.begin(), data.end());
 }
 
 void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
-    CreateStandartFunctions(cg, ehdr);
+    CreateStandartFunctions(cg);
 
     CodeGenStmt(cg, program);
 
@@ -68,11 +74,7 @@ void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
         std::cerr << "The function \"" << kEntryFunctionName << "\" was not found." << std::endl;
         exit(EXIT_FAILURE);
     }
-    call_rel32(cg, (int32_t)(addr - (cg->code.size() + 5)));
-    
-    mov_reg_imm32(cg, REG_AX, 60);
-    mov_reg_imm32(cg, REG_DI, 0);
-    syscall(cg);
+    ehdr->e_entry += addr;
 }
 
 void AddFunc(TCodeGen* cg, const std::string& name) {
@@ -88,6 +90,7 @@ static int FindVar(const TCodeGen* const cg, const std::string& id) {
 
 static void AddVar(TCodeGen* cg, const std::string& id) {
     int& varOffset = cg->isLocal ? cg->localStackOffset : cg->stackOffset;
+    std::cout << "cg->isLocal=" << cg->isLocal << std::endl; // NOTE
     varOffset += 8;
     cg->vars[id] = varOffset;
 }
@@ -142,7 +145,7 @@ static void CodeGenStmt(TCodeGen* cg, Node* node) {
 }
 
 static void EmitNumber(TCodeGen* cg, Node* node) {
-    push_imm32(cg, std::stoi(node->GetValue()));
+    x86_64::push(cg, std::stoi(node->GetValue()));
 }
 
 static void EmitIdentifier(TCodeGen* cg, Node* node) {
@@ -152,147 +155,147 @@ static void EmitIdentifier(TCodeGen* cg, Node* node) {
         exit(EXIT_FAILURE);
     }
 
-    mov_reg_mem(cg, REG_AX, -offset);
-    push_reg(cg, REG_AX);
+    x86_64::mov(cg, x86_64::r64::rax, x86_64::r64::rbp, -offset);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitAdd(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
     
-    add_reg_reg(cg, REG_AX, REG_BX);
+    x86_64::add(cg, x86_64::r64::rax, x86_64::r64::rbx);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitSub(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    sub_reg_reg(cg, REG_AX, REG_BX);
+    x86_64::sub(cg, x86_64::r64::rax, x86_64::r64::rbx);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitMul(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    imul_reg_reg(cg, REG_AX, REG_BX);
+    x86_64::imul(cg, x86_64::r64::rax, x86_64::r64::rbx);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitDiv(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    xor_reg_reg(cg, REG_DX, REG_DX);
-    idiv_reg(cg, REG_BX);
+    x86_64::mov(cg, x86_64::r64::rdx, 0);
+    x86_64::idiv(cg, x86_64::r64::rbx);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitGreater(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    cmp_reg_reg(cg, REG_AX, REG_BX);
-    setg_reg(cg, REG_AX);
-    movzx_reg_reg(cg, REG_AX, REG_AX);
+    x86_64::cmp(cg, x86_64::r64::rax, x86_64::r64::rbx);
+    x86_64::setg(cg, x86_64::r64::rax);
+    x86_64::movzx(cg, x86_64::r64::rax, x86_64::r8::al);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitGreaterOrEqual(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    cmp_reg_reg(cg, REG_AX, REG_BX);
-    setge_reg(cg, REG_AX);
-    movzx_reg_reg(cg, REG_AX, REG_AX);
+    x86_64::cmp(cg, x86_64::r64::rax, x86_64::r64::rbx);
+    x86_64::setge(cg, x86_64::r64::rax);
+    x86_64::movzx(cg, x86_64::r64::rax, x86_64::r8::al);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitLess(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    cmp_reg_reg(cg, REG_AX, REG_BX);
-    setl_reg(cg, REG_AX);
-    movzx_reg_reg(cg, REG_AX, REG_AX);
+    x86_64::cmp(cg, x86_64::r64::rax, x86_64::r64::rbx);
+    x86_64::setl(cg, x86_64::r64::rax);
+    x86_64::movzx(cg, x86_64::r64::rax, x86_64::r8::al);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitLessOrEqual(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    cmp_reg_reg(cg, REG_AX, REG_BX);
-    setle_reg(cg, REG_AX);
-    movzx_reg_reg(cg, REG_AX, REG_AX);
+    x86_64::cmp(cg, x86_64::r64::rax, x86_64::r64::rbx);
+    x86_64::setle(cg, x86_64::r64::rax);
+    x86_64::movzx(cg, x86_64::r64::rax, x86_64::r8::al);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitIdentical(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    cmp_reg_reg(cg, REG_AX, REG_BX);
-    sete_reg(cg, REG_AX);
-    movzx_reg_reg(cg, REG_AX, REG_AX);
+    x86_64::cmp(cg, x86_64::r64::rax, x86_64::r64::rbx);
+    x86_64::sete(cg, x86_64::r64::rax);
+    x86_64::movzx(cg, x86_64::r64::rax, x86_64::r8::al);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitNotIdentical(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_BX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rbx);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    cmp_reg_reg(cg, REG_AX, REG_BX);
-    setne_reg(cg, REG_AX);
-    movzx_reg_reg(cg, REG_AX, REG_AX);
+    x86_64::cmp(cg, x86_64::r64::rax, x86_64::r64::rbx);
+    x86_64::setne(cg, x86_64::r64::rax);
+    x86_64::movzx(cg, x86_64::r64::rax, x86_64::r8::al);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitCallVoid(TCodeGen* cg, Node* node) {
-    push_reg(cg, REG_DI);
-    push_reg(cg, REG_SI);
-    push_reg(cg, REG_DX);
-    push_reg(cg, REG_CX);
-    push_reg(cg, REG_R8);
-    push_reg(cg, REG_R9);
+    x86_64::push(cg, x86_64::r64::rdi);
+    x86_64::push(cg, x86_64::r64::rsi);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::push(cg, x86_64::r64::rcx);
+    x86_64::push(cg, x86_64::r64::r8);
+    x86_64::push(cg, x86_64::r64::r9);
 
     Node* arg = node->GetLeft();
 
     size_t argCount = 0;
     while (arg && argCount < 6) {
         CodeGenExpr(cg, arg);
-        pop_reg(cg, kArgRegs[argCount++]);
+        x86_64::pop(cg, kArgRegs[argCount++]);
         arg = arg->GetLeft();
     }
 
@@ -301,30 +304,30 @@ static void EmitCallVoid(TCodeGen* cg, Node* node) {
         fprintf(stderr, "Undefined function\n");
         exit(EXIT_FAILURE);
     }
-    call_rel32(cg, (int32_t)(addr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(addr - (cg->code.size() + 5)));
 
-    pop_reg(cg, REG_R9);
-    pop_reg(cg, REG_R8);
-    pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_SI);
-    pop_reg(cg, REG_DI);
+    x86_64::pop(cg, x86_64::r64::r9);
+    x86_64::pop(cg, x86_64::r64::r8);
+    x86_64::pop(cg, x86_64::r64::rcx);
+    x86_64::pop(cg, x86_64::r64::rdx);
+    x86_64::pop(cg, x86_64::r64::rsi);
+    x86_64::pop(cg, x86_64::r64::rdi);
 }
 
 static void EmitCallInt(TCodeGen* cg, Node* node) {
-    push_reg(cg, REG_DI);
-    push_reg(cg, REG_SI);
-    push_reg(cg, REG_DX);
-    push_reg(cg, REG_CX);
-    push_reg(cg, REG_R8);
-    push_reg(cg, REG_R9);
+    x86_64::push(cg, x86_64::r64::rdi);
+    x86_64::push(cg, x86_64::r64::rsi);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::push(cg, x86_64::r64::rcx);
+    x86_64::push(cg, x86_64::r64::r8);
+    x86_64::push(cg, x86_64::r64::r9);
 
     Node* arg = node->GetLeft();
 
     size_t argCount = 0;
     while (arg && argCount < 6) {
         CodeGenExpr(cg, arg);
-        pop_reg(cg, kArgRegs[argCount++]);
+        x86_64::pop(cg, kArgRegs[argCount++]);
         arg = arg->GetLeft();
     }
     size_t addr = FindFunc(cg, node->GetValue());
@@ -332,16 +335,16 @@ static void EmitCallInt(TCodeGen* cg, Node* node) {
         fprintf(stderr, "Undefined function\n");
         exit(EXIT_FAILURE);
     }
-    call_rel32(cg, (int32_t)(addr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(addr - (cg->code.size() + 5)));
 
-    pop_reg(cg, REG_R9);
-    pop_reg(cg, REG_R8);
-    pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_SI);
-    pop_reg(cg, REG_DI);
+    x86_64::pop(cg, x86_64::r64::r9);
+    x86_64::pop(cg, x86_64::r64::r8);
+    x86_64::pop(cg, x86_64::r64::rcx);
+    x86_64::pop(cg, x86_64::r64::rdx);
+    x86_64::pop(cg, x86_64::r64::rsi);
+    x86_64::pop(cg, x86_64::r64::rdi);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitReadInt(TCodeGen* cg) {
@@ -351,53 +354,52 @@ static void EmitReadInt(TCodeGen* cg) {
         exit(EXIT_FAILURE);
     }
   
-    push_reg(cg, REG_CX);
-    push_reg(cg, REG_DX);
-    push_reg(cg, REG_DI);
+    x86_64::push(cg, x86_64::r64::rcx);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::push(cg, x86_64::r64::rdi);
 
-    call_rel32(cg, (int32_t)(readIntAddr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(readIntAddr - (cg->code.size() + 5)));
 
-    pop_reg(cg, REG_DI);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_CX);
+    x86_64::pop(cg, x86_64::r64::rdi);
+    x86_64::pop(cg, x86_64::r64::rdx);
+    x86_64::pop(cg, x86_64::r64::rcx);
 
-    push_reg(cg, REG_AX);
+    x86_64::push(cg, x86_64::r64::rax);
 }
 
 static void EmitDef(TCodeGen* cg, Node* node) {
     cg->isLocal = true;
     int varCountBeforeFunction = cg->varCount;
 
-    int32_t jmpPos1 = (int32_t)cg->code.size();
-    jmp_rel32(cg, 0);
-
     AddFunc(cg, node->GetValue());
 
-    push_reg(cg, REG_BP);
-    mov_reg_reg(cg, REG_BP, REG_SP);
+    x86_64::push(cg, x86_64::r64::rbp);
+    x86_64::mov(cg, x86_64::r64::rbp, x86_64::r64::rsp);
 
     Node* arg = node->GetLeft();
     int argCount = 0;
     while (arg && argCount < 6) {
         AddVar(cg, arg->GetValue());
         int offset = cg->vars[arg->GetValue()];
-        mov_mem_reg(cg, -offset, kArgRegs[argCount]);
+        x86_64::mov(cg, x86_64::r64::rbp, -offset, kArgRegs[argCount]);
         arg = arg->GetLeft();
         ++argCount;
     }
-    sub_reg_imm32(cg, REG_SP, 8 * argCount);
+    x86_64::sub(cg, x86_64::r64::rsp, 8 * argCount);
 
     CodeGenStmt(cg, node->GetRight());
 
-    mov_reg_reg(cg, REG_SP, REG_BP);
-    pop_reg(cg, REG_BP);
+    x86_64::mov(cg, x86_64::r64::rsp, x86_64::r64::rbp);
+    x86_64::pop(cg, x86_64::r64::rbp);
 
-    mov_reg_imm32(cg, REG_AX, -1);
-    ret(cg);
+    if (node->GetValue() == kEntryFunctionName) {
+        x86_64::mov(cg, x86_64::r64::rax, 60);
+        x86_64::mov(cg, x86_64::r64::rdi, 0);
+        x86_64::syscall(cg);
+    }
 
-    int32_t jmpTarget1 = (int32_t)cg->code.size();
-    int32_t jmpOffset1 = jmpTarget1 - (jmpPos1 + 5);
-    std::copy((uint8_t*)&jmpOffset1, (uint8_t*)&jmpOffset1 + 4, cg->code.begin() + jmpPos1 + 1);
+    x86_64::mov(cg, x86_64::r64::rax, -1);
+    x86_64::ret(cg);
 
     cg->isLocal = false;
     cg->localStackOffset = 0;
@@ -412,16 +414,16 @@ static void EmitSemicolon(TCodeGen* cg, Node* node) {
 
 static void EmitEqual(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetRight());
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rax);
 
     int offset = FindVar(cg, node->GetLeft()->GetValue());
     if (offset == -1) {
         AddVar(cg, node->GetLeft()->GetValue());
         offset = cg->vars[node->GetLeft()->GetValue()];
-        sub_reg_imm32(cg, REG_SP, 8);
+        x86_64::sub(cg, x86_64::r64::rsp, 8);
     }
 
-    mov_mem_reg(cg, -offset, REG_AX);
+    x86_64::mov(cg, x86_64::r64::rbp, -offset, x86_64::r64::rax);
 }
 
 static void EmitPrintAscii(TCodeGen* cg, Node* node) {
@@ -432,21 +434,21 @@ static void EmitPrintAscii(TCodeGen* cg, Node* node) {
     }
 
     CodeGenExpr(cg, node->GetLeft());
-    pop_reg(cg, REG_DI);  
+    x86_64::pop(cg, x86_64::r64::rdi);  
 
-    push_reg(cg, REG_AX);
-    push_reg(cg, REG_CX);
-    push_reg(cg, REG_DX);
-    push_reg(cg, REG_SI);
-    push_reg(cg, REG_DI);
+    x86_64::push(cg, x86_64::r64::rax);
+    x86_64::push(cg, x86_64::r64::rcx);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::push(cg, x86_64::r64::rsi);
+    x86_64::push(cg, x86_64::r64::rdi);
 
-    call_rel32(cg, (int32_t)(printAsciiAddr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(printAsciiAddr - (cg->code.size() + 5)));
 
-    pop_reg(cg, REG_DI);
-    pop_reg(cg, REG_SI);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rdi);
+    x86_64::pop(cg, x86_64::r64::rsi);
+    x86_64::pop(cg, x86_64::r64::rdx);
+    x86_64::pop(cg, x86_64::r64::rcx);
+    x86_64::pop(cg, x86_64::r64::rax);
 }
 
 static void EmitPrintInt(TCodeGen* cg, Node* node) { 
@@ -457,28 +459,28 @@ static void EmitPrintInt(TCodeGen* cg, Node* node) {
     }
 
     CodeGenExpr(cg, node->GetLeft());
-    pop_reg(cg, REG_DI);  
+    x86_64::pop(cg, x86_64::r64::rdi);  
 
-    push_reg(cg, REG_AX);    
-    push_reg(cg, REG_CX);
-    push_reg(cg, REG_DX);
-    push_reg(cg, REG_DI);
+    x86_64::push(cg, x86_64::r64::rax);    
+    x86_64::push(cg, x86_64::r64::rcx);
+    x86_64::push(cg, x86_64::r64::rdx);
+    x86_64::push(cg, x86_64::r64::rdi);
 
-    call_rel32(cg, (int32_t)(printIntAddr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(printIntAddr - (cg->code.size() + 5)));
 
-    pop_reg(cg, REG_DI);
-    pop_reg(cg, REG_DX);
-    pop_reg(cg, REG_CX);
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rdi);
+    x86_64::pop(cg, x86_64::r64::rdx);
+    x86_64::pop(cg, x86_64::r64::rcx);
+    x86_64::pop(cg, x86_64::r64::rax);
 }
 
 static void EmitIf(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rax);
     
-    cmp_reg_imm32(cg, REG_AX, 0);
+    x86_64::cmp(cg, x86_64::r64::rax, 0);
     int32_t jmpPos_1 = (int32_t)cg->code.size();
-    je_rel32(cg, 0);
+    x86_64::je(cg, 0);
 
     CodeGenStmt(cg, node->GetRight());
 
@@ -491,17 +493,17 @@ static void EmitWhile(TCodeGen* cg, Node* node) {
     int32_t jmpTarget_2 = (int32_t)cg->code.size();
     
     CodeGenExpr(cg, node->GetLeft());
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    cmp_reg_imm32(cg, REG_AX, 0);
+    x86_64::cmp(cg, x86_64::r64::rax, 0);
     int32_t jmpPos_1 = (int32_t)cg->code.size();
-    je_rel32(cg, 0);
+    x86_64::je(cg, 0);
 
     CodeGenStmt(cg, node->GetRight());
     
     int32_t jmpPos_2 = (int32_t)cg->code.size();
     int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 5);
-    jmp_rel32(cg, jmpOffset_2);
+    x86_64::jmp(cg, jmpOffset_2);
 
     int32_t jmpTarget_1 = (int32_t)cg->code.size();
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
@@ -510,10 +512,10 @@ static void EmitWhile(TCodeGen* cg, Node* node) {
 
 static void EmitReturn(TCodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
-    pop_reg(cg, REG_AX);
+    x86_64::pop(cg, x86_64::r64::rax);
 
-    mov_reg_reg(cg, REG_SP, REG_BP);
-    pop_reg(cg, REG_BP);
+    x86_64::mov(cg, x86_64::r64::rsp, x86_64::r64::rbp);
+    x86_64::pop(cg, x86_64::r64::rbp);
 
-    ret(cg);
+    x86_64::ret(cg);
 }

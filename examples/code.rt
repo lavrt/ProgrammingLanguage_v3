@@ -1,17 +1,17 @@
 # calculating the factorial using a recursion function
 def factorial_1(a1) {
     if (a1 < 0) {
-        return (0 - 1);
+        return 0 - 1;
     };
     if (a1 == 0) {
-        return (1);
+        return 1;
     };
     if (a1 == 1) {
-        return (1);
+        return 1;
     };
     a2 = a1 - 1;
     a3 = call factorial_1(a2);
-    return (a1 * a3);
+    return a1 * a3;
 };
 
 # calculating the factorial using a loop
@@ -25,7 +25,7 @@ def factorial_2(a2) {
         k2 = k2 * b1;
         b1 = b1 + 1;
     };
-    return (k2);
+    return k2;
 };
 
 def test_factorials(c) {
