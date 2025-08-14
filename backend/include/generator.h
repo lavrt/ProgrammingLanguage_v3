@@ -3,30 +3,19 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <unordered_map>
 
 #include "headers.h"
 #include "node.h"
-
-struct TVariables {
-    std::string id;
-    int offset;
-};
-
-struct TFunctions {
-    std::string name;
-    size_t addr; 
-};
 
 struct TCodeGen {
     uint8_t* code;
     size_t size;
     size_t capacity;
     int stackOffset;
-    int labelCount;
-    TVariables* vars; 
+    std::unordered_map<std::string, int> vars; 
     int varCount;
-    TFunctions* funcs;
-    int funcCount;
+    std::unordered_map<std::string, size_t> funcs;
     int localStackOffset;
     bool isLocal;
 };

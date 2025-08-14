@@ -61,19 +61,10 @@ namespace GenStmt {
 void CodeGenCtor(TCodeGen* cg) {
     cg->size = 0;
     cg->stackOffset = 0;
-    cg->labelCount = 0;
 
     cg->capacity = kInitCapacityOfCodeArray;
     cg->code = (uint8_t*)calloc(cg->capacity, sizeof(char));
     assert(cg->code);
-
-    cg->varCount = 0;
-    cg->vars = (TVariables*)calloc(kAdditionalCapacityOfNameTable, sizeof(TVariables));
-    assert(cg->vars);
-
-    cg->funcCount = 0;
-    cg->funcs = (TFunctions*)calloc(kAdditionalCapacityOfNameTable, sizeof(TFunctions));
-    assert(cg->funcs);
 
     cg->localStackOffset = 0;
     cg->isLocal = false;
@@ -81,8 +72,6 @@ void CodeGenCtor(TCodeGen* cg) {
 
 void CodeGenDtor(TCodeGen* cg) {
     free(cg->code);
-    free(cg->vars);
-    free(cg->funcs);
 }
 
 void AppendCode(TCodeGen* cg, const uint8_t* data, size_t len) {
@@ -115,49 +104,25 @@ void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
 }
 
 void AddFunc(TCodeGen* cg, const std::string& name) {
-    if (cg->funcCount >= kAdditionalCapacityOfNameTable) {
-        cg->funcs = (TFunctions*)realloc(
-            cg->funcs, ((long unsigned)(cg->funcCount + kAdditionalCapacityOfNameTable)) * sizeof(TFunctions)
-        );
-        assert(cg->funcs);
-    }
-    cg->funcs[cg->funcCount].name = name;
-    cg->funcs[cg->funcCount].addr = cg->size;
-    ++cg->funcCount;
+    cg->funcs[name] = cg->size;
 }
 
 // static ------------------------------------------------------------------------------------------
 
 static int FindVar(const TCodeGen* const cg, const std::string& id) {
-    for (int i = 0; i != cg->varCount; ++i) {
-        if (cg->vars[i].id == id) {
-            return cg->vars[i].offset;
-        }
-    }
-    return -1;
+    auto it = cg->vars.find(id);
+    return it == cg->vars.end() ? -1 : it->second;
 }
 
 static void AddVar(TCodeGen* cg, const std::string& id) {
     int& varOffset = cg->isLocal ? cg->localStackOffset : cg->stackOffset;
-    if (cg->varCount >= kAdditionalCapacityOfNameTable) {
-        cg->vars = (TVariables*)realloc(
-            cg->vars, ((long unsigned)(cg->varCount + kAdditionalCapacityOfNameTable)) * sizeof(TVariables)
-        );
-        assert(cg->vars);
-    }
-    cg->vars[cg->varCount].id = id;
     varOffset += 8;
-    cg->vars[cg->varCount].offset = varOffset;
-    ++cg->varCount;
+    cg->vars[id] = varOffset;
 }
 
 static size_t FindFunc(const TCodeGen* const cg, const std::string& name) {
-    for (int i = 0; i < cg->funcCount; i++) {
-        if (cg->funcs[i].name == name) {
-            return cg->funcs[i].addr;
-        }
-    }
-    return 0;
+    auto it = cg->funcs.find(name);
+    return it == cg->funcs.end() ? 0 : it->second;
 }
 
 static void CodeGenExpr(TCodeGen* cg, Node* node) {
@@ -444,7 +409,7 @@ static void GenStmt::EmitDef(TCodeGen* cg, Node* node) {
     int argCount = 0;
     while (arg && argCount < 6) {
         AddVar(cg, arg->GetValue());
-        int offset = cg->vars[cg->varCount - 1].offset;
+        int offset = cg->vars[arg->GetValue()];
         mov_mem_reg(cg, -offset, kArgRegs[argCount]);
         arg = arg->GetLeft();
         ++argCount;
@@ -481,7 +446,7 @@ static void GenStmt::EmitEqual(TCodeGen* cg, Node* node) {
     int offset = FindVar(cg, node->GetLeft()->GetValue());
     if (offset == -1) {
         AddVar(cg, node->GetLeft()->GetValue());
-        offset = cg->vars[cg->varCount - 1].offset;
+        offset = cg->vars[node->GetLeft()->GetValue()];
         sub_reg_imm32(cg, REG_SP, 8);
     }
 
