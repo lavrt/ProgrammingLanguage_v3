@@ -1,8 +1,5 @@
 #include "generator.h"
 
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
 #include <iostream>
 
 #include "asmCommands.h"
@@ -20,8 +17,8 @@ static const x86_64::r64 kArgRegs[] {
     x86_64::r64::r9,
 };
 
-static int FindVar(const TCodeGen* const cg, const std::string& id);
-static void AddVar(TCodeGen* cg, const std::string& id);
+static int FindVar(TCodeGen* cg, const std::string& id);
+static int AddVar(TCodeGen* cg, const std::string& id);
 static size_t FindFunc(const TCodeGen* const cg, const std::string& name);
 static void CodeGenExpr(TCodeGen* cg, Node* node);
 static void CodeGenStmt(TCodeGen* cg, Node* node);
@@ -83,16 +80,16 @@ void AddFunc(TCodeGen* cg, const std::string& name) {
 
 // static ------------------------------------------------------------------------------------------
 
-static int FindVar(const TCodeGen* const cg, const std::string& id) {
-    auto it = cg->vars.find(id);
-    return it == cg->vars.end() ? -1 : it->second;
+static int FindVar(TCodeGen* cg, const std::string& id) {
+    return cg->vars.Lookup(id);
 }
 
-static void AddVar(TCodeGen* cg, const std::string& id) {
+static int AddVar(TCodeGen* cg, const std::string& id) {
     int& varOffset = cg->isLocal ? cg->localStackOffset : cg->stackOffset;
-    std::cout << "cg->isLocal=" << cg->isLocal << std::endl; // NOTE
     varOffset += 8;
-    cg->vars[id] = varOffset;
+    std::cerr << "id=" << id << "; off=" << varOffset << std::endl;
+    cg->vars.AddSymbol(id, varOffset);
+    return varOffset;
 }
 
 static size_t FindFunc(const TCodeGen* const cg, const std::string& name) {
@@ -372,6 +369,7 @@ static void EmitDef(TCodeGen* cg, Node* node) {
     int varCountBeforeFunction = cg->varCount;
 
     AddFunc(cg, node->GetValue());
+    cg->vars.EnterScope();
 
     x86_64::push(cg, x86_64::r64::rbp);
     x86_64::mov(cg, x86_64::r64::rbp, x86_64::r64::rsp);
@@ -379,8 +377,7 @@ static void EmitDef(TCodeGen* cg, Node* node) {
     Node* arg = node->GetLeft();
     int argCount = 0;
     while (arg && argCount < 6) {
-        AddVar(cg, arg->GetValue());
-        int offset = cg->vars[arg->GetValue()];
+        int offset = AddVar(cg, arg->GetValue());
         x86_64::mov(cg, x86_64::r64::rbp, -offset, kArgRegs[argCount]);
         arg = arg->GetLeft();
         ++argCount;
@@ -404,6 +401,8 @@ static void EmitDef(TCodeGen* cg, Node* node) {
     cg->isLocal = false;
     cg->localStackOffset = 0;
 
+    cg->vars.ExitScope();
+
     cg->varCount = varCountBeforeFunction;
 }
 
@@ -418,8 +417,7 @@ static void EmitEqual(TCodeGen* cg, Node* node) {
 
     int offset = FindVar(cg, node->GetLeft()->GetValue());
     if (offset == -1) {
-        AddVar(cg, node->GetLeft()->GetValue());
-        offset = cg->vars[node->GetLeft()->GetValue()];
+        offset = AddVar(cg, node->GetLeft()->GetValue());
         x86_64::sub(cg, x86_64::r64::rsp, 8);
     }
 

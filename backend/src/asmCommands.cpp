@@ -62,12 +62,16 @@ void x86_64::mov(TCodeGen* cg, r64 dst, r64 src, int32_t offset) {
     AppendCode(cg, AsBytes(offset));
 }
 
-void x86_64::mov(TCodeGen* cg, r64 src, int32_t offset, r64 dst) { 
+void x86_64::mov(TCodeGen* cg, r64 src, int32_t offset, r64 dst) {
     // opcode: REX.W + 89 /r disp32
     // REX.W: 0x48 (64 bits)
     // ModR/M: (Mod=10, Reg=reg, R/M=src)
+    uint8_t rex = 0x48;
+    if (static_cast<int>(src) >= 8 || static_cast<int>(dst) >= 8) {
+        rex |= 0x44;
+    }
     uint8_t modrm = static_cast<uint8_t>(0x80 + ((static_cast<int>(dst) & 0x7) << 3) + (static_cast<int>(src) & 0x7));
-    uint8_t opcode[] = {0x48, 0x89, modrm};
+    uint8_t opcode[] = {rex, 0x89, modrm};
     AppendCode(cg, opcode);
     AppendCode(cg, AsBytes(offset));
 }

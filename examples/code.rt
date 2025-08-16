@@ -17,7 +17,7 @@ def factorial_1(a1) {
 # calculating the factorial using a loop
 def factorial_2(a2) {
     if (a2 < 0) {
-        return (0 - 1);
+        return 0 - 1;
     };
     b1 = 1;
     k2 = 1;
@@ -38,6 +38,7 @@ def test_factorials(c) {
 
 def main() {
     a = read_int();
+    
     call test_factorials(a);
 };
 
