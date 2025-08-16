@@ -3,7 +3,7 @@
 #include <iostream>
 
 std::unique_ptr<Node> Parser::GetGrammar() {
-    if (tokens[pos] == keyEnd) {
+    if (!tokens.size()) {
         return std::make_unique<Node>(End, keyEnd);
     }
 
@@ -11,7 +11,7 @@ std::unique_ptr<Node> Parser::GetGrammar() {
     if (tokens[pos++] != keySemicolon) {
         syntaxError(__LINE__);
     }
-    while (tokens[pos] != keyEnd) {
+    while (pos < tokens.size()) {
         std::unique_ptr<Node> right = GetDef();
         if (tokens[pos++] != keySemicolon) {
             syntaxError(__LINE__);

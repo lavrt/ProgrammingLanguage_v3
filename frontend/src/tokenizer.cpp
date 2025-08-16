@@ -33,11 +33,6 @@ void Tokenizer::SplitIntoTokens(const std::string& data) {
             ++i;
         }
 
-        if (i == data.size()) {
-            std::cerr << "The file does not contain the keyword \"" << keyEnd << "\"." << std::endl;
-            exit(EXIT_FAILURE);
-        }
-
         std::string buffer;
         if (isalpha(data[i])) {
             while (i < data.size() && (isalnum(data[i]) || data[i] == '_')) {
@@ -55,17 +50,15 @@ void Tokenizer::SplitIntoTokens(const std::string& data) {
                 buffer += data[i++];
             }
             tokens.push_back(buffer);
-        } else if (data[i] == '#') {
+        } else if (i < data.size() && data[i] == '#') {
             while (i < data.size() && data[i] != '\n') {
                 ++i;
             }
-        } else {
-            std::cerr << "The token starts with an invalid character '" << data[i] << "'." << i << std::endl;
-            exit(EXIT_FAILURE);
-        }
-
-        if (buffer == keyEnd) {
+        } else if (i >= data.size()) {
             break;
+        } else {
+            std::cerr << "The token starts with an invalid character '" << data[i] << "'." << std::endl;
+            exit(EXIT_FAILURE);
         }
     }
 }

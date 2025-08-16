@@ -53,8 +53,6 @@ static void EmitCallVoid(TCodeGen* cg, Node* node);
 
 void CodeGenCtor(TCodeGen* cg) {
     cg->stackOffset = 0;
-    cg->localStackOffset = 0;
-    cg->isLocal = false;
 }
 
 void AppendCode(TCodeGen* cg, std::span<uint8_t> data) {
@@ -85,11 +83,9 @@ static int FindVar(TCodeGen* cg, const std::string& id) {
 }
 
 static int AddVar(TCodeGen* cg, const std::string& id) {
-    int& varOffset = cg->isLocal ? cg->localStackOffset : cg->stackOffset;
-    varOffset += 8;
-    std::cerr << "id=" << id << "; off=" << varOffset << std::endl;
-    cg->vars.AddSymbol(id, varOffset);
-    return varOffset;
+    cg->stackOffset += 8;
+    cg->vars.AddSymbol(id, cg->stackOffset);
+    return cg->stackOffset;
 }
 
 static size_t FindFunc(const TCodeGen* const cg, const std::string& name) {
@@ -365,9 +361,6 @@ static void EmitReadInt(TCodeGen* cg) {
 }
 
 static void EmitDef(TCodeGen* cg, Node* node) {
-    cg->isLocal = true;
-    int varCountBeforeFunction = cg->varCount;
-
     AddFunc(cg, node->GetValue());
     cg->vars.EnterScope();
 
@@ -398,12 +391,9 @@ static void EmitDef(TCodeGen* cg, Node* node) {
     x86_64::mov(cg, x86_64::r64::rax, -1);
     x86_64::ret(cg);
 
-    cg->isLocal = false;
-    cg->localStackOffset = 0;
+    cg->stackOffset = 0;
 
     cg->vars.ExitScope();
-
-    cg->varCount = varCountBeforeFunction;
 }
 
 static void EmitSemicolon(TCodeGen* cg, Node* node) {

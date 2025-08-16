@@ -40,11 +40,8 @@ class TCodeGen {
 public:
     std::vector<uint8_t> code;
     int stackOffset;
-    ScopeManager vars; 
-    int varCount;
+    ScopeManager vars;
     std::unordered_map<std::string, size_t> funcs;
-    int localStackOffset;
-    bool isLocal;
 };
 
 void CodeGenCtor(TCodeGen* cg);
