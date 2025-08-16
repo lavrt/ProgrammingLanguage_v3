@@ -95,10 +95,10 @@ static size_t FindFunc(const TCodeGen* const cg, const std::string& name) {
 
 static void CodeGenExpr(TCodeGen* cg, Node* node) {
     switch (node->GetType()) {
-        case Number:            EmitNumber(cg, node);                  break;
-        case Identifier:        EmitIdentifier(cg, node);              break;      
-        case Call:              EmitCallInt(cg, node);                    break;
-        case ReadInt:           EmitReadInt(cg);                       break;     
+        case Number:            EmitNumber(cg, node);          break;
+        case Identifier:        EmitIdentifier(cg, node);      break;      
+        case Call:              EmitCallInt(cg, node);         break;
+        case ReadInt:           EmitReadInt(cg);               break;     
         case Add:               EmitAdd(cg, node);             break;
         case Sub:               EmitSub(cg, node);             break;
         case Mul:               EmitMul(cg, node);             break;
@@ -128,7 +128,7 @@ static void CodeGenStmt(TCodeGen* cg, Node* node) {
         case If:            EmitIf(cg, node);              break;
         case While:         EmitWhile(cg, node);           break;
         case Return:        EmitReturn(cg, node);          break;
-        case Call:          EmitCallVoid(cg, node);            break;
+        case Call:          EmitCallVoid(cg, node);        break;
 
         default: {
             std::cerr << "Unknown node type \"" << node->GetType() << "\"." << std::endl;
@@ -294,7 +294,7 @@ static void EmitCallVoid(TCodeGen* cg, Node* node) {
 
     size_t addr = FindFunc(cg, node->GetValue());
     if (!addr) {
-        fprintf(stderr, "Undefined function\n");
+        std::cerr << "Undefined function \"" << node->GetValue() << "\"." << std::endl;
         exit(EXIT_FAILURE);
     }
     x86_64::call(cg, (int32_t)(addr - (cg->code.size() + 5)));
@@ -323,9 +323,10 @@ static void EmitCallInt(TCodeGen* cg, Node* node) {
         x86_64::pop(cg, kArgRegs[argCount++]);
         arg = arg->GetLeft();
     }
+    
     size_t addr = FindFunc(cg, node->GetValue());
     if (!addr) {
-        fprintf(stderr, "Undefined function\n");
+        std::cerr << "Undefined function \"" << node->GetValue() << "\"." << std::endl;
         exit(EXIT_FAILURE);
     }
     x86_64::call(cg, (int32_t)(addr - (cg->code.size() + 5)));
