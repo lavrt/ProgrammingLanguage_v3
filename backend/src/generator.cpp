@@ -471,7 +471,11 @@ static void EmitIf(TCodeGen* cg, Node* node) {
     int32_t jmpPos_1 = (int32_t)cg->code.size();
     x86_64::je(cg, 0);
 
+    cg->vars.EnterScope();
+
     CodeGenStmt(cg, node->GetRight());
+
+    cg->vars.ExitScope();
 
     int32_t jmpTarget_1 = (int32_t)cg->code.size();
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
@@ -488,7 +492,11 @@ static void EmitWhile(TCodeGen* cg, Node* node) {
     int32_t jmpPos_1 = (int32_t)cg->code.size();
     x86_64::je(cg, 0);
 
+    cg->vars.EnterScope();
+
     CodeGenStmt(cg, node->GetRight());
+
+    cg->vars.ExitScope();
     
     int32_t jmpPos_2 = (int32_t)cg->code.size();
     int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 5);

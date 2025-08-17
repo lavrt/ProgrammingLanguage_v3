@@ -27,9 +27,9 @@ public:
     }
 
     int Lookup(const std::string& name) {
-        for (auto it = symbolStack.rbegin(); it != symbolStack.rend(); ++it) {
-            if (it->contains(name)) {
-                return it->at(name);
+        for (auto stackIter = symbolStack.rbegin(); stackIter != symbolStack.rend(); ++stackIter) {
+            if (auto mapIter = stackIter->find(name); mapIter != stackIter->end()) {
+                return mapIter->second;
             }
         }
         return -1;
