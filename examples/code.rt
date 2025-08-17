@@ -34,7 +34,7 @@ def test_factorials(c) {
 };
 
 def main() {
-    a = read_int();   
-    
+    a = read_int(); 
+
     call test_factorials(a);
 };

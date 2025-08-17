@@ -18,7 +18,6 @@ int main() {
     ast.Dump("./tmp/dump_backend");
 
     TCodeGen cg;
-    CodeGenCtor(&cg);
 
     Elf64_Ehdr ehdr;
     CreateElfHeader(&ehdr);

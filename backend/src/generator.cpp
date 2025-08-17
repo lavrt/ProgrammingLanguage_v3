@@ -51,10 +51,6 @@ static void EmitCallVoid(TCodeGen* cg, Node* node);
 
 // global ------------------------------------------------------------------------------------------
 
-void CodeGenCtor(TCodeGen* cg) {
-    cg->stackOffset = 0;
-}
-
 void AppendCode(TCodeGen* cg, std::span<uint8_t> data) {
     cg->code.insert(cg->code.end(), data.begin(), data.end());
 }
@@ -83,9 +79,7 @@ static int FindVar(TCodeGen* cg, const std::string& id) {
 }
 
 static int AddVar(TCodeGen* cg, const std::string& id) {
-    cg->stackOffset += 8;
-    cg->vars.AddSymbol(id, cg->stackOffset);
-    return cg->stackOffset;
+    return cg->vars.AddSymbol(id);
 }
 
 static size_t FindFunc(const TCodeGen* const cg, const std::string& name) {
@@ -391,8 +385,6 @@ static void EmitDef(TCodeGen* cg, Node* node) {
 
     x86_64::mov(cg, x86_64::r64::rax, -1);
     x86_64::ret(cg);
-
-    cg->stackOffset = 0;
 
     cg->vars.ExitScope();
 }

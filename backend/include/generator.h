@@ -12,6 +12,8 @@
 class ScopeManager {
 private:
     std::vector<std::unordered_map<std::string, int>> symbolStack;
+    int stackOffset = 0;
+    const int kWordSize = 8;
 
 public:
     void EnterScope() {
@@ -19,11 +21,14 @@ public:
     }
 
     void ExitScope() {
+        stackOffset -= symbolStack.back().size() * kWordSize;
         symbolStack.pop_back();
     }
 
-    void AddSymbol(const std::string& name, int offset) {
-        symbolStack.back()[name] = offset;
+    int AddSymbol(const std::string& name) {
+        stackOffset += kWordSize;
+        symbolStack.back()[name] = stackOffset;
+        return stackOffset;
     }
 
     int Lookup(const std::string& name) {
@@ -39,12 +44,10 @@ public:
 class TCodeGen {
 public:
     std::vector<uint8_t> code;
-    int stackOffset;
     ScopeManager vars;
     std::unordered_map<std::string, size_t> funcs;
 };
 
-void CodeGenCtor(TCodeGen* cg);
 void AppendCode(TCodeGen* cg, std::span<uint8_t> data);
 void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr);
 void AddFunc(TCodeGen* cg, const std::string& name);
