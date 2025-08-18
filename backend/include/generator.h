@@ -41,15 +41,18 @@ public:
     }
 };
 
-class TCodeGen {
+class CodeGen {
+private:
+
 public:
     std::vector<uint8_t> code;
     ScopeManager vars;
     std::unordered_map<std::string, size_t> funcs;
+
 };
 
-void AppendCode(TCodeGen* cg, std::span<uint8_t> data);
-void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr);
-void AddFunc(TCodeGen* cg, const std::string& name);
+void AppendCode(CodeGen* cg, std::span<uint8_t> data);
+void CodegenProgram(CodeGen* cg, Node* program, Elf64_Ehdr* ehdr);
+void AddFunc(CodeGen* cg, const std::string& name);
 
 #endif // GENERATOR_H

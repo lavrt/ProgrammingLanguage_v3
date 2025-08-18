@@ -4,6 +4,6 @@
 #include "headers.h"
 #include "generator.h"
 
-void CreateStandartFunctions(TCodeGen* cg);
+void CreateStandartFunctions(CodeGen* cg);
 
 #endif // STANDART_FUNCTIONS_H

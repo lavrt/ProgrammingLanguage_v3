@@ -17,45 +17,45 @@ static const x86_64::r64 kArgRegs[] {
     x86_64::r64::r9,
 };
 
-static int FindVar(TCodeGen* cg, const std::string& id);
-static int AddVar(TCodeGen* cg, const std::string& id);
-static size_t FindFunc(const TCodeGen* const cg, const std::string& name);
-static void CodeGenExpr(TCodeGen* cg, Node* node);
-static void CodeGenStmt(TCodeGen* cg, Node* node);
+static int FindVar(CodeGen* cg, const std::string& id);
+static int AddVar(CodeGen* cg, const std::string& id);
+static size_t FindFunc(const CodeGen* const cg, const std::string& name);
+static void CodeGenExpr(CodeGen* cg, Node* node);
+static void CodeGenStmt(CodeGen* cg, Node* node);
 
-static void EmitNumber(TCodeGen* cg, Node* node);
-static void EmitIdentifier(TCodeGen* cg, Node* node);
-static void EmitCallInt(TCodeGen* cg, Node* node);
-static void EmitReadInt(TCodeGen* cg);
+static void EmitNumber(CodeGen* cg, Node* node);
+static void EmitIdentifier(CodeGen* cg, Node* node);
+static void EmitCallInt(CodeGen* cg, Node* node);
+static void EmitReadInt(CodeGen* cg);
 
-static void EmitAdd(TCodeGen* cg, Node* node);
-static void EmitSub(TCodeGen* cg, Node* node);
-static void EmitMul(TCodeGen* cg, Node* node);
-static void EmitDiv(TCodeGen* cg, Node* node);
-static void EmitGreater(TCodeGen* cg, Node* node);
-static void EmitGreaterOrEqual(TCodeGen* cg, Node* node);
-static void EmitLess(TCodeGen* cg, Node* node);
-static void EmitLessOrEqual(TCodeGen* cg, Node* node);
-static void EmitIdentical(TCodeGen* cg, Node* node);
-static void EmitNotIdentical(TCodeGen* cg, Node* node);
+static void EmitAdd(CodeGen* cg, Node* node);
+static void EmitSub(CodeGen* cg, Node* node);
+static void EmitMul(CodeGen* cg, Node* node);
+static void EmitDiv(CodeGen* cg, Node* node);
+static void EmitGreater(CodeGen* cg, Node* node);
+static void EmitGreaterOrEqual(CodeGen* cg, Node* node);
+static void EmitLess(CodeGen* cg, Node* node);
+static void EmitLessOrEqual(CodeGen* cg, Node* node);
+static void EmitIdentical(CodeGen* cg, Node* node);
+static void EmitNotIdentical(CodeGen* cg, Node* node);
 
-static void EmitDef(TCodeGen* cg, Node* node);
-static void EmitSemicolon(TCodeGen* cg, Node* node);
-static void EmitEqual(TCodeGen* cg, Node* node);
-static void EmitPrintAscii(TCodeGen* cg, Node* node);
-static void EmitPrintInt(TCodeGen* cg, Node* node);
-static void EmitIf(TCodeGen* cg, Node* node);
-static void EmitWhile(TCodeGen* cg, Node* node);
-static void EmitReturn(TCodeGen* cg, Node* node);
-static void EmitCallVoid(TCodeGen* cg, Node* node); 
+static void EmitDef(CodeGen* cg, Node* node);
+static void EmitSemicolon(CodeGen* cg, Node* node);
+static void EmitEqual(CodeGen* cg, Node* node);
+static void EmitPrintAscii(CodeGen* cg, Node* node);
+static void EmitPrintInt(CodeGen* cg, Node* node);
+static void EmitIf(CodeGen* cg, Node* node);
+static void EmitWhile(CodeGen* cg, Node* node);
+static void EmitReturn(CodeGen* cg, Node* node);
+static void EmitCallVoid(CodeGen* cg, Node* node); 
 
 // global ------------------------------------------------------------------------------------------
 
-void AppendCode(TCodeGen* cg, std::span<uint8_t> data) {
+void AppendCode(CodeGen* cg, std::span<uint8_t> data) {
     cg->code.insert(cg->code.end(), data.begin(), data.end());
 }
 
-void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
+void CodegenProgram(CodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
     CreateStandartFunctions(cg);
 
     CodeGenStmt(cg, program);
@@ -68,26 +68,26 @@ void CodegenProgram(TCodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
     ehdr->e_entry += addr;
 }
 
-void AddFunc(TCodeGen* cg, const std::string& name) {
+void AddFunc(CodeGen* cg, const std::string& name) {
     cg->funcs[name] = cg->code.size();
 }
 
 // static ------------------------------------------------------------------------------------------
 
-static int FindVar(TCodeGen* cg, const std::string& id) {
+static int FindVar(CodeGen* cg, const std::string& id) {
     return cg->vars.Lookup(id);
 }
 
-static int AddVar(TCodeGen* cg, const std::string& id) {
+static int AddVar(CodeGen* cg, const std::string& id) {
     return cg->vars.AddSymbol(id);
 }
 
-static size_t FindFunc(const TCodeGen* const cg, const std::string& name) {
+static size_t FindFunc(const CodeGen* const cg, const std::string& name) {
     auto it = cg->funcs.find(name);
     return it == cg->funcs.end() ? 0 : it->second;
 }
 
-static void CodeGenExpr(TCodeGen* cg, Node* node) {
+static void CodeGenExpr(CodeGen* cg, Node* node) {
     switch (node->GetType()) {
         case Number:            EmitNumber(cg, node);          break;
         case Identifier:        EmitIdentifier(cg, node);      break;      
@@ -111,7 +111,7 @@ static void CodeGenExpr(TCodeGen* cg, Node* node) {
     }
 }
 
-static void CodeGenStmt(TCodeGen* cg, Node* node) {
+static void CodeGenStmt(CodeGen* cg, Node* node) {
     switch (node->GetType()) {
         case End:                                          break;
         case Def:           EmitDef(cg, node);             break;
@@ -131,11 +131,11 @@ static void CodeGenStmt(TCodeGen* cg, Node* node) {
     }
 }
 
-static void EmitNumber(TCodeGen* cg, Node* node) {
+static void EmitNumber(CodeGen* cg, Node* node) {
     x86_64::push(cg, std::stoi(node->GetValue()));
 }
 
-static void EmitIdentifier(TCodeGen* cg, Node* node) {
+static void EmitIdentifier(CodeGen* cg, Node* node) {
     int offset = FindVar(cg, node->GetValue());
     if (offset == -1) {
         std::cerr << "Undefined variable \"" << node->GetValue() << "\"." << std::endl;
@@ -146,7 +146,7 @@ static void EmitIdentifier(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitAdd(TCodeGen* cg, Node* node) {
+static void EmitAdd(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -157,7 +157,7 @@ static void EmitAdd(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitSub(TCodeGen* cg, Node* node) {
+static void EmitSub(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -168,7 +168,7 @@ static void EmitSub(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitMul(TCodeGen* cg, Node* node) {
+static void EmitMul(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -179,7 +179,7 @@ static void EmitMul(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitDiv(TCodeGen* cg, Node* node) {
+static void EmitDiv(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -191,7 +191,7 @@ static void EmitDiv(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitGreater(TCodeGen* cg, Node* node) {
+static void EmitGreater(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -204,7 +204,7 @@ static void EmitGreater(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitGreaterOrEqual(TCodeGen* cg, Node* node) {
+static void EmitGreaterOrEqual(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -217,7 +217,7 @@ static void EmitGreaterOrEqual(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitLess(TCodeGen* cg, Node* node) {
+static void EmitLess(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -230,7 +230,7 @@ static void EmitLess(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitLessOrEqual(TCodeGen* cg, Node* node) {
+static void EmitLessOrEqual(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -243,7 +243,7 @@ static void EmitLessOrEqual(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitIdentical(TCodeGen* cg, Node* node) {
+static void EmitIdentical(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -256,7 +256,7 @@ static void EmitIdentical(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitNotIdentical(TCodeGen* cg, Node* node) {
+static void EmitNotIdentical(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rbx);
@@ -269,7 +269,7 @@ static void EmitNotIdentical(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitCallVoid(TCodeGen* cg, Node* node) {
+static void EmitCallVoid(CodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rdi);
     x86_64::push(cg, x86_64::r64::rsi);
     x86_64::push(cg, x86_64::r64::rdx);
@@ -301,7 +301,7 @@ static void EmitCallVoid(TCodeGen* cg, Node* node) {
     x86_64::pop(cg, x86_64::r64::rdi);
 }
 
-static void EmitCallInt(TCodeGen* cg, Node* node) {
+static void EmitCallInt(CodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rdi);
     x86_64::push(cg, x86_64::r64::rsi);
     x86_64::push(cg, x86_64::r64::rdx);
@@ -335,7 +335,7 @@ static void EmitCallInt(TCodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitReadInt(TCodeGen* cg) {
+static void EmitReadInt(CodeGen* cg) {
     size_t readIntAddr = FindFunc(cg, keyReadInt);
     if (!readIntAddr) {
         std::cerr << "Function \"" << keyReadInt << "\" is not found." << std::endl;
@@ -355,7 +355,7 @@ static void EmitReadInt(TCodeGen* cg) {
     x86_64::push(cg, x86_64::r64::rax);
 }
 
-static void EmitDef(TCodeGen* cg, Node* node) {
+static void EmitDef(CodeGen* cg, Node* node) {
     AddFunc(cg, node->GetValue());
     cg->vars.EnterScope();
 
@@ -389,12 +389,12 @@ static void EmitDef(TCodeGen* cg, Node* node) {
     cg->vars.ExitScope();
 }
 
-static void EmitSemicolon(TCodeGen* cg, Node* node) {
+static void EmitSemicolon(CodeGen* cg, Node* node) {
     CodeGenStmt(cg, node->GetLeft());
     CodeGenStmt(cg, node->GetRight());
 }
 
-static void EmitEqual(TCodeGen* cg, Node* node) {
+static void EmitEqual(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rax);
 
@@ -407,7 +407,7 @@ static void EmitEqual(TCodeGen* cg, Node* node) {
     x86_64::mov(cg, x86_64::r64::rbp, -offset, x86_64::r64::rax);
 }
 
-static void EmitPrintAscii(TCodeGen* cg, Node* node) {
+static void EmitPrintAscii(CodeGen* cg, Node* node) {
     size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
     if (!printAsciiAddr) {
         std::cerr << "Function \"" << keyPrintAscii << "\" is not found." << std::endl;
@@ -432,7 +432,7 @@ static void EmitPrintAscii(TCodeGen* cg, Node* node) {
     x86_64::pop(cg, x86_64::r64::rax);
 }
 
-static void EmitPrintInt(TCodeGen* cg, Node* node) { 
+static void EmitPrintInt(CodeGen* cg, Node* node) { 
     size_t printIntAddr = FindFunc(cg, keyPrintInt);
     if (!printIntAddr) {
         std::cerr << "Function \"" << keyPrintInt << "\" is not found." << std::endl;
@@ -455,7 +455,7 @@ static void EmitPrintInt(TCodeGen* cg, Node* node) {
     x86_64::pop(cg, x86_64::r64::rax);
 }
 
-static void EmitIf(TCodeGen* cg, Node* node) {
+static void EmitIf(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     x86_64::pop(cg, x86_64::r64::rax);
     
@@ -474,7 +474,7 @@ static void EmitIf(TCodeGen* cg, Node* node) {
     std::copy((uint8_t*)&jmpOffset_1, (uint8_t*)&jmpOffset_1 + 4, cg->code.begin() + jmpPos_1 + 2);
 }
 
-static void EmitWhile(TCodeGen* cg, Node* node) {
+static void EmitWhile(CodeGen* cg, Node* node) {
     int32_t jmpTarget_2 = (int32_t)cg->code.size();
     
     CodeGenExpr(cg, node->GetLeft());
@@ -499,7 +499,7 @@ static void EmitWhile(TCodeGen* cg, Node* node) {
     std::copy((uint8_t*)&jmpOffset_1, (uint8_t*)&jmpOffset_1 + 4, cg->code.begin() + jmpPos_1 + 2);
 }
 
-static void EmitReturn(TCodeGen* cg, Node* node) {
+static void EmitReturn(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetLeft());
     x86_64::pop(cg, x86_64::r64::rax);
 

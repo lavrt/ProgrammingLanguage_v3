@@ -4,13 +4,13 @@
 
 // static ------------------------------------------------------------------------------------------
 
-static void CreatePrintAscii(TCodeGen* cg);
-static void CreatePrintInt(TCodeGen* cg);
-static void CreateReadInt(TCodeGen* cg);
+static void CreatePrintAscii(CodeGen* cg);
+static void CreatePrintInt(CodeGen* cg);
+static void CreateReadInt(CodeGen* cg);
 
 // global ------------------------------------------------------------------------------------------
 
-void CreateStandartFunctions(TCodeGen* cg) {
+void CreateStandartFunctions(CodeGen* cg) {
     x86_64::nop(cg); // it is not allowed to place functions with cg->code.size() = 0
 
     CreatePrintAscii(cg);
@@ -20,7 +20,7 @@ void CreateStandartFunctions(TCodeGen* cg) {
 
 // static ------------------------------------------------------------------------------------------
 
-static void CreatePrintAscii(TCodeGen* cg) {
+static void CreatePrintAscii(CodeGen* cg) {
     AddFunc(cg, keyPrintAscii); 
 
     x86_64::push(cg, x86_64::r64::rbp);
@@ -41,7 +41,7 @@ static void CreatePrintAscii(TCodeGen* cg) {
     x86_64::ret(cg);
 }
 
-static void CreatePrintInt(TCodeGen* cg) {
+static void CreatePrintInt(CodeGen* cg) {
     AddFunc(cg, keyPrintInt);
 
     x86_64::push(cg, x86_64::r64::rbx);
@@ -169,7 +169,7 @@ static void CreatePrintInt(TCodeGen* cg) {
     x86_64::ret(cg);
 }
 
-static void CreateReadInt(TCodeGen* cg) {
+static void CreateReadInt(CodeGen* cg) {
     AddFunc(cg, keyReadInt);
 
     x86_64::push(cg, x86_64::r64::rbx);

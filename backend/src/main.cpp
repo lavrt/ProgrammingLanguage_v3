@@ -17,7 +17,7 @@ int main() {
     ast.Deserialize("./tmp/tree.txt");
     ast.Dump("./tmp/dump_backend");
 
-    TCodeGen cg;
+    CodeGen cg;
 
     Elf64_Ehdr ehdr;
     CreateElfHeader(&ehdr);
