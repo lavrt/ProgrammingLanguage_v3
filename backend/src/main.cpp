@@ -15,7 +15,7 @@ static const char* const kNameOfOutputFile = "./bin/output.elf";
 int main() {
     Tree ast;
     ast.Deserialize("./tmp/tree.txt");
-    ast.Dump("./tmp/dump_backend");
+    // ast.Dump("./tmp/dump_backend");
 
     CodeGen cg;
 
@@ -25,7 +25,7 @@ int main() {
     CodegenProgram(&cg, ast.GetRoot(), &ehdr);
 
     Elf64_Phdr phdr;
-    CreateProgramHeader(&phdr, cg.code.size());
+    CreateProgramHeader(&phdr, cg.code.GetSize());
 
     std::ofstream file(kNameOfOutputFile, std::ios::binary);
     if (!file) {
@@ -37,7 +37,7 @@ int main() {
 
     file.write(reinterpret_cast<const char*>(&ehdr), kElfHeaderSize);
     file.write(reinterpret_cast<const char*>(&phdr), kProgramHeaderSize);
-    file.write(reinterpret_cast<const char*>(cg.code.data()), cg.code.size() * sizeof(uint8_t));
+    file.write(reinterpret_cast<const char*>(cg.code.GetData()), cg.code.GetSize() * sizeof(uint8_t));
 
     if (!file.good()) {
         std::cerr << "Error writing to the \"" << kNameOfOutputFile << "\" file." << std::endl;

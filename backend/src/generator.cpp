@@ -17,9 +17,6 @@ static const x86_64::r64 kArgRegs[] {
     x86_64::r64::r9,
 };
 
-static int FindVar(CodeGen* cg, const std::string& id);
-static int AddVar(CodeGen* cg, const std::string& id);
-static size_t FindFunc(const CodeGen* const cg, const std::string& name);
 static void CodeGenExpr(CodeGen* cg, Node* node);
 static void CodeGenStmt(CodeGen* cg, Node* node);
 
@@ -51,16 +48,12 @@ static void EmitCallVoid(CodeGen* cg, Node* node);
 
 // global ------------------------------------------------------------------------------------------
 
-void AppendCode(CodeGen* cg, std::span<uint8_t> data) {
-    cg->code.insert(cg->code.end(), data.begin(), data.end());
-}
-
 void CodegenProgram(CodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
     CreateStandartFunctions(cg);
 
     CodeGenStmt(cg, program);
 
-    size_t addr = FindFunc(cg, kEntryFunctionName);
+    size_t addr = cg->funcs.FindFunction(kEntryFunctionName);
     if (!addr) {
         std::cerr << "The function \"" << kEntryFunctionName << "\" was not found." << std::endl;
         exit(EXIT_FAILURE);
@@ -68,24 +61,7 @@ void CodegenProgram(CodeGen* cg, Node* program, Elf64_Ehdr* ehdr) {
     ehdr->e_entry += addr;
 }
 
-void AddFunc(CodeGen* cg, const std::string& name) {
-    cg->funcs[name] = cg->code.size();
-}
-
 // static ------------------------------------------------------------------------------------------
-
-static int FindVar(CodeGen* cg, const std::string& id) {
-    return cg->vars.Lookup(id);
-}
-
-static int AddVar(CodeGen* cg, const std::string& id) {
-    return cg->vars.AddSymbol(id);
-}
-
-static size_t FindFunc(const CodeGen* const cg, const std::string& name) {
-    auto it = cg->funcs.find(name);
-    return it == cg->funcs.end() ? 0 : it->second;
-}
 
 static void CodeGenExpr(CodeGen* cg, Node* node) {
     switch (node->GetType()) {
@@ -136,7 +112,7 @@ static void EmitNumber(CodeGen* cg, Node* node) {
 }
 
 static void EmitIdentifier(CodeGen* cg, Node* node) {
-    int offset = FindVar(cg, node->GetValue());
+    int offset = cg->vars.FindSymbol(node->GetValue());
     if (offset == -1) {
         std::cerr << "Undefined variable \"" << node->GetValue() << "\"." << std::endl;
         exit(EXIT_FAILURE);
@@ -286,12 +262,12 @@ static void EmitCallVoid(CodeGen* cg, Node* node) {
         arg = arg->GetLeft();
     }
 
-    size_t addr = FindFunc(cg, node->GetValue());
+    size_t addr = cg->funcs.FindFunction(node->GetValue());
     if (!addr) {
         std::cerr << "Undefined function \"" << node->GetValue() << "\"." << std::endl;
         exit(EXIT_FAILURE);
     }
-    x86_64::call(cg, (int32_t)(addr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(addr - (cg->code.GetSize() + 5)));
 
     x86_64::pop(cg, x86_64::r64::r9);
     x86_64::pop(cg, x86_64::r64::r8);
@@ -318,12 +294,12 @@ static void EmitCallInt(CodeGen* cg, Node* node) {
         arg = arg->GetLeft();
     }
     
-    size_t addr = FindFunc(cg, node->GetValue());
+    size_t addr = cg->funcs.FindFunction(node->GetValue());
     if (!addr) {
         std::cerr << "Undefined function \"" << node->GetValue() << "\"." << std::endl;
         exit(EXIT_FAILURE);
     }
-    x86_64::call(cg, (int32_t)(addr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(addr - (cg->code.GetSize() + 5)));
 
     x86_64::pop(cg, x86_64::r64::r9);
     x86_64::pop(cg, x86_64::r64::r8);
@@ -336,7 +312,7 @@ static void EmitCallInt(CodeGen* cg, Node* node) {
 }
 
 static void EmitReadInt(CodeGen* cg) {
-    size_t readIntAddr = FindFunc(cg, keyReadInt);
+    size_t readIntAddr = cg->funcs.FindFunction(keyReadInt);
     if (!readIntAddr) {
         std::cerr << "Function \"" << keyReadInt << "\" is not found." << std::endl;
         exit(EXIT_FAILURE);
@@ -346,7 +322,7 @@ static void EmitReadInt(CodeGen* cg) {
     x86_64::push(cg, x86_64::r64::rdx);
     x86_64::push(cg, x86_64::r64::rdi);
 
-    x86_64::call(cg, (int32_t)(readIntAddr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(readIntAddr - (cg->code.GetSize() + 5)));
 
     x86_64::pop(cg, x86_64::r64::rdi);
     x86_64::pop(cg, x86_64::r64::rdx);
@@ -356,7 +332,7 @@ static void EmitReadInt(CodeGen* cg) {
 }
 
 static void EmitDef(CodeGen* cg, Node* node) {
-    AddFunc(cg, node->GetValue());
+    cg->funcs.AddFunction(node->GetValue(), cg->code.GetSize());
     cg->vars.EnterScope();
 
     x86_64::push(cg, x86_64::r64::rbp);
@@ -365,7 +341,7 @@ static void EmitDef(CodeGen* cg, Node* node) {
     Node* arg = node->GetLeft();
     int argCount = 0;
     while (arg && argCount < 6) {
-        int offset = AddVar(cg, arg->GetValue());
+        int offset = cg->vars.AddSymbol(arg->GetValue());
         x86_64::mov(cg, x86_64::r64::rbp, -offset, kArgRegs[argCount]);
         arg = arg->GetLeft();
         ++argCount;
@@ -398,9 +374,9 @@ static void EmitEqual(CodeGen* cg, Node* node) {
     CodeGenExpr(cg, node->GetRight());
     x86_64::pop(cg, x86_64::r64::rax);
 
-    int offset = FindVar(cg, node->GetLeft()->GetValue());
+    int offset = cg->vars.FindSymbol(node->GetLeft()->GetValue());
     if (offset == -1) {
-        offset = AddVar(cg, node->GetLeft()->GetValue());
+        offset = cg->vars.AddSymbol(node->GetLeft()->GetValue());
         x86_64::sub(cg, x86_64::r64::rsp, 8);
     }
 
@@ -408,7 +384,7 @@ static void EmitEqual(CodeGen* cg, Node* node) {
 }
 
 static void EmitPrintAscii(CodeGen* cg, Node* node) {
-    size_t printAsciiAddr = FindFunc(cg, keyPrintAscii);
+    size_t printAsciiAddr = cg->funcs.FindFunction(keyPrintAscii);
     if (!printAsciiAddr) {
         std::cerr << "Function \"" << keyPrintAscii << "\" is not found." << std::endl;
         exit(EXIT_FAILURE);
@@ -423,7 +399,7 @@ static void EmitPrintAscii(CodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rsi);
     x86_64::push(cg, x86_64::r64::rdi);
 
-    x86_64::call(cg, (int32_t)(printAsciiAddr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(printAsciiAddr - (cg->code.GetSize() + 5)));
 
     x86_64::pop(cg, x86_64::r64::rdi);
     x86_64::pop(cg, x86_64::r64::rsi);
@@ -433,7 +409,7 @@ static void EmitPrintAscii(CodeGen* cg, Node* node) {
 }
 
 static void EmitPrintInt(CodeGen* cg, Node* node) { 
-    size_t printIntAddr = FindFunc(cg, keyPrintInt);
+    size_t printIntAddr = cg->funcs.FindFunction(keyPrintInt);
     if (!printIntAddr) {
         std::cerr << "Function \"" << keyPrintInt << "\" is not found." << std::endl;
         exit(EXIT_FAILURE);
@@ -447,7 +423,7 @@ static void EmitPrintInt(CodeGen* cg, Node* node) {
     x86_64::push(cg, x86_64::r64::rdx);
     x86_64::push(cg, x86_64::r64::rdi);
 
-    x86_64::call(cg, (int32_t)(printIntAddr - (cg->code.size() + 5)));
+    x86_64::call(cg, (int32_t)(printIntAddr - (cg->code.GetSize() + 5)));
 
     x86_64::pop(cg, x86_64::r64::rdi);
     x86_64::pop(cg, x86_64::r64::rdx);
@@ -460,7 +436,7 @@ static void EmitIf(CodeGen* cg, Node* node) {
     x86_64::pop(cg, x86_64::r64::rax);
     
     x86_64::cmp(cg, x86_64::r64::rax, 0);
-    int32_t jmpPos_1 = (int32_t)cg->code.size();
+    int32_t jmpPos_1 = (int32_t)cg->code.GetSize();
     x86_64::je(cg, 0);
 
     cg->vars.EnterScope();
@@ -469,19 +445,19 @@ static void EmitIf(CodeGen* cg, Node* node) {
 
     cg->vars.ExitScope();
 
-    int32_t jmpTarget_1 = (int32_t)cg->code.size();
+    int32_t jmpTarget_1 = (int32_t)cg->code.GetSize();
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
-    std::copy((uint8_t*)&jmpOffset_1, (uint8_t*)&jmpOffset_1 + 4, cg->code.begin() + jmpPos_1 + 2);
+    cg->code.InsertNumber(jmpOffset_1, jmpPos_1 + 2);
 }
 
 static void EmitWhile(CodeGen* cg, Node* node) {
-    int32_t jmpTarget_2 = (int32_t)cg->code.size();
+    int32_t jmpTarget_2 = (int32_t)cg->code.GetSize();
     
     CodeGenExpr(cg, node->GetLeft());
     x86_64::pop(cg, x86_64::r64::rax);
 
     x86_64::cmp(cg, x86_64::r64::rax, 0);
-    int32_t jmpPos_1 = (int32_t)cg->code.size();
+    int32_t jmpPos_1 = (int32_t)cg->code.GetSize();
     x86_64::je(cg, 0);
 
     cg->vars.EnterScope();
@@ -490,13 +466,13 @@ static void EmitWhile(CodeGen* cg, Node* node) {
 
     cg->vars.ExitScope();
     
-    int32_t jmpPos_2 = (int32_t)cg->code.size();
+    int32_t jmpPos_2 = (int32_t)cg->code.GetSize();
     int32_t jmpOffset_2 = jmpTarget_2 - (jmpPos_2 + 5);
     x86_64::jmp(cg, jmpOffset_2);
 
-    int32_t jmpTarget_1 = (int32_t)cg->code.size();
+    int32_t jmpTarget_1 = (int32_t)cg->code.GetSize();
     int32_t jmpOffset_1 = jmpTarget_1 - (jmpPos_1 + 6);
-    std::copy((uint8_t*)&jmpOffset_1, (uint8_t*)&jmpOffset_1 + 4, cg->code.begin() + jmpPos_1 + 2);
+    cg->code.InsertNumber(jmpOffset_1, jmpPos_1 + 2);
 }
 
 static void EmitReturn(CodeGen* cg, Node* node) {

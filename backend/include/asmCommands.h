@@ -5,13 +5,7 @@
 
 class x86_64 {
 private:
-    template <typename T>
-    static std::span<uint8_t> AsBytes(T& value) {
-        return std::span<uint8_t>(
-            reinterpret_cast<uint8_t*>(&value),
-            sizeof(T)
-        );
-    }
+
 
 public:
     enum class r64 {
