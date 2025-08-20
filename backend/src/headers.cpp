@@ -1,16 +1,17 @@
 #include "headers.h"
 
-#include <string.h>
 #include <cstdint>
+
+#include "generator.h"
 
 // static ------------------------------------------------------------------------------------------
 
 static const uint64_t kBaseLoadAddress = 0x400000;
 static const uint64_t kPageSize = 0x1000;
 
-// global ------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
-void CreateElfHeader(Elf64_Ehdr* ehdr) {
+void CodeGen::CreateElfHeader(Elf64_Ehdr* ehdr) {
     ehdr->e_ident[EI_MAG0] = ELFMAG0;
     ehdr->e_ident[EI_MAG1] = ELFMAG1;
     ehdr->e_ident[EI_MAG2] = ELFMAG2;
@@ -20,7 +21,7 @@ void CreateElfHeader(Elf64_Ehdr* ehdr) {
     ehdr->e_ident[EI_VERSION] = EV_CURRENT;
     ehdr->e_ident[EI_OSABI] = ELFOSABI_SYSV;
     ehdr->e_ident[EI_ABIVERSION] = 0;
-    memset(ehdr->e_ident + EI_PAD, 0, EI_NIDENT - EI_PAD);
+    std::fill(ehdr->e_ident + EI_PAD, ehdr->e_ident + EI_NIDENT, 0);
 
     ehdr->e_type = ET_EXEC;
     ehdr->e_machine = EM_X86_64;
@@ -37,7 +38,7 @@ void CreateElfHeader(Elf64_Ehdr* ehdr) {
     ehdr->e_shstrndx = 0;
 }
 
-void CreateProgramHeader(Elf64_Phdr* phdr, uint64_t filesz) {
+void CodeGen::CreateProgramHeader(Elf64_Phdr* phdr, uint64_t filesz) {
     phdr->p_type = PT_LOAD;
     phdr->p_flags = PF_X | PF_R;
     phdr->p_offset = kElfHeaderSize + kProgramHeaderSize;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 
+#include "asmCommands.h"
 #include "headers.h"
 #include "node.h"
 
@@ -31,7 +32,7 @@ public:
         return stackOffset;
     }
 
-    int FindSymbol(const std::string& name) {
+    int FindSymbol(const std::string& name) const {
         for (auto stackIter = symbolStack.rbegin(); stackIter != symbolStack.rend(); ++stackIter) {
             if (auto mapIter = stackIter->find(name); mapIter != stackIter->end()) {
                 return mapIter->second;
@@ -50,52 +51,55 @@ public:
         mp[name] = offset;
     }
 
-    size_t FindFunction(const std::string& name) {
+    size_t FindFunction(const std::string& name) const {
         auto iter = mp.find(name);
         return iter == mp.end() ? 0 : iter->second;
     }
 };
 
-class CodeBuffer {
-private:
-    std::vector<uint8_t> vec;
-
-public:
-    void Append(std::span<uint8_t> data) {
-        vec.insert(vec.end(), data.begin(), data.end());
-    }
-
-    void Append(int32_t num) {
-        std::span<uint8_t> data {
-            reinterpret_cast<uint8_t*>(&num),
-            sizeof(num)
-        };
-        vec.insert(vec.end(), data.begin(), data.end());
-    }
-
-    void InsertNumber(int32_t num, size_t pos) {
-        const uint8_t* data = reinterpret_cast<const uint8_t*>(&num);
-        std::copy(data, data + sizeof(num), vec.begin() + pos);
-    }
-
-    size_t GetSize() const {
-        return vec.size();
-    }
-
-    const uint8_t* GetData() const {
-        return vec.data();
-    }
-};
-
 class CodeGen {
 private:
-
-public:
-    CodeBuffer code;
+    x86_64 asmGen;
     ScopeManager vars;
     FunctionManager funcs;
-};
 
-void CodegenProgram(CodeGen* cg, Node* program, Elf64_Ehdr* ehdr);
+    void CreateElfHeader(Elf64_Ehdr* ehdr);
+    void CreateProgramHeader(Elf64_Phdr* phdr, uint64_t filesz);
+
+    void CreateStandartFunctions();
+    void CreatePrintAscii();
+    void CreatePrintInt();
+    void CreateReadInt();
+
+    void CodeGenExpr(Node* node);
+    void CodeGenStmt(Node* node);
+
+    void EmitNumber(Node* node);
+    void EmitIdentifier(Node* node);
+    void EmitCallInt(Node* node);
+    void EmitReadInt();
+    void EmitAdd(Node* node);
+    void EmitSub(Node* node);
+    void EmitMul(Node* node);
+    void EmitDiv(Node* node);
+    void EmitGreater(Node* node);
+    void EmitGreaterOrEqual(Node* node);
+    void EmitLess(Node* node);
+    void EmitLessOrEqual(Node* node);
+    void EmitIdentical(Node* node);
+    void EmitNotIdentical(Node* node);
+    void EmitDef(Node* node);
+    void EmitSemicolon(Node* node);
+    void EmitEqual(Node* node);
+    void EmitPrintAscii(Node* node);
+    void EmitPrintInt(Node* node);
+    void EmitIf(Node* node);
+    void EmitWhile(Node* node);
+    void EmitReturn(Node* node);
+    void EmitCallVoid(Node* node);
+
+public:
+    void GenerateProgram(Node* program, const std::string& fileName);
+};
 
 #endif // GENERATOR_H
