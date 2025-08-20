@@ -6,9 +6,9 @@
 #include "node.h"
 
 Tokenizer::Tokenizer(const std::string& fn) {
-    std::ifstream file(kNameOfFileWithCode);
+    std::ifstream file(fn);
     if (!file) {
-        std::cerr << "The \"" << kNameOfFileWithCode << "\" file cannot be opened." << std::endl;
+        std::cerr << "The \"" << fn << "\" file cannot be opened." << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -20,7 +20,7 @@ Tokenizer::Tokenizer(const std::string& fn) {
     file.close();
 
     if (data.empty()) {
-        std::cerr << "The \"" << kNameOfFileWithCode << "\" file is empty or cannot be read." << std::endl;
+        std::cerr << "The \"" << fn << "\" file is empty or cannot be read." << std::endl;
         exit(EXIT_FAILURE);
     }
 

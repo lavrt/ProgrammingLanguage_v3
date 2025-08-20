@@ -103,7 +103,7 @@ std::unique_ptr<Node> Parser::GetDef() {
             root->SetType(Identifier);
             root->SetValue(tokens[pos]);
             pos++;
-            if (tokens[pos] == keySemicolon) {
+            if (tokens[pos] == keyComma) {
                 pos++;
                 root->SetLeft(std::make_unique<Node>());
                 root = root->GetLeft();
@@ -238,7 +238,7 @@ std::unique_ptr<Node> Parser::GetCalling() {
         node->SetType(Identifier);
         node->SetValue(tokens[pos]);
         pos++;
-        if (tokens[pos] == keySemicolon) {
+        if (tokens[pos] == keyComma) {
             pos++;
             node->SetLeft(std::make_unique<Node>());
             node = node->GetLeft();

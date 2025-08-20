@@ -10,7 +10,7 @@ private:
     std::vector<std::string> tokens;
 
     inline static const std::unordered_set<char> kAllowedSpecialChars {
-        '{', '}', '(', ')', ';', '+', '-', '*', '/', '<', '>', '=', '!'
+        '{', '}', '(', ')', ';', '+', '-', '*', '/', '<', '>', '=', '!', ','
     };
 
     void SplitIntoTokens(const std::string& data);

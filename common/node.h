@@ -109,6 +109,7 @@ inline const std::string keyRightCurlyBracket = "}";
 inline const std::string keyNumber = "number";
 inline const std::string keyIdentifier = "identifier";
 inline const std::string keyOperation = "operation";
+inline const std::string keyComma = ",";
 
 const std::unordered_map<NodeType, std::string> kNodeTypeToString {
     {End, keyEnd},

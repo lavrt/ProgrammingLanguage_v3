@@ -15,7 +15,7 @@ static const char* const kNameOfOutputFile = "./bin/output.elf";
 int main() {
     Tree ast;
     ast.Deserialize("./tmp/tree.txt");
-    // ast.Dump("./tmp/dump_backend");
+    ast.Dump("./tmp/dump_backend");
 
     CodeGen cg;
 
