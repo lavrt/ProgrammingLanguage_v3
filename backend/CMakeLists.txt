@@ -17,7 +17,7 @@ add_executable(backend ${SOURCES})
 target_include_directories(backend
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/../shared/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tree/include
 )
 
 target_link_libraries(backend tree)

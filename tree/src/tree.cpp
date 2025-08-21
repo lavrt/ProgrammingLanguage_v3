@@ -3,11 +3,12 @@
 #include <iostream>
 #include <fstream>
 
+#include "treeExceptions.h"
+
 void Tree::Dump(const std::string& fileName) const {
     std::ofstream file(fileName + ".gv");
     if (!file) {
-        std::cerr << "The \"" << fileName + ".gv" << "\" file cannot be opened." << std::endl;
-        exit(EXIT_FAILURE);
+        throw FileException("Cannot open file: " + fileName + ".gv");
     }
 
     file << "digraph\n"
@@ -93,8 +94,7 @@ void Tree::DefiningGraphDependencies(std::ofstream& file, Node* node) const {
 void Tree::Serialize(const std::string& fileName) const {
     std::ofstream file(fileName);
     if (!file) {
-        std::cerr << "The \"" << fileName << "\" file cannot be opened." << std::endl;
-        exit(EXIT_FAILURE);
+        throw FileException("Cannot open file: " + fileName);
     }
 
     PreOrderTraversal(file, this->GetRoot());
@@ -117,8 +117,7 @@ void Tree::PreOrderTraversal(std::ofstream& file, Node* node) const {
 void Tree::Deserialize(const std::string& fileName) {
     std::ifstream file(fileName);
     if (!file) {
-        std::cerr << "The \"" << fileName << "\" file cannot be opened." << std::endl;
-        exit(EXIT_FAILURE);
+        throw FileException("Cannot open file: " + fileName);
     }
 
     std::string data {
@@ -129,8 +128,7 @@ void Tree::Deserialize(const std::string& fileName) {
     file.close();
 
     if (data.empty()) {
-        std::cerr << "Deserialization error." << std::endl;
-        exit(EXIT_FAILURE);
+        throw TreeException("Deserialization error: File is empty:" + fileName);
     }
 
     std::vector<std::pair<NodeType, std::string>> tokens;

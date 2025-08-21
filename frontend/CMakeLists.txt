@@ -15,7 +15,6 @@ add_executable(frontend ${SOURCES})
 target_include_directories(frontend
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/../shared/include
         ${CMAKE_CURRENT_SOURCE_DIR}/../tree/include
 )
 

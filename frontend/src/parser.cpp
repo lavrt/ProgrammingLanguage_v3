@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "exceptions.h"
+#include "frontendExceptions.h"
 
 std::unique_ptr<Node> Parser::GetGrammar() {
     if (!tokens.size()) {

@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include "exceptions.h"
+#include "frontendExceptions.h"
+#include "treeExceptions.h"
 #include "tokenizer.h"
 #include "parser.h"
 #include "tree.h"
@@ -21,6 +22,9 @@ int main() {
         std::cerr << e.what() << std::endl;
         return 1;
     } catch (const ParserException& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    } catch (const TreeException& e) {
         std::cerr << e.what() << std::endl;
         return 1;
     } catch (const std::exception& e) {

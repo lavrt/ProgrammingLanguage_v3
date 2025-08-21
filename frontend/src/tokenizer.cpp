@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "node.h"
-#include "exceptions.h"
+#include "frontendExceptions.h"
 
 Tokenizer::Tokenizer(const std::string& fn) {
     std::ifstream file(fn);

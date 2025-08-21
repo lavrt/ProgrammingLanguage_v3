@@ -1,5 +1,5 @@
-#ifndef EXCEPTIONS_H
-#define EXCEPTIONS_H
+#ifndef FRONTEND_EXCEPTIONS_H
+#define FRONTEND_EXCEPTIONS_H
 
 #include <stdexcept>
 #include <string>
@@ -28,4 +28,4 @@ public:
         : BaseException("Parser error: " + message) {}
 };
 
-#endif // EXCEPTIONS_H
+#endif // FRONTEND_EXCEPTIONS_H
