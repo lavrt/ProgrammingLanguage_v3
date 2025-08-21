@@ -65,11 +65,11 @@ public:
         std::copy(data, data + sizeof(num), vec.begin() + pos);
     }
 
-    size_t GetSize() const {
+    size_t GetSize() const noexcept {
         return vec.size();
     }
 
-    const uint8_t* GetData() const {
+    const uint8_t* GetData() const noexcept {
         return vec.data();
     }
 };
@@ -79,11 +79,11 @@ private:
     CodeBuffer code;
 
 public:
-    size_t GetCodeSize() const {
+    size_t GetCodeSize() const noexcept {
         return code.GetSize();
     }
 
-    const uint8_t* GetCodeData() const {
+    const uint8_t* GetCodeData() const noexcept {
         return code.GetData();
     }
 

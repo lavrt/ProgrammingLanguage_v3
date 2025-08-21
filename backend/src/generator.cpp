@@ -122,7 +122,7 @@ void CodeGen::EmitAdd(Node* node) {
     CodeGenExpr(node->GetRight());
     asmGen.pop(r64::rbx);
     asmGen.pop(r64::rax);
-    
+
     asmGen.add(r64::rax, r64::rbx);
 
     asmGen.push(r64::rax);
