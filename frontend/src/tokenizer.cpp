@@ -4,12 +4,12 @@
 #include <iostream>
 
 #include "node.h"
+#include "exceptions.h"
 
 Tokenizer::Tokenizer(const std::string& fn) {
     std::ifstream file(fn);
     if (!file) {
-        std::cerr << "The \"" << fn << "\" file cannot be opened." << std::endl;
-        exit(EXIT_FAILURE);
+        throw FileException("Cannot open file: " + fn);
     }
 
     std::string data {
@@ -20,17 +20,20 @@ Tokenizer::Tokenizer(const std::string& fn) {
     file.close();
 
     if (data.empty()) {
-        std::cerr << "The \"" << fn << "\" file is empty or cannot be read." << std::endl;
-        exit(EXIT_FAILURE);
+        throw FileException("File is empty: " + fn);
     }
 
     SplitIntoTokens(data);
 }
 
 void Tokenizer::SplitIntoTokens(const std::string& data) {
-    for (size_t i = 0; i < data.size();) {
+    for (size_t i = 0; i < data.size(); ) {
         while (i < data.size() && isspace(data[i])) {
             ++i;
+        }
+
+        if (i >= data.size()) {
+            break;
         }
 
         std::string buffer;
@@ -54,11 +57,11 @@ void Tokenizer::SplitIntoTokens(const std::string& data) {
             while (i < data.size() && data[i] != '\n') {
                 ++i;
             }
-        } else if (i >= data.size()) {
-            break;
         } else {
-            std::cerr << "The token starts with an invalid character '" << data[i] << "'." << std::endl;
-            exit(EXIT_FAILURE);
+            throw TokenizerException(
+                "Invalid character '" + std::string(1, data[i]) +
+                "' at position " + std::to_string(i)
+            );
         }
     }
 }

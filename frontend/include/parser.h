@@ -26,7 +26,7 @@ private:
     std::unique_ptr<Node> GetMultiplication();
     std::unique_ptr<Node> GetCalling();
 
-    [[noreturn]] void syntaxError(int line);
+    [[noreturn]] void SyntaxError();
     bool isKeyWord(const std::string& word);
 
 public:
@@ -41,8 +41,8 @@ public:
 };
 
 #define CHECK_LEFT_PARENTHESIS \
-    do { if (tokens[pos] != keyLeftParenthesis) syntaxError(__LINE__); } while(0);
+    do { if (tokens[pos] != keyLeftParenthesis) SyntaxError(); } while(0);
 #define CHECK_RIGHT_PARENTHESIS \
-    do { if (tokens[pos] != keyRightParenthesis) syntaxError(__LINE__); } while(0);
+    do { if (tokens[pos] != keyRightParenthesis) SyntaxError(); } while(0);
 
 #endif // PARSER_H

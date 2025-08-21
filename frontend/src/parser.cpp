@@ -2,20 +2,24 @@
 
 #include <iostream>
 
+#include "exceptions.h"
+
 std::unique_ptr<Node> Parser::GetGrammar() {
     if (!tokens.size()) {
         return std::make_unique<Node>(End, keyEnd);
     }
 
     std::unique_ptr<Node> left = GetDef();
-    if (tokens[pos++] != keySemicolon) {
-        syntaxError(__LINE__);
+    if (tokens[pos] != keySemicolon) {
+        SyntaxError();
     }
+    pos++;
     while (pos < tokens.size()) {
         std::unique_ptr<Node> right = GetDef();
-        if (tokens[pos++] != keySemicolon) {
-            syntaxError(__LINE__);
+        if (tokens[pos] != keySemicolon) {
+            SyntaxError();
         }
+        pos++;
         left = std::make_unique<Node>(Semicolon, keySemicolon, std::move(left), std::move(right)); 
     }
 
@@ -67,7 +71,7 @@ std::unique_ptr<Node> Parser::GetParentheses() {
         pos++;
         std::unique_ptr<Node> node = GetComparsion();
         if (tokens[pos] != keyRightParenthesis) {
-            syntaxError(__LINE__);
+            SyntaxError();
         }
         pos++;
         return node;
@@ -76,7 +80,7 @@ std::unique_ptr<Node> Parser::GetParentheses() {
     } else if (std::isdigit(tokens[pos][0])) {
         return GetNumber();
     } else {
-        syntaxError(__LINE__);
+        SyntaxError();
     }
 }
 
@@ -149,26 +153,29 @@ std::unique_ptr<Node> Parser::GetOperation() {
     } else if (tokens[pos] == keyLeftCurlyBracket) {
         pos++;
         std::unique_ptr<Node> left = GetOperation();
-        if (tokens[pos++] != keySemicolon) {
-            syntaxError(__LINE__);
+        if (tokens[pos] != keySemicolon) {
+            SyntaxError();
         }
+        pos++;
         while (tokens[pos] != keyRightCurlyBracket) {
             std::unique_ptr<Node> righNode = GetOperation();
-            if (tokens[pos++] != keySemicolon) {
-                syntaxError(__LINE__);
+            if (tokens[pos] != keySemicolon) {
+                SyntaxError();
             }
+            pos++;
             left = std::make_unique<Node>(Semicolon, keySemicolon, std::move(left), std::move(righNode));
         }
 
-        if (tokens[pos++] != keyRightCurlyBracket) {
-            syntaxError(__LINE__);
+        if (tokens[pos] != keyRightCurlyBracket) {
+            SyntaxError();
         }
+        pos++;
 
         return left;
     } else if (!isKeyWord(tokens[pos])) { 
         return GetAssignment();
     } else {
-        syntaxError(__LINE__);
+        SyntaxError();
     }
 }
 
@@ -205,15 +212,13 @@ std::unique_ptr<Node> Parser::GetAssignment() {
     std::unique_ptr<Node> righNode = nullptr;
 
     if (tokens[pos] != keyEqual) {
-        syntaxError(__LINE__);
+        SyntaxError();
     }
 
-    size_t op = pos;
     pos++;
     if (tokens[pos] == keyCall) {
         righNode = GetCalling();
     } else if (tokens[pos] == keyReadInt) {
-        size_t op1 = pos;
         pos++;
         CHECK_LEFT_PARENTHESIS;
         pos++;
@@ -249,10 +254,8 @@ std::unique_ptr<Node> Parser::GetCalling() {
     return std::make_unique<Node>(Call, tokens[nameIndex], std::move(argNode), nullptr);
 }
 
-void Parser::syntaxError(int line) {
-    fprintf(stderr, "Syntax error in %d\n", line);
-
-    exit(EXIT_FAILURE);
+void Parser::SyntaxError() {
+    throw ParserException("Syntax error: \"" + tokens[pos] + "\"");
 }
 
 bool Parser::isKeyWord(const std::string& word) {
