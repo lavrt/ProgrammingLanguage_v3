@@ -75,7 +75,7 @@ std::unique_ptr<Node> Parser::GetParentheses() {
         }
         pos++;
         return node;
-    } else if (!std::isdigit(tokens[pos][0])) {
+    } else if (std::isalpha(tokens[pos][0])) {
         return GetVariable();
     } else if (std::isdigit(tokens[pos][0])) {
         return GetNumber();
