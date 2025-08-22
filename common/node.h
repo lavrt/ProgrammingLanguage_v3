@@ -64,19 +64,19 @@ public:
         right = std::move(r);
     }
 
-    NodeType GetType() const {
+    NodeType GetType() const noexcept {
         return type;
     }
 
-    std::string GetValue() const {
+    std::string GetValue() const noexcept {
         return value;
     }
 
-    Node* GetLeft() const {
+    Node* GetLeft() const noexcept {
         return left.get();
     }
 
-    Node* GetRight() const {
+    Node* GetRight() const noexcept {
         return right.get();
     }
 };

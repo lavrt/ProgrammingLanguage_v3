@@ -172,7 +172,7 @@ std::unique_ptr<Node> Parser::GetOperation() {
         pos++;
 
         return left;
-    } else if (!isKeyWord(tokens[pos])) { 
+    } else if (!kStringToNodeType.contains(tokens[pos])) { 
         return GetAssignment();
     } else {
         SyntaxError();
@@ -256,32 +256,4 @@ std::unique_ptr<Node> Parser::GetCalling() {
 
 void Parser::SyntaxError() {
     throw FrontendExcept::ParserException("Syntax error: \"" + tokens[pos] + "\"");
-}
-
-bool Parser::isKeyWord(const std::string& word) {
-    return word == keyAdd ||
-        word == keySub ||
-        word == keyMul ||
-        word == keyDiv ||
-        word == keySemicolon ||
-        word == keyEqual ||
-        word == keyLeftParenthesis ||
-        word == keyRightParenthesis ||
-        word == keyLeftCurlyBracket ||
-        word == keyRightCurlyBracket ||
-        word == keyLess ||
-        word == keyGreater ||
-        word == keyIdentical ||
-        word == keyLessOrEqual ||
-        word == keyNotIdentical ||
-        word == keyGreaterOrEqual ||
-        word == keyIf ||
-        word == keyWhile ||
-        word == keyPrintAscii ||
-        word == keyPrintInt ||
-        word == keyReadInt ||
-        word == keyReturn ||
-        word == keyEnd ||
-        word == keyDef ||
-        word == keyCall;
 }

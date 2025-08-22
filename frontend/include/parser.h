@@ -27,7 +27,6 @@ private:
     std::unique_ptr<Node> GetCalling();
 
     [[noreturn]] void SyntaxError();
-    bool isKeyWord(const std::string& word);
 
 public:
     Parser(const std::vector<std::string>& t) : tokens(t) {}
