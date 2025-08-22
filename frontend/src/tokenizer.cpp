@@ -9,7 +9,7 @@
 Tokenizer::Tokenizer(const std::string& fn) {
     std::ifstream file(fn);
     if (!file) {
-        throw FileException("Cannot open file: " + fn);
+        throw FrontendExcept::FileException("Cannot open file: " + fn);
     }
 
     std::string data {
@@ -20,7 +20,7 @@ Tokenizer::Tokenizer(const std::string& fn) {
     file.close();
 
     if (data.empty()) {
-        throw FileException("File is empty: " + fn);
+        throw FrontendExcept::FileException("File is empty: " + fn);
     }
 
     SplitIntoTokens(data);
@@ -58,7 +58,7 @@ void Tokenizer::SplitIntoTokens(const std::string& data) {
                 ++i;
             }
         } else {
-            throw TokenizerException(
+            throw FrontendExcept::TokenizerException(
                 "Invalid character '" + std::string(1, data[i]) +
                 "' at position " + std::to_string(i)
             );

@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace BackendExcept {
+
 class BaseException : public std::runtime_error {
 public:
     explicit BaseException(const std::string& message)
@@ -21,5 +23,7 @@ public:
     explicit CodeGeneratorException(const std::string& message)
         : BaseException("Code generator error: " + message) {}
 };
+
+} // namespace BackendExcept
 
 #endif // BACKEND_EXCEPTIONS_H

@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace TreeExcept {
+
 class BaseException : public std::runtime_error {
 public:
     explicit BaseException(const std::string& message)
@@ -21,5 +23,7 @@ public:
     explicit TreeException(const std::string& message)
         : BaseException("Tree error: " + message) {}
 };
+
+} // namespace TreeExcept
 
 #endif // TREE_EXCEPTIONS_H

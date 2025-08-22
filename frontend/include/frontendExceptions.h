@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace FrontendExcept {
+
 class BaseException : public std::runtime_error {
 public:
     explicit BaseException(const std::string& message)
@@ -27,5 +29,7 @@ public:
     explicit ParserException(const std::string& message) 
         : BaseException("Parser error: " + message) {}
 };
+
+} // namespace FrontendExcept
 
 #endif // FRONTEND_EXCEPTIONS_H

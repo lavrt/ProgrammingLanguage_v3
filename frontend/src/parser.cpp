@@ -255,7 +255,7 @@ std::unique_ptr<Node> Parser::GetCalling() {
 }
 
 void Parser::SyntaxError() {
-    throw ParserException("Syntax error: \"" + tokens[pos] + "\"");
+    throw FrontendExcept::ParserException("Syntax error: \"" + tokens[pos] + "\"");
 }
 
 bool Parser::isKeyWord(const std::string& word) {

@@ -15,16 +15,19 @@ int main() {
         ast.Serialize("./tmp/tree.txt");
 
         return 0;
-    } catch (const FileException& e) {
+    } catch (const FrontendExcept::FileException& e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const TokenizerException& e) {
+    } catch (const FrontendExcept::TokenizerException& e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const ParserException& e) {
+    } catch (const FrontendExcept::ParserException& e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const TreeException& e) {
+    } catch (const TreeExcept::TreeException& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    } catch (const TreeExcept::FileException& e) {
         std::cerr << e.what() << std::endl;
         return 1;
     } catch (const std::exception& e) {

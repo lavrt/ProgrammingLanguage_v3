@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "asmCommands.h"
+#include "backendExceptions.h"
 
 // static ------------------------------------------------------------------------------------------
 
@@ -25,8 +26,7 @@ void CodeGen::GenerateProgram(Node* program, const std::string& fileName) {
 
     size_t addr = funcs.FindFunction(kEntryFunctionName);
     if (!addr) {
-        std::cerr << "The function \"" << kEntryFunctionName << "\" was not found." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::CodeGeneratorException("Function not found: " + kEntryFunctionName);
     }
 
     Elf64_Ehdr ehdr;
@@ -38,10 +38,11 @@ void CodeGen::GenerateProgram(Node* program, const std::string& fileName) {
 
     std::ofstream file(fileName, std::ios::binary); 
     if (!file) {
-        std::cerr << "The \"" << fileName << "\" file cannot be opened. \n" <<
-            "It is possible that this file is already being used by another process. "
-            "Try to kill this process or delete the file." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::FileException(
+            "File cannot be opened: " + fileName + "\n" +
+            "Note: It is possible that this file is already being used by another process. " +
+            "Try to kill this process or delete the file."
+        );
     }
 
     file.write(reinterpret_cast<const char*>(&ehdr), kElfHeaderSize);
@@ -49,8 +50,7 @@ void CodeGen::GenerateProgram(Node* program, const std::string& fileName) {
     file.write(reinterpret_cast<const char*>(asmGen.GetCodeData()), asmGen.GetCodeSize() * sizeof(uint8_t));
 
     if (!file.good()) {
-        std::cerr << "Error writing to the \"" << fileName << "\" file." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::FileException("Error writing to file: " + fileName);
     }
 
     file.close();
@@ -76,8 +76,7 @@ void CodeGen::CodeGenExpr(Node* node) {
         case NotIdentical:      EmitNotIdentical(node);    break;
         
         default: {
-            std::cerr << "Unknown expression type \"" << node->GetType() << "\"." << std::endl;
-            exit(EXIT_FAILURE);
+            throw BackendExcept::CodeGeneratorException("Unknown node type: " + node->GetType());
         }
     }
 }
@@ -96,8 +95,7 @@ void CodeGen::CodeGenStmt(Node* node) {
         case Call:          EmitCallVoid(node);        break;
 
         default: {
-            std::cerr << "Unknown node type \"" << node->GetType() << "\"." << std::endl;
-            exit(EXIT_FAILURE);
+            throw BackendExcept::CodeGeneratorException("Unknown node type: " + node->GetType());
         }
     }
 }
@@ -109,8 +107,7 @@ void CodeGen::EmitNumber(Node* node) {
 void CodeGen::EmitIdentifier(Node* node) {
     int offset = vars.FindSymbol(node->GetValue());
     if (offset == -1) {
-        std::cerr << "Undefined variable \"" << node->GetValue() << "\"." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::CodeGeneratorException("Undefined variable: " + node->GetValue());
     }
 
     asmGen.mov(r64::rax, r64::rbp, -offset);
@@ -259,8 +256,7 @@ void CodeGen::EmitCallVoid(Node* node) {
 
     size_t addr = funcs.FindFunction(node->GetValue());
     if (!addr) {
-        std::cerr << "Undefined function \"" << node->GetValue() << "\"." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::CodeGeneratorException("Undefined function: " + node->GetValue());
     }
     asmGen.call((int32_t)(addr - (asmGen.GetCodeSize() + 5)));
 
@@ -291,8 +287,7 @@ void CodeGen::EmitCallInt(Node* node) {
     
     size_t addr = funcs.FindFunction(node->GetValue());
     if (!addr) {
-        std::cerr << "Undefined function \"" << node->GetValue() << "\"." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::CodeGeneratorException("Undefined function: " + node->GetValue());
     }
     asmGen.call((int32_t)(addr - (asmGen.GetCodeSize() + 5)));
 
@@ -309,8 +304,7 @@ void CodeGen::EmitCallInt(Node* node) {
 void CodeGen::EmitReadInt() {
     size_t readIntAddr = funcs.FindFunction(keyReadInt);
     if (!readIntAddr) {
-        std::cerr << "Function \"" << keyReadInt << "\" is not found." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::CodeGeneratorException("Undefined function: " + keyReadInt);
     }
   
     asmGen.push(r64::rcx);
@@ -381,8 +375,7 @@ void CodeGen::EmitEqual(Node* node) {
 void CodeGen::EmitPrintAscii(Node* node) {
     size_t printAsciiAddr = funcs.FindFunction(keyPrintAscii);
     if (!printAsciiAddr) {
-        std::cerr << "Function \"" << keyPrintAscii << "\" is not found." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::CodeGeneratorException("Undefined function: " + keyPrintAscii);
     }
 
     CodeGenExpr(node->GetLeft());
@@ -406,8 +399,7 @@ void CodeGen::EmitPrintAscii(Node* node) {
 void CodeGen::EmitPrintInt(Node* node) { 
     size_t printIntAddr = funcs.FindFunction(keyPrintInt);
     if (!printIntAddr) {
-        std::cerr << "Function \"" << keyPrintInt << "\" is not found." << std::endl;
-        exit(EXIT_FAILURE);
+        throw BackendExcept::CodeGeneratorException("Undefined function: " + keyPrintInt);
     }
 
     CodeGenExpr(node->GetLeft());
