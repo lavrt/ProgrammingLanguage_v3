@@ -5,6 +5,7 @@
 #include <span>
 #include <vector>
 #include <string>
+#include <optional>
 
 #include "asmCommands.h"
 #include "headers.h"
@@ -32,13 +33,13 @@ public:
         return stackOffset;
     }
 
-    int FindSymbol(const std::string& name) const {
+    std::optional<int> FindSymbol(const std::string& name) const {
         for (auto stackIter = symbolStack.rbegin(); stackIter != symbolStack.rend(); ++stackIter) {
             if (auto mapIter = stackIter->find(name); mapIter != stackIter->end()) {
                 return mapIter->second;
             }
         }
-        return -1;
+        return std::nullopt;
     }
 };
 

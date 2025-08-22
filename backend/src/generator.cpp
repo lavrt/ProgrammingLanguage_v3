@@ -105,12 +105,12 @@ void CodeGen::EmitNumber(Node* node) {
 }
 
 void CodeGen::EmitIdentifier(Node* node) {
-    int offset = vars.FindSymbol(node->GetValue());
-    if (offset == -1) {
+    std::optional<int> offset = vars.FindSymbol(node->GetValue());
+    if (!offset) {
         throw BackendExcept::CodeGeneratorException("Undefined variable: " + node->GetValue());
     }
 
-    asmGen.mov(r64::rax, r64::rbp, -offset);
+    asmGen.mov(r64::rax, r64::rbp, -offset.value());
     asmGen.push(r64::rax);
 }
 
@@ -363,13 +363,13 @@ void CodeGen::EmitEqual(Node* node) {
     CodeGenExpr(node->GetRight());
     asmGen.pop(r64::rax);
 
-    int offset = vars.FindSymbol(node->GetLeft()->GetValue());
-    if (offset == -1) {
+    std::optional<int> offset = vars.FindSymbol(node->GetLeft()->GetValue());
+    if (!offset) {
         offset = vars.AddSymbol(node->GetLeft()->GetValue());
         asmGen.sub(r64::rsp, 8);
     }
 
-    asmGen.mov(r64::rbp, -offset, r64::rax);
+    asmGen.mov(r64::rbp, -offset.value(), r64::rax);
 }
 
 void CodeGen::EmitPrintAscii(Node* node) {
