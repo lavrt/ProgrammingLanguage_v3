@@ -2,8 +2,6 @@
 #include "generator.h"
 
 void CodeGen::CreateStandartFunctions() {
-    asmGen.nop(); // it is not allowed to place functions with asmGen.GetCodeSize() = 0
-
     CreatePrintAscii();
     CreatePrintInt();
     CreateReadInt();
