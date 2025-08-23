@@ -52,9 +52,9 @@ public:
         mp[name] = offset;
     }
 
-    size_t FindFunction(const std::string& name) const noexcept {
+    std::optional<size_t> FindFunction(const std::string& name) const noexcept {
         auto iter = mp.find(name);
-        return iter == mp.end() ? 0 : iter->second;
+        return iter == mp.end() ? std::nullopt : std::make_optional(iter->second);
     }
 };
 

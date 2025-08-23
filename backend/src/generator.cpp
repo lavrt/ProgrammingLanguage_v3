@@ -24,14 +24,14 @@ void CodeGen::GenerateProgram(Node* program, const std::string& fileName) {
     CreateStandartFunctions();
     CodeGenStmt(program);
 
-    size_t addr = funcs.FindFunction(kEntryFunctionName);
-    if (!addr) {
+    std::optional<size_t> addr = funcs.FindFunction(kEntryFunctionName);
+    if (!addr.has_value()) {
         throw BackendExcept::CodeGeneratorException("Function not found: " + kEntryFunctionName);
     }
 
     Elf64_Ehdr ehdr;
     CreateElfHeader(&ehdr);
-    ehdr.e_entry += addr;
+    ehdr.e_entry += addr.value();
 
     Elf64_Phdr phdr;
     CreateProgramHeader(&phdr, asmGen.GetCodeSize());
@@ -106,7 +106,7 @@ void CodeGen::EmitNumber(Node* node) {
 
 void CodeGen::EmitIdentifier(Node* node) {
     std::optional<int> offset = vars.FindSymbol(node->GetValue());
-    if (!offset) {
+    if (!offset.has_value()) {
         throw BackendExcept::CodeGeneratorException("Undefined variable: " + node->GetValue());
     }
 
@@ -254,11 +254,11 @@ void CodeGen::EmitCallVoid(Node* node) {
         arg = arg->GetLeft();
     }
 
-    size_t addr = funcs.FindFunction(node->GetValue());
-    if (!addr) {
+    std::optional<size_t> addr = funcs.FindFunction(node->GetValue());
+    if (!addr.has_value()) {
         throw BackendExcept::CodeGeneratorException("Undefined function: " + node->GetValue());
     }
-    asmGen.call((int32_t)(addr - (asmGen.GetCodeSize() + 5)));
+    asmGen.call((int32_t)(addr.value() - (asmGen.GetCodeSize() + 5)));
 
     asmGen.pop(r64::r9);
     asmGen.pop(r64::r8);
@@ -285,11 +285,11 @@ void CodeGen::EmitCallInt(Node* node) {
         arg = arg->GetLeft();
     }
     
-    size_t addr = funcs.FindFunction(node->GetValue());
-    if (!addr) {
+    std::optional<size_t> addr = funcs.FindFunction(node->GetValue());
+    if (!addr.has_value()) {
         throw BackendExcept::CodeGeneratorException("Undefined function: " + node->GetValue());
     }
-    asmGen.call((int32_t)(addr - (asmGen.GetCodeSize() + 5)));
+    asmGen.call((int32_t)(addr.value() - (asmGen.GetCodeSize() + 5)));
 
     asmGen.pop(r64::r9);
     asmGen.pop(r64::r8);
@@ -302,8 +302,8 @@ void CodeGen::EmitCallInt(Node* node) {
 }
 
 void CodeGen::EmitReadInt() {
-    size_t readIntAddr = funcs.FindFunction(keyReadInt);
-    if (!readIntAddr) {
+    std::optional<size_t> readIntAddr = funcs.FindFunction(keyReadInt);
+    if (!readIntAddr.has_value()) {
         throw BackendExcept::CodeGeneratorException("Undefined function: " + keyReadInt);
     }
   
@@ -311,7 +311,7 @@ void CodeGen::EmitReadInt() {
     asmGen.push(r64::rdx);
     asmGen.push(r64::rdi);
 
-    asmGen.call((int32_t)(readIntAddr - (asmGen.GetCodeSize() + 5)));
+    asmGen.call((int32_t)(readIntAddr.value() - (asmGen.GetCodeSize() + 5)));
 
     asmGen.pop(r64::rdi);
     asmGen.pop(r64::rdx);
@@ -364,7 +364,7 @@ void CodeGen::EmitEqual(Node* node) {
     asmGen.pop(r64::rax);
 
     std::optional<int> offset = vars.FindSymbol(node->GetLeft()->GetValue());
-    if (!offset) {
+    if (!offset.has_value()) {
         offset = vars.AddSymbol(node->GetLeft()->GetValue());
         asmGen.sub(r64::rsp, 8);
     }
@@ -373,8 +373,8 @@ void CodeGen::EmitEqual(Node* node) {
 }
 
 void CodeGen::EmitPrintAscii(Node* node) {
-    size_t printAsciiAddr = funcs.FindFunction(keyPrintAscii);
-    if (!printAsciiAddr) {
+    std::optional<size_t> printAsciiAddr = funcs.FindFunction(keyPrintAscii);
+    if (!printAsciiAddr.has_value()) {
         throw BackendExcept::CodeGeneratorException("Undefined function: " + keyPrintAscii);
     }
 
@@ -387,7 +387,7 @@ void CodeGen::EmitPrintAscii(Node* node) {
     asmGen.push(r64::rsi);
     asmGen.push(r64::rdi);
 
-    asmGen.call((int32_t)(printAsciiAddr - (asmGen.GetCodeSize() + 5)));
+    asmGen.call((int32_t)(printAsciiAddr.value() - (asmGen.GetCodeSize() + 5)));
 
     asmGen.pop(r64::rdi);
     asmGen.pop(r64::rsi);
@@ -397,8 +397,8 @@ void CodeGen::EmitPrintAscii(Node* node) {
 }
 
 void CodeGen::EmitPrintInt(Node* node) { 
-    size_t printIntAddr = funcs.FindFunction(keyPrintInt);
-    if (!printIntAddr) {
+    std::optional<size_t> printIntAddr = funcs.FindFunction(keyPrintInt);
+    if (!printIntAddr.has_value()) {
         throw BackendExcept::CodeGeneratorException("Undefined function: " + keyPrintInt);
     }
 
@@ -410,7 +410,7 @@ void CodeGen::EmitPrintInt(Node* node) {
     asmGen.push(r64::rdx);
     asmGen.push(r64::rdi);
 
-    asmGen.call((int32_t)(printIntAddr - (asmGen.GetCodeSize() + 5)));
+    asmGen.call((int32_t)(printIntAddr.value() - (asmGen.GetCodeSize() + 5)));
 
     asmGen.pop(r64::rdi);
     asmGen.pop(r64::rdx);
