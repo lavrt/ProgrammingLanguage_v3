@@ -23,6 +23,4 @@ public:
     }
 };
 
-const char* const kNameOfFileWithCode = "./examples/code.rt";
-
 #endif // TOKENIZER_H
