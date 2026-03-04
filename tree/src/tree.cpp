@@ -23,9 +23,6 @@ void Tree::Dump(const std::string& fileName) const {
     file << "}\n";
 
     file.close();
-
-    std::string dotCmd = "dot " + fileName + ".gv -Tpng -o " + fileName + ".png";
-    std::system(dotCmd.c_str());
 }
 
 void Tree::DefiningGraphNodes(std::ofstream& file, Node* node) const {
