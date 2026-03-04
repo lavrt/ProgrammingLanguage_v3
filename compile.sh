@@ -1,9 +1,6 @@
 #!/bin/bash
 
-mkdir -p build bin tmp
-
-cmake -B build && \
-cmake --build build && \
+mkdir -p bin tmp && \
 
 ./build/frontend/frontend && \
 ./build/backend/backend && \
