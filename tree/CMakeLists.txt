@@ -5,7 +5,10 @@ set(SOURCES
     src/tree.cpp
 )
 
-add_library(tree STATIC ${SOURCES})
+add_library(tree
+    STATIC
+        ${SOURCES}
+)
 
 target_include_directories(tree
     PUBLIC
