@@ -6,14 +6,11 @@
 #include "parser.h"
 #include "tree.h"
 
-int main() {
+int main(int argc, const char** argv) {
     try {
-        Tokenizer tokenizer("./examples/code.rt");
+        Tokenizer tokenizer(argv[1]);
         Tree ast = Parser(tokenizer.GetTokens()).Parse();
-
-        ast.Dump("./tmp/dump_frontend");
-        ast.Serialize("./tmp/tree.txt");
-
+        ast.Serialize(argv[2]);
         return 0;
     } catch (const FrontendExcept::FileException& e) {
         std::cerr << e.what() << std::endl;
