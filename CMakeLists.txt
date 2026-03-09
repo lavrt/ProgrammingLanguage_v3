@@ -25,7 +25,3 @@ target_link_libraries(compile
         Boost::process
         Boost::filesystem
 )
-
-# conan install . -of build -s build_type=Release --build=missing
-# cmake --preset conan-release 
-# cmake --build --preset conan-release -j
