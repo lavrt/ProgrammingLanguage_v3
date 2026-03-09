@@ -3,9 +3,9 @@ project(lang)
 
 find_package(Boost CONFIG REQUIRED COMPONENTS program_options)
 
-add_subdirectory(tree)
-add_subdirectory(frontend)
-add_subdirectory(backend)
+add_subdirectory(src/core/tree)
+add_subdirectory(src/core/frontend)
+add_subdirectory(src/core/backend)
 
 add_executable(compile
     src/main.cpp
