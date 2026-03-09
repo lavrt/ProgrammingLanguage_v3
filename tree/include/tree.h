@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 
-#include "node.h"
+#include "node.hpp"
 
 class Tree {
 private:

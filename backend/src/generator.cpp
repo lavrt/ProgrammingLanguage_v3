@@ -5,6 +5,7 @@
 
 #include "asmCommands.h"
 #include "backendExceptions.h"
+#include "node.hpp"
 
 // static ------------------------------------------------------------------------------------------
 

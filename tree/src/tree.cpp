@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "treeExceptions.h"
+#include "node_types.hpp"
 
 void Tree::Dump(const std::string& fileName) const {
     std::ofstream file(fileName + ".gv");

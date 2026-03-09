@@ -9,7 +9,7 @@
 
 #include "asmCommands.h"
 #include "headers.h"
-#include "node.h"
+#include "node.hpp"
 
 class ScopeManager {
 private:
