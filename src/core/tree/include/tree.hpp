@@ -8,18 +8,6 @@
 #include "node.hpp"
 
 class Tree {
-private:
-    std::unique_ptr<Node> root = nullptr;
-
-    void DefiningGraphNodes(std::ofstream& file, Node* node) const;
-
-    void DefiningGraphDependencies(std::ofstream& file, Node* node) const;
-
-    void PreOrderTraversal(std::ofstream& file, Node* node) const;
-
-    std::pair<std::unique_ptr<Node>, size_t> ParseTreeFromTokens(
-        const std::vector<std::pair<NodeType, std::string>>& tokens, size_t pos = 0) const;
-
 public:
     Tree() : root(nullptr) {}
 
@@ -38,6 +26,18 @@ public:
     void Serialize(const std::string& fileName) const;
 
     void Deserialize(const std::string& fileName);
+    
+private:
+    std::unique_ptr<Node> root = nullptr;
+
+    void DefiningGraphNodes(std::ofstream& file, Node* node) const;
+
+    void DefiningGraphDependencies(std::ofstream& file, Node* node) const;
+
+    void PreOrderTraversal(std::ofstream& file, Node* node) const;
+
+    std::pair<std::unique_ptr<Node>, size_t> ParseTreeFromTokens(
+        const std::vector<std::pair<NodeType, std::string>>& tokens, size_t pos = 0) const;
 };
 
 #endif // TREE_H

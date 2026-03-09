@@ -6,12 +6,6 @@
 #include "node_types.hpp"
 
 class Node {
-private:
-    NodeType type;
-    std::string value;
-    std::unique_ptr<Node> left;
-    std::unique_ptr<Node> right;
-
 public:
     Node(NodeType t, const std::string& v, std::unique_ptr<Node> l, std::unique_ptr<Node> r)
         : type(t), value(v), left(std::move(l)), right(std::move(r)) {}
@@ -52,4 +46,10 @@ public:
     Node* GetRight() const noexcept {
         return right.get();
     }
+
+private:
+    NodeType type;
+    std::string value;
+    std::unique_ptr<Node> left;
+    std::unique_ptr<Node> right;
 };
