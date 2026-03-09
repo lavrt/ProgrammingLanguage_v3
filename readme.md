@@ -1,81 +1,127 @@
 # Programming Language
 
-A small programming language implemented in C++20 with a classic split into:
+A small programming language implemented in C++20.
 
-- **Frontend**: tokenizer + recursive-descent parser → builds an AST  
-- **Backend**: AST → x86-64 machine code packaged into a Linux ELF executable
+The project is split into two main compilation stages:
 
-The default build pipeline runs the frontend on ```./examples/code.rt```, serializes the AST into ```./tmp/```, then runs the backend to generate a Linux ELF binary at ```./bin/output.elf```.
+- **Frontend**: tokenizer + recursive-descent parser &rarr; builds and serializes an AST
+- **Backend**: reads the serialized AST &rarr; generates x86-64 machine code packaged into a Linux ELF executable
+
+The repository also contains a small **driver** program (`compile`) that parses CLI arguments and runs the frontend and backend in sequence.
+
 
 ---
 
 ## Project layout
 
-- `frontend/` — tokenizer + parser (builds AST, serializes it)   
-- `backend/` — code generator (reads serialized AST and emits an ELF executable)  
-- `tree/` + `common/` — AST implementation, serialization/deserialization, helpers 
-- `examples/` — sample source program(s), e.g. `code.rt`
-- `compile.sh` — one-command compile pipeline
+- `src/core/frontend/` — tokenizer, parser, frontend executable
+- `src/core/backend/` — code generator, backend executable
+- `src/core/tree/` — AST, serialization/deserialization, tree utilities
+- `src/app/cli/` — command-line parsing
+- `src/app/proc/` — process launching helpers
+- `src/main.cpp` — driver program (`compile`)
+- `examples/` — sample source programs
+- `conanfile.txt` — Conan dependencies
+- `CMakeLists.txt` — build configuration
 
 ---
 
 ## Requirements
 
-- **Linux x86-64** (output is an ELF executable)
-- **CMake**
+- **Linux x86-64** (the backend generates a Linux ELF executable)
 - **C++20**
+- **CMake**
+- **Conan 2**
+- **Boost 1.90.0** (installed via Conan)
 
 ---
 
 ## Build
 
-#### Get the code
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/lavrt/ProgrammingLanguage_v3.git
 cd ProgrammingLanguage_v3
 ```
 
-#### Configure and build the project:
+### 2. Install dependencies with Conan
 
 ```bash
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
+conan install . -of build -s build_type=Release --build=missing
 ```
 
-#### Run (compile example program):
+### 3. Configure and build
+```bash
+cmake --preset conan-release
+cmake --build --preset conan-release -j
+```
+
+---
+
+## Usage
+
+The main entry point is the driver executable:
 
 ```bash
-./compile.sh
+./build/compile -i <input.rt> [-a <ast-file>] [-o <output.elf>]
 ```
 
-This script will:
+### Options
 
-1) create ```./bin``` and ```./tmp``` if they don't exist
+- ```-i, --input``` — path to the input source file (required)
 
-2) run ```./build/frontend/frontend```
+- ```-a, --ast``` — path to the serialized AST file (default: ./tmp/tree.txt)
 
-3) run ```./build/backend/backend```
+- ```-o, --output``` — path to the output ELF file (default: ./bin/a.elf)
 
-4) mark ```./bin/output.elf``` as executable and print its path
+- ```-h, --help``` — show help and exit
 
-#### Run the produced executable:
+### Example
+
+Compile the sample program:
 
 ```bash
-./bin/output.elf
+./build/compile -i ./examples/factorial.rt
 ```
 
-#### Dump AST and generate a graph (Graphviz)
+Compile with custom output paths:
 
-After running the frontend, you can dump the AST:
-```cpp
-ast.Dump("./tmp/filename");
-```
-
-Convert the dump to an image with Graphviz:
 ```bash
-dot -Tpng ./tmp/filename.dot -o ./tmp/filename.png
+./build/compile -i ./examples/factorial.rt -a ./tmp/factorial.tree -o ./bin/factorial.elf
 ```
+
+Run the produced executable:
+
+```bash
+./bin/a.elf
+```
+
+or, if you used a custom output path:
+
+```bash
+./bin/factorial.elf
+```
+
+---
+
+## What the driver does
+
+When you run ```compile```, it:
+
+1. creates ```./tmp``` and ```./bin``` if they do not exist
+
+2. runs the frontend executable
+
+3. runs the backend executable
+
+4. marks the produced ELF file as executable
+
+At the moment, the driver launches the stage executables from these paths:
+
+- ```./build/src/core/frontend/frontend```
+
+- ```./build/src/core/backend/backend```
 
 ---
 
@@ -97,15 +143,20 @@ Supported constructs:
 
 - Comparisons: ```<``` ```<=``` ```>``` ```>=``` ```==``` ```!=```
 
-- Control flow: ```if (<cond>) <stmt>``` and ```while (<cond>) <stmt>```
+- Control flow:
+    - ```if (<cond>) <stmt>```
+    - ```while (<cond>) <stmt>```
 
-- Blocks: ```{ stmt; stmt; ... };``` (statements separated by ```;```)
+- Blocks: ```{ stmt; stmt; ... };```
 
-- I/O builtins: ```read_int()```, ```print_int(x)```, ```print_ascii(x)```
+- I/O builtins:
+    - ```read_int()```
+    - ```print_int(x)```
+    - ```print_ascii(x)```
 
 ---
 
-## Example
+## Example program
 
 ```examples/factorial.rt``` computes factorial both recursively and iteratively:
 
@@ -140,9 +191,11 @@ def factorial_2(a) {
 def test_factorials(c) {
     res_1 = call factorial_1(c);
     print_int(res_1);
+    print_ascii(10);
 
     res_2 = call factorial_2(c);
     print_int(res_2);
+    print_ascii(10);
 };
 
 def main() {
@@ -150,3 +203,13 @@ def main() {
     call test_factorials(a);
 };
 ```
+
+---
+
+## Notes
+
+- The output format is **Linux ELF**, so the generated binaries are intended to run on Linux x86-64.
+
+- The project currently uses a serialized AST file as an interface between the frontend and backend.
+
+- The build uses **Conan + CMake** for dependency management and compilation.
