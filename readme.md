@@ -107,7 +107,7 @@ Supported constructs:
 
 ## Example
 
-```examples/code.rt``` computes factorial both recursively and iteratively:
+```examples/factorial.rt``` computes factorial both recursively and iteratively:
 
 ```r
 # calculating the factorial using a recursion function
