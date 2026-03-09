@@ -3,3 +3,5 @@ build/
 dump/
 bin/
 tmp/
+
+CMakeUserPresets.json
