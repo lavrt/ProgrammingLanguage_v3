@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 project(lang)
 
-find_package(Boost CONFIG REQUIRED COMPONENTS program_options)
+find_package(Boost CONFIG REQUIRED COMPONENTS program_options process filesystem)
 
 add_subdirectory(src/core/tree)
 add_subdirectory(src/core/frontend)
@@ -22,4 +22,10 @@ target_include_directories(compile
 target_link_libraries(compile
     PRIVATE
         Boost::program_options
+        Boost::process
+        Boost::filesystem
 )
+
+# conan install . -of build -s build_type=Release --build=missing
+# cmake --preset conan-release 
+# cmake --build --preset conan-release -j
