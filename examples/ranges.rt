@@ -1,0 +1,49 @@
+def print_alphabet() {
+    i = 65;
+    while (i <= 90) {
+        print_ascii(i);
+        print_ascii(32);
+        i = i + 1;
+    };
+    print_ascii(10);
+};
+
+def print_digits() {
+    i = 48;
+    while (i <= 57) {
+        print_ascii(i);
+        print_ascii(32);
+        i = i + 1;
+    };
+    print_ascii(10);
+};
+
+def print_num_range(from, to, interval) {
+    if (interval) {
+        to = to - 1;
+        while (from < to) {
+            from = from + 1;
+            print_int(from);
+            print_ascii(32);
+        };
+        print_ascii(10);
+        return 0;
+    };
+
+    while (from <= to) {
+        print_int(from);
+        print_ascii(32);
+        from = from + 1;
+    };
+    print_ascii(10);
+};
+
+def main() {
+    call print_alphabet();
+    call print_digits();
+
+    from = 55; to = 67; interval = 1;
+    call print_num_range(from, to, interval);
+    interval = 0;
+    call print_num_range(from, to, interval);
+};
