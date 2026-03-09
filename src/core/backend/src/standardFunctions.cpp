@@ -124,29 +124,6 @@ void CodeGen::CreatePrintInt() {
     int32_t jmpTarget_3 = (int32_t)asmGen.GetCodeSize();
     int32_t jmpOffset_3 = jmpTarget_3 - (jmpPos_3 + 6);
     asmGen.InsertNumber(jmpOffset_3, jmpPos_3 + 2);
-                                   
-    asmGen.push(r64::rax);
-    asmGen.push(r64::rcx);
-    asmGen.push(r64::rdx);
-    asmGen.push(r64::rsi);
-    asmGen.push(r64::rdi);
-
-    asmGen.push('\n');
-
-    asmGen.mov(r64::rax, 1);
-    asmGen.mov(r64::rdi, 1);
-    asmGen.mov(r64::rsi, r64::rsp);
-    asmGen.mov(r64::rdx, 8);
-
-    asmGen.syscall();
-
-    asmGen.add(r64::rsp, 8);
-    
-    asmGen.pop(r64::rdi);
-    asmGen.pop(r64::rsi);
-    asmGen.pop(r64::rdx);
-    asmGen.pop(r64::rcx);
-    asmGen.pop(r64::rax);
 
     asmGen.mov(r64::rsp, r64::rbp);
     asmGen.pop(r64::rbp);
