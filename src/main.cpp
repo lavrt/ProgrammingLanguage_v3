@@ -15,8 +15,10 @@ int main(int argc, const char** argv) {
             std::cout << program.exit_action.exit_text;
             return program.exit_action.exit_code;
         }
-
         const auto& cfg = cfg_opt.value();
+
+        fs::create_directory("tmp");
+        fs::create_directory("bin");
 
         auto frontend = app::proc::RunProcess("./build/frontend/frontend", {cfg.input, cfg.ast});
         if (frontend.exit_code) {
