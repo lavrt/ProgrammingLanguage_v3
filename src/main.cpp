@@ -20,13 +20,13 @@ int main(int argc, const char** argv) {
         fs::create_directory("tmp");
         fs::create_directory("bin");
 
-        auto frontend = app::proc::RunProcess("./build/frontend/frontend", {cfg.input, cfg.ast});
+        auto frontend = app::proc::RunProcess("./build/src/core/frontend/frontend", {cfg.input, cfg.ast});
         if (frontend.exit_code) {
             std::cerr << "Frontend failed:\n" << frontend.stderr_text;
             return frontend.exit_code;
         }
 
-        auto backend = app::proc::RunProcess("./build/backend/backend", {cfg.ast, cfg.output});
+        auto backend = app::proc::RunProcess("./build/src/core/backend/backend", {cfg.ast, cfg.output});
         if (backend.exit_code) {
             std::cerr << "Backend failed:\n" << backend.stderr_text;
             return backend.exit_code;
