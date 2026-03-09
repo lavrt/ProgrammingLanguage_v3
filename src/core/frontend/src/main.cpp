@@ -9,7 +9,7 @@
 int main(int argc, const char** argv) {
     try {
         Tokenizer tokenizer(argv[1]);
-        Tree ast = Parser(tokenizer.GetTokens()).Parse();
+        auto ast = Parser(tokenizer.GetTokens()).Parse();
         ast.Serialize(argv[2]);
         return 0;
     } catch (const FrontendExcept::FileException& e) {

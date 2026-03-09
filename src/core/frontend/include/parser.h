@@ -9,22 +9,24 @@
 
 class Parser {
 private:
+    Tree ast;
+
     std::vector<std::string> tokens;
     size_t pos = 0;
 
-    std::unique_ptr<Node> GetGrammar();
-    std::unique_ptr<Node> GetIf();
-    std::unique_ptr<Node> GetDef();
-    std::unique_ptr<Node> GetWhile();
-    std::unique_ptr<Node> GetNumber();
-    std::unique_ptr<Node> GetVariable();
-    std::unique_ptr<Node> GetOperation();
-    std::unique_ptr<Node> GetExpression();
-    std::unique_ptr<Node> GetComparsion();
-    std::unique_ptr<Node> GetAssignment();
-    std::unique_ptr<Node> GetParentheses();
-    std::unique_ptr<Node> GetMultiplication();
-    std::unique_ptr<Node> GetCalling();
+    Node* GetGrammar();
+    Node* GetIf();
+    Node* GetDef();
+    Node* GetWhile();
+    Node* GetNumber();
+    Node* GetVariable();
+    Node* GetOperation();
+    Node* GetExpression();
+    Node* GetComparsion();
+    Node* GetAssignment();
+    Node* GetParentheses();
+    Node* GetMultiplication();
+    Node* GetCalling();
 
     [[noreturn]] void SyntaxError();
 
@@ -32,10 +34,8 @@ public:
     Parser(const std::vector<std::string>& t) : tokens(t) {}
 
     Tree Parse() {
-        std::unique_ptr<Node> root = GetGrammar();
-        Tree ast(std::move(root));
-    
-        return ast;
+        ast.SetRoot(GetGrammar());
+        return std::move(ast);
     }
 };
 

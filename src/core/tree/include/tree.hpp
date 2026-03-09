@@ -8,17 +8,42 @@
 #include "node.hpp"
 
 class Tree {
+    class NodePool {
+    private:
+        std::vector<std::unique_ptr<Node>> data_;
+
+    public:
+        template <class... Args>
+        Node* Create(Args&&... args) {
+            data_.push_back(std::make_unique<Node>(std::forward<Args>(args)...));
+            return data_.back().get();
+        }
+
+        void Reserve(size_t n) {
+            data_.reserve(n);
+        }
+
+        void Clear() {
+            data_.clear();
+        }
+    };
+
 public:
     Tree() : root(nullptr) {}
 
-    Tree(std::unique_ptr<Node> r) : root(std::move(r)) {}
+    Tree(Node* r) : root(r) {}
 
-    Node* GetRoot() const {
-        return root.get();
+    template <class... Args>
+    Node* Create(Args&&... args) {
+        return pool.Create(std::forward<Args>(args)...);
     }
 
-    void SetRoot(std::unique_ptr<Node> r) {
-        root = std::move(r);
+    Node* GetRoot() const {
+        return root;
+    }
+
+    void SetRoot(Node* r) {
+        root = r;
     }
 
     void Dump(const std::string& fileName) const;
@@ -28,7 +53,8 @@ public:
     void Deserialize(const std::string& fileName);
     
 private:
-    std::unique_ptr<Node> root = nullptr;
+    Node* root;
+    NodePool pool;
 
     void DefiningGraphNodes(std::ofstream& file, Node* node) const;
 
@@ -36,8 +62,8 @@ private:
 
     void PreOrderTraversal(std::ofstream& file, Node* node) const;
 
-    std::pair<std::unique_ptr<Node>, size_t> ParseTreeFromTokens(
-        const std::vector<std::pair<NodeType, std::string>>& tokens, size_t pos = 0) const;
+    std::pair<Node*, size_t> ParseTreeFromTokens(
+        const std::vector<std::pair<NodeType, std::string>>& tokens, size_t pos = 0);
 };
 
 #endif // TREE_H

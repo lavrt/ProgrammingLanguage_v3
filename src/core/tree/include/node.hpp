@@ -7,8 +7,8 @@
 
 class Node {
 public:
-    Node(NodeType t, const std::string& v, std::unique_ptr<Node> l, std::unique_ptr<Node> r)
-        : type(t), value(v), left(std::move(l)), right(std::move(r)) {}
+    Node(NodeType t, const std::string& v, Node* l, Node* r)
+        : type(t), value(v), left(l), right(r) {}
 
     Node(NodeType t, const std::string& v)
         : type(t), value(v), left(nullptr), right(nullptr) {}
@@ -23,12 +23,12 @@ public:
         value = v;
     }
 
-    void SetLeft(std::unique_ptr<Node> l) {
-        left = std::move(l);
+    void SetLeft(Node* l) {
+        left = l;
     }
 
-    void SetRight(std::unique_ptr<Node> r) {
-        right = std::move(r);
+    void SetRight(Node* r) {
+        right = r;
     }
 
     NodeType GetType() const noexcept {
@@ -40,16 +40,16 @@ public:
     }
 
     Node* GetLeft() const noexcept {
-        return left.get();
+        return left;
     }
 
     Node* GetRight() const noexcept {
-        return right.get();
+        return right;
     }
 
 private:
     NodeType type;
     std::string value;
-    std::unique_ptr<Node> left;
-    std::unique_ptr<Node> right;
+    Node* left;
+    Node* right;
 };

@@ -18,8 +18,10 @@ void Tree::Dump(const std::string& fileName) const {
          << "node [shape=record,style = filled,penwidth = 2.5];\n    "
          << "bgcolor = \"#FDFBE4\";\n\n";
 
-    DefiningGraphNodes(file, this->GetRoot());
-    DefiningGraphDependencies(file, this->GetRoot());
+    if (GetRoot()) {
+        DefiningGraphNodes(file, GetRoot());
+        DefiningGraphDependencies(file, GetRoot());
+    }
 
     file << "}\n";
 
@@ -113,6 +115,11 @@ void Tree::PreOrderTraversal(std::ofstream& file, Node* node) const {
 }
 
 void Tree::Deserialize(const std::string& fileName) {
+    if (root) {
+        pool.Clear();
+        root = nullptr;
+    }
+
     std::ifstream file(fileName);
     if (!file) {
         throw TreeExcept::FileException("Cannot open file: " + fileName);
@@ -145,24 +152,25 @@ void Tree::Deserialize(const std::string& fileName) {
         tokens.push_back({type, buffer});
     }
 
-    this->SetRoot(ParseTreeFromTokens(tokens).first);
+    SetRoot(ParseTreeFromTokens(tokens).first);
 }
-std::pair<std::unique_ptr<Node>, size_t> Tree::ParseTreeFromTokens(
-    const std::vector<std::pair<NodeType, std::string>>& tokens, size_t pos) const
+
+std::pair<Node*, size_t> Tree::ParseTreeFromTokens(
+    const std::vector<std::pair<NodeType, std::string>>& tokens, size_t pos)
 {
     if (tokens[pos].first == Null) {
         return {nullptr, pos + 1};
     }
 
-    std::unique_ptr<Node> node = std::make_unique<Node>(tokens[pos].first, tokens[pos].second);
+    Node* node = pool.Create(tokens[pos].first, tokens[pos].second);
 
     auto [left, pos1] = ParseTreeFromTokens(tokens, pos + 1);
-    node->SetLeft(std::move(left));
+    node->SetLeft(left);
     pos = pos1;
 
     auto [right, pos2] = ParseTreeFromTokens(tokens, pos);
-    node->SetRight(std::move(right));
+    node->SetRight(right);
     pos = pos2;
 
-    return {std::move(node), pos};
+    return {node, pos};
 }
