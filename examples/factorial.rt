@@ -28,13 +28,14 @@ def factorial_2(a) {
 def test_factorials(c) {
     res_1 = call factorial_1(c);
     print_int(res_1);
+    print_ascii(10);
 
     res_2 = call factorial_2(c);
     print_int(res_2);
+    print_ascii(10);
 };
 
 def main() {
     a = read_int();
-
     call test_factorials(a);
 };
