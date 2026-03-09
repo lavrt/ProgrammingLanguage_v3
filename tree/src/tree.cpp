@@ -1,9 +1,9 @@
-#include "tree.h"
+#include "tree.hpp"
 
 #include <iostream>
 #include <fstream>
 
-#include "treeExceptions.h"
+#include "treeExceptions.hpp"
 #include "node_types.hpp"
 
 void Tree::Dump(const std::string& fileName) const {

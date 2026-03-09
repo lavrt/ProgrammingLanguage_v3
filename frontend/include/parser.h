@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "tree.h"
+#include "tree.hpp"
 
 #include <vector>
 #include <memory>

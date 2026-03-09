@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "tree.h"
+#include "tree.hpp"
 #include "generator.h"
 #include "backendExceptions.h"
-#include "treeExceptions.h"
+#include "treeExceptions.hpp"
 
 int main(int argc, const char** argv) {
     try {

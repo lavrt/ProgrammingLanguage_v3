@@ -1,10 +1,10 @@
 #include <iostream>
 
 #include "frontendExceptions.h"
-#include "treeExceptions.h"
+#include "treeExceptions.hpp"
 #include "tokenizer.h"
 #include "parser.h"
-#include "tree.h"
+#include "tree.hpp"
 
 int main(int argc, const char** argv) {
     try {
