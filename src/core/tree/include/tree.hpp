@@ -46,6 +46,7 @@ public:
         root = r;
     }
 
+    // dot -Tpng ./tmp/filename.dot -o ./tmp/filename.png
     void Dump(const std::string& fileName) const;
 
     void Serialize(const std::string& fileName) const;
