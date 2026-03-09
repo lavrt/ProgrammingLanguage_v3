@@ -54,8 +54,6 @@ void CodeGen::GenerateProgram(Node* program, const std::string& fileName) {
     }
 
     file.close();
-
-    std::cout << "Executable file created\n";
 }
 
 void CodeGen::CodeGenExpr(Node* node) {

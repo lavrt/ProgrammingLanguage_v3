@@ -5,15 +5,12 @@
 #include "backendExceptions.h"
 #include "treeExceptions.h"
 
-int main() {
+int main(int argc, const char** argv) {
     try {
         Tree ast;
-        ast.Deserialize("./tmp/tree.txt");
-        ast.Dump("./tmp/dump_backend");
-
+        ast.Deserialize(argv[1]);
         CodeGen cg;
-        cg.GenerateProgram(ast.GetRoot(), "./bin/output.elf");
-
+        cg.GenerateProgram(ast.GetRoot(), argv[2]);
         return 0;
     } catch (const BackendExcept::FileException& e) {
         std::cerr << e.what() << std::endl;
