@@ -7,10 +7,10 @@
 #include "backendExceptions.h"
 #include "node.hpp"
 
-// static ------------------------------------------------------------------------------------------
+namespace {
 
-static const std::string kEntryFunctionName = "main";
-static const r64 kArgRegs[] {
+const std::string kEntryFunctionName = "main";
+const r64 kArgRegs[] {
     r64::rdi,
     r64::rsi,
     r64::rdx,
@@ -19,7 +19,7 @@ static const r64 kArgRegs[] {
     r64::r9,
 };
 
-// -------------------------------------------------------------------------------------------------
+} // namespace
 
 void CodeGen::GenerateProgram(Node* program, const std::string& fileName) {
     CreateStandartFunctions();

@@ -4,12 +4,12 @@
 
 #include "generator.h"
 
-// static ------------------------------------------------------------------------------------------
+namespace {
 
 static const uint64_t kBaseLoadAddress = 0x400000;
 static const uint64_t kPageSize = 0x1000;
 
-// -------------------------------------------------------------------------------------------------
+} // namespace
 
 void CodeGen::CreateElfHeader(Elf64_Ehdr* ehdr) {
     ehdr->e_ident[EI_MAG0] = ELFMAG0;

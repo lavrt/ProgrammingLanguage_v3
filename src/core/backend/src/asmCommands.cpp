@@ -1,11 +1,13 @@
 #include "asmCommands.h"
 
-// static ------------------------------------------------------------------------------------------
+namespace {
 
-inline constexpr uint8_t kRexW = 0x48;
-inline constexpr uint8_t kRexR = 0x44;
-inline constexpr uint8_t kRexX = 0x42;
-inline constexpr uint8_t kRexB = 0x41;
+constexpr uint8_t kRexW = 0x48;
+constexpr uint8_t kRexR = 0x44;
+constexpr uint8_t kRexX = 0x42;
+constexpr uint8_t kRexB = 0x41;
+
+} // namespace
 
 void x86_64::push(r64 reg) {
     if (reg <= r64::rdi) {
